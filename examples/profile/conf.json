@@ -1,0 +1,14 @@
+{
+  "name": "Profile",
+  "Version": "0.0.1",
+  "description": "A simple profile menu.",
+  "assets": {
+    "font": "",
+    "img": "",
+    "html": "",
+    "js": "",
+    "css":""
+  },
+  "enviroment" : "dev",
+  "licence": "MIT"
+}

@@ -1,0 +1,20 @@
+script(type='text/javascript', src="/bower_components/jquery/dist/jquery.min.js")
+script(type='text/javascript', src="/core/Form.class.js")
+script.
+  $data = {}
+  $data["my_form_name"]={
+    "name" : "My name",
+    "username": "Valtid",
+    "password": 123
+  }
+
+form(key="my_form_name")
+  input(name="username" key="username" xtype="input")
+  input(name="password" key="password" xtype="input")
+  input(type="submit" value="Submit Button")
+
+script.
+  new Form('form')
+  $('body').on('change','[name="password"]', function (){
+    console.log("Changed")
+  })

@@ -1,9 +1,17 @@
 script(type='text/javascript', src="/bower_components/jquery/dist/jquery.min.js")
-script(type='text/javascript', src="/form.class.js")
+script(type='text/javascript', src="/xtype.class.js")
+script(type='text/javascript', src="/Component.class.js")
+script(type='text/javascript', src="/Form.class.js")
+
+
+a(href="/examples/form") Form
+
 form(key="login")
-  div(key="username" contenteditable="true")
-  input(key="password")
+  controller(key="username" xtype="input")
+  controller(key="password")
+  controller(key="forgot" xtype="bool"  contenteditable="true")
+  controller(type="submit") Submit Form
 
 
 script.
-  new Form('form')
+  x('form')
