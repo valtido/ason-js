@@ -2,7 +2,7 @@
   "name": "JSONForm",
   "version": "0.0.1",
   "description": "forms to manipulate json",
-  "main": "index.js",
+  "main": "lib/index.js",
   "directories": {
     "example": "examples",
     "test": "test"
