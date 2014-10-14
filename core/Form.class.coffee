@@ -1,7 +1,20 @@
+Function::getter = (prop, get) ->
+  Object.defineProperty @prototype, prop, {get, configurable: yes}
+
+Function::setter = (prop, set) ->
+  Object.defineProperty @prototype, prop, {set, configurable: yes}
+
 class xapp
   constructor: ()->
+    @data = {}
     form = $ 'form'; new Form form if form.length
-
+  @getter "length", ->
+    i = 0
+    for k, item of @data
+      i++
+    # return result
+    console.log i
+    i
 x = ->
   new xapp.apply arguments
 
@@ -42,31 +55,51 @@ class Control extends xapp
       value = $data[form_key][control_key]
       xtype = new Xtype selector, value
 
+class Schema extends xapp
+  constructor: (@data, @tree) ->
+    throw new Error "Schema: Data is missing" unless @data
+    throw new Error "Schema: Schema strucutre is missing" unless @tree
+    @valid @data, @tree
+    @
+
+  @getter "valid", (@data, @tree) ->
+    tv4.validateMultiple(@data, @tree)
+
 class Form extends xapp
   constructor: (@selector)->
-    throw new Error "Form: $data object not found" unless $data
-    throw new Error "Form: Selector missing" unless @selector
+    throw new Error "Form: Selector misrohrewhsing" unless @selector
+    form = $ selector
+    throw new Error "Form: No form found" if form.length is 0
 
-    forms = $ selector
+    form = $ selector
+    @form = form
+
+    # multiple forms, new instances
+    if form.length > 1
+      $.each form, (i, item) -> new Form item
+      return @
+
+    # check for Schema
+
+    @Schema = new Schema form.attr 'Schema'
+
+    throw new Error "Form: $data object not found" unless xapp.data
+
+
     @form_key = ''
     @controls = []
 
-    if forms.length is 1
-      @attach_events()
-      form = forms
-      @form_key = $(form).attr 'key'
-      data = $data[@form_key]
+    @attach_events()
+    @form_key = $(form).attr 'key'
+    data = $data[@form_key]
 
-      throw new Error "Form: form key was not found" unless @form_key
-      throw new Error "Form: data was not found" unless data
+    throw new Error "Form: form key was not found" unless @form_key
+    throw new Error "Form: data was not found" unless data
 
-      form.find '[key]'
-      .each (key, item)=>
-        @controls.push new Control item
-    else
-      $.each forms, (i, form) ->
-        new Form form
-    forms
+    form.find '[key]'
+    .each (key, item)=>
+      @controls.push new Control item
+    form
 
 
   serialize: ()->

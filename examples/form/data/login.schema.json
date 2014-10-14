@@ -1,0 +1,10 @@
+{
+  "title":"Login system",
+  "type":"object",
+  "properties":{
+    "username": {
+      "type":"string",
+    }
+  },
+  "required": ["username"]
+}
