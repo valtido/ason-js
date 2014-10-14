@@ -24,7 +24,7 @@
     "underscore": "^1.6.0"
   },
   "devDependencies": {
-    "grunt-karma": "^0.8.3",
+    "grunt-karma": "^0.9.0",
     "karma-chrome-launcher": "^0.1.4",
     "karma-coffee-preprocessor": "^0.2.1",
     "karma-coverage": "^0.2.6",
