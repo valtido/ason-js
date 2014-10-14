@@ -9,7 +9,7 @@
   },
   "scripts": {
     "test": "karma start",
-    "build": ""
+    "build": "coffeebar -o lib src"
   },
   "repository": {
     "type": "git",
