@@ -8,7 +8,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "karma start",
+    "test": "build && karma start",
     "build": "coffeebar -o lib src"
   },
   "repository": {

@@ -65,6 +65,35 @@ class Schema extends xapp
   @getter "valid", (@data, @tree) ->
     tv4.validateMultiple(@data, @tree)
 
+class String_convert_to extends xapp
+  constructor : (@data, @to) ->
+    switch @to.toLowerCase()
+      when "string" then result  = @data
+      when "number" then result  = new Number @data
+      when "boolean" then result = new Boolean @data
+      when "array" then result   = new Array @data
+      when "symbol" then result  = new Symbol @data
+    # return
+    result
+class Data extends xapp
+  constructor: (@data)->
+    # check for data type and try to convert to an object.
+    switch typeof @data
+      when "string"
+        result = @string_to_object()
+      when "object"
+        result = @data
+      else
+        throw new Error "Data: only `String, Object` allowed"
+    # return result
+    result
+
+  string_to_object: ()->
+    @data = @data.trim()
+    if @data[0] is "{" and @data[@data.length] is "}"
+      return @data = JSON.parse @data
+
+
 class Form extends xapp
   constructor: (@selector)->
     throw new Error "Form: Selector misrohrewhsing" unless @selector
@@ -80,8 +109,8 @@ class Form extends xapp
       return @
 
     # check for Schema
-
-    @Schema = new Schema form.attr 'Schema'
+    data = new Data form.attr('data')
+    @Schema = new Schema data, form.attr 'Schema'
 
     throw new Error "Form: $data object not found" unless xapp.data
 
