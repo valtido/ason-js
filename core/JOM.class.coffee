@@ -1,7 +1,7 @@
 # Json Object Model
 
 # required: Schema Tree && Machine Data && ~Human Data (~ optional)
-# @tree describes how data should be structured (hierarchically)
+# @tree is schema, describes how data should be structured (hierarchically)
 # @human are data to display to user,
 #   e.g: a list of data from a drop down.
 #   animal = ['dog','cat','horse','mouse']
@@ -24,4 +24,6 @@ select
 
 
 class JOM
+  @data = {}
   constructor: (@tree, @machine, @human = {} )->
+    @data = {}
