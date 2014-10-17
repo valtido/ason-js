@@ -1,19 +1,23 @@
-script(type='text/javascript', src="/bower_components/jquery/dist/jquery.min.js")
-script(type='text/javascript', src="/core/Controls.class.js")
+link(href="/assets/-/color-picker/css/colorpicker.css" type="text/css" rel="stylesheet")
+link(href="/assets/main.css" type="text/css" rel="stylesheet")
+script(type='text/javascript' src="/bower_components/jquery/dist/jquery.min.js")
+script(type='text/javascript' src="/core/Controls.class.js")
+script(type='text/javascript' src="/assets/-/color-picker/js/colorpicker.js")
 script.
-  $data = {}
-  $data["my_form_name"]={
+  $data = {app:{}}
+  $data["app"]['login']={
     "name" : "My name",
     "username": "Valtid",
     "password": 123,
     "remember": false
   }
 
-app(key="my_form_name")
-  controller
-    input(key="username")
-    input(key="password")
-    button Submit Button
+app(collection="app.login")
+  form
+    controller
+      input(key="username")
+      input(key="password")
+      input(type="submit" value="Submit Button")
 
   div(key="remember")
     span.yes Yes
@@ -23,9 +27,6 @@ style.
   .yes{display: none;}
 
 script.
-  $('body').on('change','[name="password"]', function (){
-    console.log("Changed")
-  })
 
   $('body')
   .on('click','.yes', function(){
