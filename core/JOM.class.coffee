@@ -22,8 +22,13 @@ select
 # and make logical decisions to display and indicate to user which `options`
 # are available, and those which are already selected.
 
-
 class JOM
-  @data = {}
-  constructor: (@tree, @machine, @human = {} )->
-    @data = {}
+  constructor: ()->
+    @Schema = {}
+    @Data = {}
+    console.log "class JOM"
+    return @
+
+
+JOM = new JOM()
+console.log "JOMO"
