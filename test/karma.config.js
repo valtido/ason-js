@@ -92,7 +92,7 @@ module.exports = function(config) {
     // 'chrome_without_security'
     // 'firefox_without_security'
     // 'Safari','Firefox'
-    browsers: ['PhantomJS'],
+    browsers: ['chrome_without_security'],
 
       customLaunchers : {
        chrome_without_security: {
