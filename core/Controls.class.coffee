@@ -13,7 +13,6 @@ class Ason
       @app[get_key] = new App app
 
 
-
 ason = Ason
 $ ->
   window["x"] = new Ason()
@@ -24,8 +23,13 @@ class Schema extends Ason
     # @tree = new Tree
 
 class Collection extends Ason
-  constructor: (@selector)->    
-    @selector
+  @data = []
+  constructor: (@selector)->
+    # DOT seperated list
+    @data unless @selector
+    @selector = @selector.split(".")
+    throw new Error "Collection: not found" if @data[@selector] isnt undefined
+    @data[@selector]
 
 class Human extends Ason
   constructor: (@selector)->    @selector

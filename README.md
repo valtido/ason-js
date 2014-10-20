@@ -1,7 +1,7 @@
 [![License][LicenseIMGURL]][LicenseURL]
 [![NPM version][NPMIMGURL]][NPMURL]
 [![Dependency Status](https://gemnasium.com/valtido/JSONForm.svg)](https://gemnasium.com/valtido/JSONForm)
-[![Build Status](https://travis-ci.org/valtido/JSONForm.svg)](https://travis-ci.org/valtido/JSONForm)
+[![Build Status](https://travis-ci.org/valtido/ason-js.svg?branch=master)](https://travis-ci.org/valtido/ason-js)
 ===============
 [NPMIMGURL]:                https://img.shields.io/npm/v/minify.svg?style=flat
 [NPMURL]:                   //npmjs.org/package/minify
