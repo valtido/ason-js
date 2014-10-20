@@ -15,12 +15,14 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
-      {pattern: 'bower_components/jquery/dist/jquery.min.map', included: false},
-      {pattern: 'bower_components/jquery/dist/jquery.min.js', included: true},
-      {pattern: 'bower_components/tv4/tv4.js', included: true},
-      {pattern: 'core/**/form.class.coffee', included: true},
-      {pattern: 'test/helper.coffee', included: true},
-      {pattern: 'test/**/*.Spec.coffee', included: true}
+      {pattern: '../bower_components/jquery/dist/jquery.min.map', included: false},
+      {pattern: '../bower_components/jquery/dist/jquery.min.js', included: true},
+      {pattern: '../bower_components/tv4/tv4.js', included: true},
+      {pattern: '../test/mock.js', included: true},
+      {pattern: '../test/mock/**/*.js', included: true},
+      {pattern: '../core/**/ason.class.coffee', included: true},
+      {pattern: '../test/helper.coffee', included: true},
+      {pattern: '../test/**/*.Spec.coffee', included: true}
     ],
 
 
@@ -36,13 +38,13 @@ module.exports = function(config) {
       // do not include tests or libraries
       // (these files will be instrumented by Istanbul via Ibrik unless
       // specified otherwise in coverageReporter.instrumenter)
-      'core/**/*.coffee': ['coffee'],
+      '../core/**/*.coffee': ['coffee'],
 
       // note: project files will already be converted to
       // JavaScript via coverage preprocessor.
       // Thus, you'll have to limit the CoffeeScript preprocessor
       // to uncovered files.
-      'test/**/*.coffee': ['coffee']
+      '../test/**/*.coffee': ['coffee']
     },
 
     coffeePreprocessor: {
