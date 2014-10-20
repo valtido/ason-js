@@ -1,5 +1,5 @@
 {
-  "name": "JSONForm",
+  "name": "Ason",
   "version": "0.0.1",
   "description": "forms to manipulate json",
   "main": "./lib/index.js",
@@ -8,7 +8,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "build && karma start",
+    "test": "karma start",
     "build": "coffeebar -o lib src"
   },
   "repository": {
