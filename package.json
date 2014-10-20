@@ -8,7 +8,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "karma start",
+    "test": "bower install && ./node_modules/.bin/karma start",
     "build": "coffeebar -o lib src"
   },
   "repository": {
@@ -25,6 +25,7 @@
     "underscore": "^1.6.0"
   },
   "devDependencies": {
+    "bower": "^1.3.12",
     "coffeebar": "^0.4.0",
     "grunt-karma": "^0.9.0",
     "karma": "^0.12.24",
