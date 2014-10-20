@@ -8,7 +8,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "bower install && ./node_modules/.bin/karma start",
+    "test": "bower install && node node_modules/karma/bin/karma start test/karma.config.js",
     "build": "coffeebar -o lib src"
   },
   "repository": {
