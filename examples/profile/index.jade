@@ -1,8 +1,19 @@
-div.app(config="/examples")
-  div.pane
-    div.left
-    div.right
-      h1.title Profile
-      form.app
-        controller()
-          label(key="")
+body
+  script(type='text/javascript' src="/bower_components/jquery/dist/jquery.min.js")
+  script(src="/core/Template.class.js")
+  script(src="/core/Component.class.js")
+  style.
+    body{background: #333;}
+    component[key="person"]{background: #fff; padding: 20px;}
+  templates
+    template(key="person")
+      h1(key="name")
+        span(key="first")
+        span(key="last")
+      img(key="image")
+      p(key="description")
+
+      script.
+        alert('hello')
+
+  component(key="person")
