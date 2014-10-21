@@ -1,6 +1,5 @@
 describe "JOM", ->
   it "should be defined", ->
-    console.log "Spec JOM"
     expect(JOM).toBeDefined()
 
   it "Schema should be present", ->

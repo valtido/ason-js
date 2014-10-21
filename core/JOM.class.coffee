@@ -26,9 +26,8 @@ class JOM
   constructor: ()->
     @Schema = {}
     @Data = {}
-    console.log "class JOM"
+
     return @
 
 
 JOM = new JOM()
-console.log "JOMO"
