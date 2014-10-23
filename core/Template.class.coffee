@@ -4,10 +4,3 @@ class Template
       element = $(template)
       key = element.attr 'key'
       throw new Error "Template: key attribute is required." unless key
-
-
-
-
-
-$ ->
-  new Template()

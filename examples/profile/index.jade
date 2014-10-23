@@ -1,19 +1,52 @@
-body
-  script(type='text/javascript' src="/bower_components/jquery/dist/jquery.min.js")
-  script(src="/core/Template.class.js")
-  script(src="/core/Component.class.js")
+//- script(src="/core/Template.class.js")
+script(src="/core/Component.class.js")
+script(src="/core/Prop.class.js")
+
+script.
+  JOM = {
+    "collection": {
+      "user": [
+        {
+          "name": {"first": "Valtid", "last": "Caushi"},
+          "location": "London",
+          "image":"http://placehold.it/90x90"
+        },
+        {
+          "name": {"first": "Thomas", "last": "McKiernan"},
+          "location": "Paris",
+          "image":"http://placehold.it/90x90"
+        },
+        {
+          "name": {"first": "Mario", "last": "Contessa"},
+          "location": "Rome",
+          "image":"http://placehold.it/90x90"
+        }
+      ]
+    }
+  }
+
+
+
+template(ns="profile")
   style.
-    body{background: #333;}
-    component[key="person"]{background: #fff; padding: 20px;}
-  templates
-    template(key="person")
-      h1(key="name")
-        span(key="first")
-        span(key="last")
-      img(key="image")
-      p(key="description")
+    @import url("/assets/-/fontello/css/fontello.css");
+    :host {display: block; padding: 20px; background: #fff; min-height: 90px; margin-bottom: 10px;}
+    header {font-size: 30px;}
+    .icon-location {font-size: 25px; color: #900;}
+    img {float: right;}
 
-      script.
-        alert('hello')
+  img(src="\#{image}")
+  header \#{name.first} \#{name.last}
+  div
+    span.icon-location
+    span \#{location}
 
-  component(key="person")
+
+
+component(ns="profile" collection="user[0]")
+component(ns="profile" collection="user[1]" class="different")
+component(ns="profile" collection="user[2]")
+
+component(ns="profile" collection="user[0]")
+component(ns="profile" collection="user[1]" class="different")
+component(ns="profile" collection="user[2]")
