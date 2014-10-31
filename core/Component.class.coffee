@@ -4,7 +4,7 @@ class Component
     $element        = $ selector
     ns              = $element.attr 'ns'
     collection_attr = $element.attr 'collection'
-
+    collections.reverse()
     for collection, key in collections
       console.log collection, key
       component      = $ '<component />'
@@ -56,6 +56,7 @@ class Component
       # will find #{...} whether in text or in attribute and replace it with
       # corresponding dataset found on collections, if found
       clone = @data_transform collection, clone
+      document.importNode template_tag.content, true
       $(shadow).append clone
   data_transform : ( data, clone)->
     # text handlers

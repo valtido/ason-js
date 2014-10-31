@@ -8,22 +8,32 @@ script.
     "collection": {
       "user": [
         {
+          "name": {"first": "John", "last": "Smith"},
+          "location": "NYC",
+          "dob": "31/06/1988",
+          "likes": 0,
+          "image":"http://hhhhold.com/90x90?1"
+        },
+        {
           "name": {"first": "Valtid", "last": "Caushi"},
           "location": "London",
           "dob": "31/06/1988",
-          "image":"http://placehold.it/90x90"
+          "likes": 0,
+          "image":"http://hhhhold.com/90x90?2"
         },
         {
           "name": {"first": "Thomas", "last": "McKiernan"},
           "location": "Paris",
           "dob": "31/06/1988",
-          "image":"http://placehold.it/90x90"
+          "likes": 0,
+          "image":"http://hhhhold.com/90x90?3"
         },
         {
           "name": {"first": "Mario", "last": "Contessa"},
           "location": "Rome",
           "dob": "31/06/1988",
-          "image":"http://placehold.it/90x90"
+          "likes": 0,
+          "image":"http://hhhhold.com/90x90?4"
         }
       ]
     }
@@ -39,7 +49,7 @@ template(ns="profile")
     .icon-location {font-size: 25px; color: #900;}
     img {float: right;}
     i { width: 40px; display: inline-block; color: #333; text-align: center;margin-right: 10px;}
-
+  
   img(src="\#{image}")
   header 
     i.icon-user
@@ -50,10 +60,16 @@ template(ns="profile")
   div
     i.icon-location
     span \#{location}
+  div
+    i.icon-thumbs-up-alt
+    span \#{likes}
+
+  script.
+    alert('yes')
+    console.log "start"
 
 
-
-component(ns="profile" collection="user[0]") asd
+component(ns="profile" collection="user") asd
   //- component(ns="profile" collection="user[1]" class="different")
   //- component(ns="profile" collection="user[2]")
 
