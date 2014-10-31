@@ -1,44 +1,68 @@
 class Component
-  constructor: ->
-    $.each $('component'), (i,component) =>
-      $element = $ component
-      element = $element.get 0
+  repeat: (selector, collections)->
+    # generate clones if it's an array
+    $element        = $ selector
+    ns              = $element.attr 'ns'
+    collection_attr = $element.attr 'collection'
+
+    for collection, key in collections
+      console.log collection, key
+      component      = $ '<component />'
+      component.attr 'ns', ns
+      component.attr 'collection', "#{collection_attr}[#{key}]"
+      component.insertAfter $element
+      new Component component
+    $element.remove()
+  constructor: (selector) ->
+    components = if $(selector).length then $ selector else $ 'component'
+    components = components.filter =>
+      @component is undefined
+    if components.length > 1
+      return $.each components, (i,component) ->
+        return new Component component
+    if components.length is 1
+      component       = components
+      $element        = $ component
+      element         = $element.get 0
+      collection_attr = $element.attr 'collection'
+      # get from JOM using path
+      collection      = Prop collection_attr, JOM.collection
+      template        = $element.attr 'ns'
+
+      throw new Error "Component: `ns` attr is required." unless template
+      throw new Error "Component: `collection` attr is required." unless collection_attr isnt undefined
+
+      console.log collection
+      return @repeat component, collection if collection.constructor.name is "Array"
+
       return element if element.component?.init?
       element.component = {}
       element.component.init = true
+      element.component.ns = template
+      element.component.collection_attr = collection_attr
 
-      # required
-      collection = $element.attr 'collection'
-      ns = $element.attr 'ns'
-      throw new Error "Component: ns attribute is required." unless ns
-      throw new Error "Component: collection attribute is required." unless collection
-      element.component.ns = ns
-
-      # grab data from JOM.collection
-      data = new Prop collection, JOM.collection
-      throw new Error "Component: collection not found" unless data
-      element.component.data = data
+      throw new Error "Component: collection data not found" unless collection
+      element.component.collection = collection
       # Get from template
-      $template_tag = $ "template[ns='#{ns}']"
+      $template_tag = $ "template[ns='#{template}']"
       template_tag = $template_tag.get 0
       element.component.template =
         tag : template_tag
-        ns: ns
+        ns  : template
       throw new Error "Component: template not found" unless $template_tag.length is 1
       shadow = element.createShadowRoot()
-      clone = template_tag.content.cloneNode true
+      clone  = template_tag.content.cloneNode true
 
       # will find #{...} whether in text or in attribute and replace it with
       # corresponding dataset found on collections, if found
-      clone = @data_transform data, clone
-
+      clone = @data_transform collection, clone
       $(shadow).append clone
   data_transform : ( data, clone)->
     # text handlers
     regx = /#{[\w|\[|\]|\.|"|']*}*/g
     replacer = (match)->
       key = match.slice 2, -1
-      value = new Prop().get key, data
+      value = Prop key, data
       if value isnt undefined
         return value
       else
@@ -67,6 +91,12 @@ unless $.fn.findAll?
   $.fn.findAll = (selector) ->
       return this.find(selector).add(this.filter(selector));
 
+x= ''
 
 $ ->
-  new Component()
+  $ 'body'
+  .on 'click', ->
+    c = $ '<component collection="user[1]" ns="profile" />'
+    $ '.xx'
+    .prepend c
+  x = new Component()
