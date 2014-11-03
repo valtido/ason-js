@@ -8,13 +8,6 @@ script.
     "collection": {
       "user": [
         {
-          "name": {"first": "John", "last": "Smith"},
-          "location": "NYC",
-          "dob": "31/06/1988",
-          "likes": 0,
-          "image":"http://hhhhold.com/90x90?1"
-        },
-        {
           "name": {"first": "Valtid", "last": "Caushi"},
           "location": "London",
           "dob": "31/06/1988",
@@ -38,6 +31,15 @@ script.
       ]
     }
   }
+  JOM.collection["profile"] = [
+    {
+      "name": {"first": "John", "last": "Smith"},
+      "location": "NYC",
+      "dob": "31/06/1988",
+      "likes": 0,
+      "image":"http://hhhhold.com/90x90?1"
+    }
+  ]
 
 div.xx
 
@@ -47,7 +49,7 @@ template(ns="profile")
     :host {display: block; padding: 20px; background: #fff; min-height: 90px; margin-bottom: 10px;}
     header {font-size: 30px;margin-bottom: 20px;}
     .icon-location {font-size: 25px; color: #900;}
-    img {float: right;}
+    img {float: right;border: 5px solid #f0f0f0; }
     i { width: 40px; display: inline-block; color: #333; text-align: center;margin-right: 10px;}
   
   img(src="\#{image}")
@@ -67,16 +69,20 @@ template(ns="profile")
   script.
     alert('yes')
     console.log "start"
+//- attr `ns` is used if collection is not used
+//- collection is a optional in-case collection has a different name
+//-     how ever it is advisable that the ns and collection be the same
+//-     to retain the one-point-of-reference idiology
 
-
-component(ns="profile" collection="user") asd
-  //- component(ns="profile" collection="user[1]" class="different")
-  //- component(ns="profile" collection="user[2]")
+//- omit the collection attribute, to use ns as a fallback
+component(ns="profile")
+//- Use the collection attr
+component(ns="profile" collection="user")
 
 
 //- change this late on
 //- The double escape experiment
-script.
+script(type="text/javascript").
   $('body').get(0).times_escaped = 0;
   $('body')
   .on('dblescape', function(){

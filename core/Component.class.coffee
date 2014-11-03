@@ -3,10 +3,9 @@ class Component
     # generate clones if it's an array
     $element        = $ selector
     ns              = $element.attr 'ns'
-    collection_attr = $element.attr 'collection'
+    collection_attr = $element.attr('collection') || ns
     collections.reverse()
     for collection, key in collections
-      console.log collection, key
       component      = $ '<component />'
       component.attr 'ns', ns
       component.attr 'collection', "#{collection_attr}[#{key}]"
@@ -24,15 +23,15 @@ class Component
       component       = components
       $element        = $ component
       element         = $element.get 0
-      collection_attr = $element.attr 'collection'
+      template        = $element.attr 'ns'
+      ns              = template
+      collection_attr = $element.attr('collection') || ns
       # get from JOM using path
       collection      = Prop collection_attr, JOM.collection
-      template        = $element.attr 'ns'
 
       throw new Error "Component: `ns` attr is required." unless template
       throw new Error "Component: `collection` attr is required." unless collection_attr isnt undefined
 
-      console.log collection
       return @repeat component, collection if collection.constructor.name is "Array"
 
       return element if element.component?.init?
@@ -95,9 +94,4 @@ unless $.fn.findAll?
 x= ''
 
 $ ->
-  $ 'body'
-  .on 'click', ->
-    c = $ '<component collection="user[1]" ns="profile" />'
-    $ '.xx'
-    .prepend c
   x = new Component()
