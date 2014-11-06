@@ -1,74 +1,89 @@
 class Component
-  repeat: (selector, collections)->
-    # generate clones if it's an array
-    $element        = $ selector
-    ns              = $element.attr 'ns'
-    collection_attr = $element.attr('collection') || ns
-    collections.reverse()
-    for collection, key in collections
-      component      = $ '<component />'
-      component.attr 'ns', ns
-      component.attr 'collection', "#{collection_attr}[#{key}]"
-      component.insertAfter $element
-      new Component component
-    $element.remove()
-  constructor: (selector) ->
-    components = if $(selector).length then $ selector else $ 'component'
-    components = components.filter =>
-      @component is undefined
-    if components.length > 1
-      return $.each components, (i,component) ->
-        return new Component component
-    if components.length is 1
-      component       = components
-      $element        = $ component
-      element         = $element.get 0
-      template        = $element.attr 'ns'
-      ns              = template
-      collection_attr = $element.attr('collection') || ns
-      # get from JOM using path
-      collection      = Prop collection_attr, JOM.collection
+  constructor: (selector, @repeated = false, @index = 0) ->
+    throw new Error "Component: reqires JOM." unless JOM
+    component        = $ selector
+    @element         = component.get 0
+    @ns              = component.attr 'ns'
+    @repeat          = component.attr("repeat") isnt undefined
+    @collection      = {}
+    @collection_attr = component.attr('collection') || @ns
 
-      throw new Error "Component: `ns` attr is required." unless template
-      throw new Error "Component: `collection` attr is required." unless collection_attr isnt undefined
+    throw new Error "Component: `ns` attr is required." unless @ns
+    throw new Error "Component: `collection` attr is required." unless @collection_attr
 
-      return @repeat component, collection if collection.constructor.name is "Array"
+    @collection_loader()
 
-      return element if element.component?.init?
-      element.component = {}
-      element.component.init = true
-      element.component.ns = template
-      element.component.collection_attr = collection_attr
+    # check if component has already been set up before
+
+    @template_loader() unless JOM.Template[@ns]
+
+    JOM.Component[@ns] = @
+    @
+  collection_loader : ()->
+    $ 'body'
+    .on "collection:#{@ns}.ready", (event, response)=>
+      collection = response()
+      @collection = collection
 
       throw new Error "Component: collection data not found" unless collection
-      element.component.collection = collection
-      # Get from template
-      $template_tag = $ "template[ns='#{template}']"
-      template_tag = $template_tag.get 0
-      element.component.template =
-        tag : template_tag
-        ns  : template
-      throw new Error "Component: template not found" unless $template_tag.length is 1
-      shadow = element.createShadowRoot()
-      clone  = template_tag.content.cloneNode true
 
-      # will find #{...} whether in text or in attribute and replace it with
-      # corresponding dataset found on collections, if found
-      clone = @data_transform collection, clone
-      document.importNode template_tag.content, true
-      $(shadow).append clone
-  data_transform : ( data, clone)->
+      # repeat, clones itself and re constructs a new component
+      is_array    = @collection.constructor.name is "Array"
+      is_repeated = @repeat isnt false
+      return @repeater() if is_array and is_repeated
+
+  shadow: ->
+    # create a shadow for component
+    shadow    = @current_element.createShadowRoot()
+    cloneNode = @template.content.cloneNode true
+    clone     = document.importNode cloneNode, true
+    @current_element = cloneNode
+    @data_transform()
+    shadow.appendChild cloneNode
+  template_loader: ->
+    importer  = $ "link[template='#{@ns}']"
+    throw new Error "Component: Template not imported" if importer.length isnt 1
+    importer = $(importer).get 0
+
+    $template  = $ 'template', importer.import
+    throw new Error "Component: template not found" if $template is undefined
+
+    template = $template.get 0
+
+    # import template once
+    clone = document.importNode template.content, true
+    @template         = template
+    JOM.Template[@ns] = template
+
+    @template
+  repeater: ->
+    # generate clones if it's an array
+    reversed = @collection.reverse()
+    tmp      = $ '<component />'
+    for collection, key in reversed
+      path = "#{@collection_attr}[#{key}]"
+      clone = tmp.clone()
+      clone.attr 'ns', @ns
+      clone.attr 'collection', path
+      clone.insertAfter @element
+      @current_collection = Prop path, JOM.Collection
+      @current_element = clone.get 0
+      @shadow()
+    @element.remove()
+
+  data_transform : ->
+    that = @
     # text handlers
     regx = /#{[\w|\[|\]|\.|"|']*}*/g
     replacer = (match)->
       key = match.slice 2, -1
-      value = Prop key, data
+      value = Prop key, that.current_collection
       if value isnt undefined
         return value
       else
-        console?.warn? "Component: Collection data not found. `%s` in %o",match, clone
+        console?.warn? "Component: Collection data not found. `%s` in %o",match, @current_element
         return match
-    all_text = $(clone.children).findAll ":contains(\#{)"
+    all_text = $(@current_element.children).children().findAll ":contains(\#{)"
     nodes_only = all_text.filter(-> return $(this).children().length==0 )
     text = nodes_only.each(->
       txt = $(this)
@@ -78,20 +93,20 @@ class Component
     )
 
     # attributes handler
-    all = $(clone.children).findAll('*').each (i,el)->
+    all = $(@current_element.children).findAll('*').each (i,el)->
       attrs = el.attributes
       for attr, i in attrs
         name = attr.name
         value = attr.value
           .replace regx, replacer
         $(el).attr name, value
-    clone
+    @current_element
 
 unless $.fn.findAll?
   $.fn.findAll = (selector) ->
       return this.find(selector).add(this.filter(selector));
 
-x= ''
-
 $ ->
-  x = new Component()
+  $('component').each (i, element)->
+    new Component element
+    this

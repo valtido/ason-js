@@ -1,0 +1,25 @@
+template(ns="profile")
+  style.
+    @import url("/assets/-/fontello/css/fontello.css");
+    :host {display: block; padding: 20px; background: #fff; min-height: 90px; margin-bottom: 10px;}
+    header {font-size: 30px;margin-bottom: 20px;}
+    .icon-location {font-size: 25px; color: #900;}
+    img {float: right;border: 5px solid #f0f0f0; }
+    i { width: 40px; display: inline-block; color: #333; text-align: center;margin-right: 10px;}
+  
+  img(src="\#{image}")
+  header 
+    i.icon-user
+    span \#{name.first} \#{name.last}
+  div
+    i.icon-calendar
+    span \#{dob}
+  div
+    i.icon-location
+    span \#{location}
+  div
+    i.icon-thumbs-up-alt
+    span \#{likes}
+
+  script.
+    console.log("template script is working")

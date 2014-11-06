@@ -1,109 +1,64 @@
-//- script(src="/core/Template.class.js")
-script(src="/core/Prop.class.js")
-script(src="/core/jsonpath.js")
-script(src="/core/Component.class.js")
-
-script.
-  JOM = {
-    "collection": {
-      "user": [
-        {
-          "name": {"first": "Valtid", "last": "Caushi"},
-          "location": "London",
-          "dob": "31/06/1988",
-          "likes": 0,
-          "image":"http://hhhhold.com/90x90?2"
-        },
-        {
-          "name": {"first": "Thomas", "last": "McKiernan"},
-          "location": "Paris",
-          "dob": "31/06/1988",
-          "likes": 0,
-          "image":"http://hhhhold.com/90x90?3"
-        },
-        {
-          "name": {"first": "Mario", "last": "Contessa"},
-          "location": "Rome",
-          "dob": "31/06/1988",
-          "likes": 0,
-          "image":"http://hhhhold.com/90x90?4"
-        }
-      ]
-    }
-  }
-  JOM.collection["profile"] = [
-    {
-      "name": {"first": "John", "last": "Smith"},
-      "location": "NYC",
-      "dob": "31/06/1988",
-      "likes": 0,
-      "image":"http://hhhhold.com/90x90?1"
-    }
-  ]
-
-div.xx
-
-template(ns="profile")
-  style.
-    @import url("/assets/-/fontello/css/fontello.css");
-    :host {display: block; padding: 20px; background: #fff; min-height: 90px; margin-bottom: 10px;}
-    header {font-size: 30px;margin-bottom: 20px;}
-    .icon-location {font-size: 25px; color: #900;}
-    img {float: right;border: 5px solid #f0f0f0; }
-    i { width: 40px; display: inline-block; color: #333; text-align: center;margin-right: 10px;}
-  
-  img(src="\#{image}")
-  header 
-    i.icon-user
-    span \#{name.first} \#{name.last}
-  div
-    i.icon-calendar
-    span \#{dob}
-  div
-    i.icon-location
-    span \#{location}
-  div
-    i.icon-thumbs-up-alt
-    span \#{likes}
-
+extends ../../_layout
+block html_import
+  link(rel="import" href="template.html")
+block content
   script.
-    alert('yes')
-    console.log "start"
-//- attr `ns` is used if collection is not used
-//- collection is a optional in-case collection has a different name
-//-     how ever it is advisable that the ns and collection be the same
-//-     to retain the one-point-of-reference idiology
-
-//- omit the collection attribute, to use ns as a fallback
-component(ns="profile")
-//- Use the collection attr
-component(ns="profile" collection="user")
-
-
-//- change this late on
-//- The double escape experiment
-script(type="text/javascript").
-  $('body').get(0).times_escaped = 0;
-  $('body')
-  .on('dblescape', function(){
-    $('component').toggle()
-  })
-  .on('keyup', function (event){
-    if(event.which==27){
-      that = this
-      this.times_escaped++;
-      setTimeout (function (){
-        if (that.times_escaped >= 2){
-          //pressed it twice at least
-          clearTimeout(timer);
-          that.times_escaped = 0;
-          $(that).trigger('dblescape')
-        }
-      }, 50)
-      var timer = setTimeout(function(){
-        that.times_escaped = 0;
-      },500)
-      
-      
+    ason = {}
+    ason.app = {
+      ns: "profile",
+      title: "Profile",
+      description: "Holds profile information about a user.",
+      schema : "schema.js",
+      collections: {"profile": 'data.json'}
     }
-  })
+  //- script(src="/core/Template.class.js")
+  script(src="/core/Prop.class.js")
+  script(src="/core/jsonpath.js")
+  script(src="/core/JOM.class.js")
+  script(src="/core/Collection.class.js")
+  script(src="/core/Component.class.js")
+  script(src="/core/App.class.js")
+
+  //- attr `ns` is used if collection is not used
+  //- collection is a optional in-case collection has a different name
+  //-     how ever it is advisable that the ns and collection be the same
+  //-     to retain the one-point-of-reference idiology
+
+  //- omit the collection attribute, to use ns as a fallback
+  component(ns="profile" repeat)
+  //- Use the collection attr
+  //- component(ns="profile" repeat collection="user[0]")
+
+
+
+
+
+
+    
+  //- change this late on
+  //- The double escape experiment
+  script(type="text/javascript").
+    $('body').get(0).times_escaped = 0;
+    $('body')
+    .on('dblescape', function(){
+      $('component').toggle()
+    })
+    .on('keyup', function (event){
+      if(event.which==27){
+        that = this
+        this.times_escaped++;
+        setTimeout (function (){
+          if (that.times_escaped >= 2){
+            //pressed it twice at least
+            clearTimeout(timer);
+            that.times_escaped = 0;
+            $(that).trigger('dblescape')
+          }
+        }, 50)
+        var timer = setTimeout(function(){
+          that.times_escaped = 0;
+        },500)
+        
+        
+      }
+    })

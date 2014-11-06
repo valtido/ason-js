@@ -26,7 +26,9 @@ class JOM
   constructor: ()->
     @Schema = {}
     @Data = {}
-
+    @Collection = {}
+    @Component = {}
+    @Template = {}
     return @
 
 

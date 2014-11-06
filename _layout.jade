@@ -1,10 +1,20 @@
 doctype
 html
   head
+    meta(charset="utf-8")
+    
     link(rel="stylesheet" href="/assets/css/main.css")
     link(rel="stylesheet" href="/assets/-/fontello/css/fontello.css")
     script(src="/bower_components/platform/platform.js")
     script(src="/bower_components/jquery/dist/jquery.min.js")
-
+    script(src="/core/import_checker.js")
+    unless yield 
+      block html_import
+        link()
   body
-    != yield
+    if yield
+      != yield
+    else
+      block content
+        
+    
