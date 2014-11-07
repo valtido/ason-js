@@ -10,7 +10,7 @@ template(ns="profile")
   img(src="\#{image}")
   header 
     i.icon-user
-    span \#{name.first} \#{name.last}
+    span \#{name.first} \#{name.middle} \#{name.last}
   div
     i.icon-calendar
     span \#{dob}
@@ -19,7 +19,15 @@ template(ns="profile")
     span \#{location}
   div
     i.icon-thumbs-up-alt
-    span \#{likes}
-
+    span.likes \#{likes}
   script.
-    console.log("template script is working")
+    shadow = Root.content
+    $(shadow)
+    .on('click','.icon-thumbs-up-alt',function (){
+      var context = Root.content
+      var num     = parseInt($('.likes',context).text()) +1
+
+      $('.likes',context).text(num)
+    })
+    console.log(document.currentScript)
+    

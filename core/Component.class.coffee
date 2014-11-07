@@ -1,3 +1,27 @@
+class Shadow
+  constructor : ->
+    @root = document.currentScript?.parentNode ||
+            arguments.callee.caller.caller.arguments[0].target
+    @RootGetter()
+    @document = @root
+    @root
+  RootGetter : ->
+    if @root.parentNode
+      @root = @root.parentNode
+      @RootGetter()
+
+
+  @property  "$",  get: -> $ @root.content
+  @property  "content",  get: -> @root.childNodes
+  @property  "host",  get: -> @root.host
+
+Object.defineProperty window, "Root",
+  get: -> new Shadow()
+
+
+
+
+
 class Component
   constructor: (selector, @repeated = false, @index = 0) ->
     throw new Error "Component: reqires JOM." unless JOM
@@ -34,12 +58,14 @@ class Component
 
   shadow: ->
     # create a shadow for component
-    shadow    = @current_element.createShadowRoot()
-    cloneNode = @template.content.cloneNode true
-    clone     = document.importNode cloneNode, true
-    @current_element = cloneNode
+    shadow   = @current_element.createShadowRoot()
+    template = @template
+    clone    = template.content.cloneNode(true)
+
+    shadow.appendChild clone
+
+    @current_element = shadow
     @data_transform()
-    shadow.appendChild cloneNode
   template_loader: ->
     importer  = $ "link[template='#{@ns}']"
     throw new Error "Component: Template not imported" if importer.length isnt 1

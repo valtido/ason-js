@@ -4,14 +4,18 @@ Function::getter = (prop, get) ->
 Function::setter = (prop, set) ->
   Object.defineProperty @prototype, prop, {set, configurable: yes}
 
+Function::property = (prop, desc) ->
+  Object.defineProperty @prototype, prop, desc
+
 class Ason
   constructor: ()->
     @app = {}
+    @root = undefined
     for app, key in $ 'app','body'
       get_key = $ app
         .attr 'key'
       @app[get_key] = new App app
-
+  @getter 'root', -> document.currentScript.parentNode.host
 
 ason = Ason
 $ ->
