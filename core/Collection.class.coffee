@@ -104,4 +104,7 @@ class Collection
 Observe JOM.Collection, (changes) ->
   for key, change of changes
     element = $(shadow.content).findAll("[path='#{change.path}']")
+    jom = element.data 'jom'
+    element.text change.value if jom?.text? is true
+    # debugger
     $(element).trigger 'jom.change', change.value

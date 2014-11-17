@@ -107,7 +107,6 @@ class Component
     that      = @
     element   = null
     path_type = null
-    attr_name = null
     # text handlers
     regx = /#{[\w|\[|\]|\.|"|']*}*/g
     replacer = (match)->
@@ -136,14 +135,15 @@ class Component
       .text()
       .replace regx, replacer
 
+      path = $(n).attr 'path'
       $ n
       .text txt
-      .on 'ason.change', ->
-        path = $(this).attr 'path'
-        prop       = Prop path,
-                          JOM.Collection,
-                          $(n).value()
-        console.log 'time for change: ', arguments, txt
+      .data 'jom',
+        text: true
+
+      prop = Prop path,
+                  JOM.Collection,
+                  $(n).value()
 
     )
 
@@ -153,7 +153,6 @@ class Component
       attrs = el.attributes
       for attr, i in attrs
         name = attr.name
-        attr_name = name
         value = attr.value
           .replace regx, replacer
         $(el).attr name, value
@@ -169,7 +168,7 @@ unless $.fn.value?
       if text is true
         txt = $.trim val
         $(this).text txt
-      $(this).trigger 'ason.change'
+      $(this).trigger 'jom.change'
       return $(this)
 
     return $(this).data 'value'

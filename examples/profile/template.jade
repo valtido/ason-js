@@ -5,7 +5,8 @@ template(ns="profile")
     header {font-size: 30px;margin-bottom: 20px;}
     .icon-location {font-size: 25px; color: #900;}
     img {float: right;border: 5px solid #f0f0f0; }
-    i { width: 40px; display: inline-block; color: #333; text-align: center;margin-right: 10px; cursor: pointer;}
+    i { width: 40px; display: inline-block; color: #333; text-align: center;margin-right: 10px;}
+    i.icon-thumbs-up-alt {cursor: pointer;}
   
   img(src="\#{image}")
   header 
@@ -25,16 +26,20 @@ template(ns="profile")
   script.
 
     $(shadow.content)
-    .on('jom.change','.likes',function (event, value){
-      $(this).text(value)
-    })
     .on('click','.icon-thumbs-up-alt',function (){
       //- debugger
-      var context = shadow.content
-      var num     = parseInt($('.likes',context).text()) + 1
-      $('.likes', context).value(num, true)
+      shadow = Root
+      var likes = $('.likes', shadow.content)
+      var path = likes.attr('path')
+      var num = Prop(path, JOM.Collection)+1
+      Prop(path, JOM.Collection, num)
       
-      JOM.Collection.profile[2].likes = num
-      console.log(JOM.Collection.profile[2].likes)
+    })
+    .findAll('img')
+    .on('click',function (){
+      console.log("do")
+      var value = "http://hhhhold.com/90x90?"+ new Date().getTime()
+      var path = likes.attr('path')
+      Prop(path, JOM.Collection, value)
     })
     
