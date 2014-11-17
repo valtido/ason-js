@@ -3,13 +3,13 @@ block html_import
   link(rel="import" href="template.html")
 block content
   script.
-    ason = {}
+    ason.env = "production"
     ason.app = {
-      ns: "profile",
-      title: "Profile",
-      description: "Holds profile information about a user.",
-      schema : "schema.js",
-      collections: {"profile": 'data.json'}
+      ns          : "profile",
+      title       : "Profile",
+      description : "Holds profile information about a user.",
+      schema      : "schema.js",
+      collections : {"profile": 'data.json'}
     }
   //- script(src="/core/Template.class.js")
   script(src="/core/Prop.class.js")

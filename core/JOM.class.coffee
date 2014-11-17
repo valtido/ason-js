@@ -1,12 +1,3 @@
-Function::getter = (prop, get) ->
-  Object.defineProperty @prototype, prop, {get, configurable: yes}
-
-Function::setter = (prop, set) ->
-  Object.defineProperty @prototype, prop, {set, configurable: yes}
-
-Function::property = (prop, desc) ->
-  Object.defineProperty @prototype, prop, desc
-
 # Json Object Model
 
 # required: Schema Tree && Machine Data && ~Human Data (~ optional)

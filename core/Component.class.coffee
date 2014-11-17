@@ -4,6 +4,7 @@ class Shadow
             arguments.callee.caller.caller.arguments[0].target
     @RootGetter()
     @document = @root
+    @ns       = $(@document.host).attr('ns')
     @root
   RootGetter : ->
     if @root.parentNode
@@ -11,9 +12,9 @@ class Shadow
       @RootGetter()
 
 
-  @property  "$",  get: -> $ @root.content
-  @property  "content",  get: -> @root.childNodes
-  @property  "host",  get: -> @root.host
+  @property  "$",       get : -> $ @root.content
+  @property  "content", get : -> @root.childNodes
+  @property  "host",    get : -> @root.host
 
 Object.defineProperty window, "Root",
   get: -> new Shadow()
@@ -34,7 +35,7 @@ class Component
 
     throw new Error "Component: `ns` attr is required." unless @ns
     throw new Error "Component: `collection` attr is required." unless @collection_attr
-
+    component.attr 'collection', @collection_attr
     @collection_loader()
 
     # check if component has already been set up before
@@ -46,7 +47,7 @@ class Component
   collection_loader : ()->
     $ 'body'
     .on "collection:#{@ns}.ready", (event, response)=>
-      collection = response()
+      collection  = response()
       @collection = collection
 
       throw new Error "Component: collection data not found" unless collection
@@ -60,10 +61,13 @@ class Component
     # create a shadow for component
     shadow   = @current_element.createShadowRoot()
     template = @template
-    clone    = template.content.cloneNode(true)
-
+    # clone    = template.content.cloneNode(true)
+    $(template.content.childNodes).findAll('script').each (i,n)->
+      unless /^shadow = Root/.test(n.text)
+        n.text = "shadow = Root\n" + n.text
+      n
+    clone    = document.importNode template.content, true
     shadow.appendChild clone
-
     @current_element = shadow
     @data_transform()
   template_loader: ->
@@ -84,45 +88,72 @@ class Component
     @template
   repeater: ->
     # generate clones if it's an array
-    reversed = @collection.reverse()
+    # reversed = @collection.reverse()
+    reversed = @collection
     tmp      = $ '<component />'
     for collection, key in reversed
       path = "#{@collection_attr}[#{key}]"
       clone = tmp.clone()
       clone.attr 'ns', @ns
       clone.attr 'collection', path
-      clone.insertAfter @element
+      clone.insertBefore @element
       @current_collection = Prop path, JOM.Collection
+
       @current_element = clone.get 0
       @shadow()
     @element.remove()
 
   data_transform : ->
-    that = @
+    that      = @
+    element   = null
+    path_type = null
+    attr_name = null
     # text handlers
     regx = /#{[\w|\[|\]|\.|"|']*}*/g
     replacer = (match)->
       key = match.slice 2, -1
       value = Prop key, that.current_collection
+      element.attr 'prop', key
+      collection = $(shadow.host).attr 'collection'
+      path       = "#{collection}.#{key}"
+      element.attr 'path', path
+
       if value isnt undefined
         return value
       else
         console?.warn? "Component: Collection data not found. `%s` in %o",match, @current_element
+        if ason.env is "production"
+          return ""
         return match
-    all_text = $(@current_element.children).children().findAll ":contains(\#{)"
+
+    all_text = $(@current_element.children).findAll ":contains(\#{)"
     nodes_only = all_text.filter(-> return $(this).children().length==0 )
-    text = nodes_only.each(->
-      txt = $(this)
+
+    # text nodes
+    text = nodes_only.each( (i,n)->
+      element = $ n
+      txt = $(n)
       .text()
       .replace regx, replacer
-      $(this).text(txt)
+
+      $ n
+      .text txt
+      .on 'ason.change', ->
+        path = $(this).attr 'path'
+        prop       = Prop path,
+                          JOM.Collection,
+                          $(n).value()
+        console.log 'time for change: ', arguments, txt
+
     )
 
     # attributes handler
     all = $(@current_element.children).findAll('*').each (i,el)->
+      element = $ el
       attrs = el.attributes
       for attr, i in attrs
         name = attr.name
+        attr_name = name
         value = attr.value
           .replace regx, replacer
         $(el).attr name, value
@@ -130,9 +161,21 @@ class Component
 
 unless $.fn.findAll?
   $.fn.findAll = (selector) ->
-      return this.find(selector).add(this.filter(selector));
+    return this.find(selector).add(this.filter(selector))
+unless $.fn.value?
+  $.fn.value = (val, text=false)->
+    if val
+      $(this).data('value',arguments[0])
+      if text is true
+        txt = $.trim val
+        $(this).text txt
+      $(this).trigger 'ason.change'
+      return $(this)
+
+    return $(this).data 'value'
 
 $ ->
+
   $('component').each (i, element)->
     new Component element
     this
