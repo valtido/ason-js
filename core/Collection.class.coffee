@@ -75,7 +75,6 @@ class Collection
 
     throw new Error "Collection: no collections found." unless collections
 
-
     result = []
     type = collections.constructor.name
     switch type
@@ -92,8 +91,6 @@ class Collection
     result
 
   single: (name, src)->
-
-
     $.getJSON src
     .done (response)->
       JOM.Collection[name] = response
@@ -104,7 +101,14 @@ class Collection
 Observe JOM.Collection, (changes) ->
   for key, change of changes
     element = $(shadow.content).findAll("[path='#{change.path}']")
+
+    # automatically change the text
     jom = element.data 'jom'
     element.text change.value if jom?.text? is true
-    # debugger
+
+    # automatically change the attributes
+    if jom?.attrs?
+      for key, attr of jom.attrs
+        element.attr key, change.value
+
     $(element).trigger 'jom.change', change.value

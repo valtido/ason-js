@@ -55,6 +55,10 @@ class Component
       # repeat, clones itself and re constructs a new component
       is_array    = @collection.constructor.name is "Array"
       is_repeated = @repeat isnt false
+
+      if is_array is true and is_repeated is false
+        throw new Error "Component: collection `#{@collection_attr}`, should be repeated"
+
       return @repeater() if is_array and is_repeated
 
   shadow: ->
@@ -129,21 +133,23 @@ class Component
     nodes_only = all_text.filter(-> return $(this).children().length==0 )
 
     # text nodes
-    text = nodes_only.each( (i,n)->
-      element = $ n
-      txt = $(n)
-      .text()
-      .replace regx, replacer
+    text = nodes_only.each( (i, el)->
+      element = $ el
+      if regx.test element.text()
+        txt = element
+        .text()
+        .replace regx, replacer
 
-      path = $(n).attr 'path'
-      $ n
-      .text txt
-      .data 'jom',
-        text: true
+        path = element.attr 'path'
+        jom = element.data('jom') or {}
+        jom['text'] = true
+        element
+        .text txt
+        .data 'jom', jom
 
-      prop = Prop path,
-                  JOM.Collection,
-                  $(n).value()
+        prop = Prop path,
+                    JOM.Collection,
+                    $(el).value()
 
     )
 
@@ -155,7 +161,13 @@ class Component
         name = attr.name
         value = attr.value
           .replace regx, replacer
-        $(el).attr name, value
+        if regx.test attr.value
+          jom = element.data('jom') || {attrs:{}}
+          jom['attrs'][name] = value
+
+          element
+          .attr name, value
+          .data 'jom', jom
     @current_element
 
 unless $.fn.findAll?

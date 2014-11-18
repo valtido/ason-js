@@ -7,22 +7,25 @@ template(ns="profile")
     img {float: right;border: 5px solid #f0f0f0; }
     i { width: 40px; display: inline-block; color: #333; text-align: center;margin-right: 10px;}
     i.icon-thumbs-up-alt {cursor: pointer;}
-  
-  img(src="\#{image}")
-  header 
-    i.icon-user
-    span \#{name.first} 
-    span \#{name.middle} 
-    span \#{name.last}
-  div
-    i.icon-calendar
-    span \#{dob}
-  div
-    i.icon-location
-    span \#{location}
-  div(visible)
-    i.icon-thumbs-up-alt
-    span.likes \#{likes}
+    header span span{padding-left: 5px;}
+    header span span:first-child{padding-left: 0px;}
+  div.wrap
+    img(src="\#{image}")
+    header 
+      i.icon-user
+      span.editable
+        span \#{name.first}
+        span \#{name.middle}
+        span \#{name.last}
+    div
+      i.icon-calendar
+      span \#{dob}
+    div
+      i.icon-location
+      span \#{location}
+    div(visible)
+      i.icon-thumbs-up-alt
+      span.likes \#{likes}
   script.
 
     $(shadow.content)
@@ -35,11 +38,25 @@ template(ns="profile")
       Prop(path, JOM.Collection, num)
       
     })
-    .findAll('img')
-    .on('click',function (){
-      console.log("do")
+    .on('click','img',function (){
+      shadow = Root
+      var img = $('img', shadow.content)
       var value = "http://hhhhold.com/90x90?"+ new Date().getTime()
-      var path = likes.attr('path')
+      var path = img.attr('path')
       Prop(path, JOM.Collection, value)
     })
     
+    $('.editable', shadow.content).each(function(i, el){
+      
+      $(el).children('span').each(function (i, span){
+        new_span = $('<span/>',{contenteditable: true, text: $(span).text() })
+        $(span).text("").append(new_span)
+      })
+    })
+    .on('blur', function(){
+      debugger
+      var path = $(this).attr('path')
+      var val = $(this).val()
+      
+      Prop(path, JOM.Collection, val)
+    })
