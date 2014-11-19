@@ -1,33 +1,9 @@
-class Shadow
-  constructor : ->
-    @root = document.currentScript?.parentNode ||
-            arguments.callee.caller.caller.arguments[0].target
-    @RootGetter()
-    @document = @root
-    @ns       = $(@document.host).attr('ns')
-    @root
-  RootGetter : ->
-    if @root.parentNode
-      @root = @root.parentNode
-      @RootGetter()
-
-
-  @property  "$",       get : -> $ @root.content
-  @property  "content", get : -> @root.childNodes
-  @property  "host",    get : -> @root.host
-
-Object.defineProperty window, "Root",
-  get: -> new Shadow()
-
-
-
-
-
 class Component
   constructor: (selector, @repeated = false, @index = 0) ->
     throw new Error "Component: reqires JOM." unless JOM
     component        = $ selector
     @element         = component.get 0
+    @current_element = @element
     @ns              = component.attr 'ns'
     @repeat          = component.attr("repeat") isnt undefined
     @collection      = {}
@@ -39,7 +15,6 @@ class Component
     @collection_loader()
 
     # check if component has already been set up before
-
     @template_loader() unless JOM.Template[@ns]
 
     JOM.Component[@ns] = @
@@ -57,8 +32,15 @@ class Component
       is_repeated = @repeat isnt false
 
       if is_array is true and is_repeated is false
-        throw new Error "Component: collection `#{@collection_attr}`, should be repeated"
-
+        @collection      = @collection.shift()
+        @current_collection = @collection
+        before           = @collection_attr
+        @collection_attr = "#{@collection_attr}[0]"
+        $(@element).attr 'collection', @collection_attr
+        @shadow()
+        # @shadow() # constructs a single instance not a repeater
+        console?.warn? "Component: collection `#{before}`, should be repeated"
+        return @
       return @repeater() if is_array and is_repeated
 
   shadow: ->
@@ -92,10 +74,8 @@ class Component
     @template
   repeater: ->
     # generate clones if it's an array
-    # reversed = @collection.reverse()
-    reversed = @collection
     tmp      = $ '<component />'
-    for collection, key in reversed
+    for collection, key in @collection
       path = "#{@collection_attr}[#{key}]"
       clone = tmp.clone()
       clone.attr 'ns', @ns
@@ -120,7 +100,6 @@ class Component
       collection = $(shadow.host).attr 'collection'
       path       = "#{collection}.#{key}"
       element.attr 'path', path
-
       if value isnt undefined
         return value
       else
@@ -143,6 +122,7 @@ class Component
         path = element.attr 'path'
         jom = element.data('jom') or {}
         jom['text'] = true
+
         element
         .text txt
         .data 'jom', jom

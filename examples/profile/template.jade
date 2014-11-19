@@ -9,7 +9,7 @@ template(ns="profile")
     i.icon-thumbs-up-alt {cursor: pointer;}
     header span span{padding-left: 5px;}
     header span span:first-child{padding-left: 0px;}
-  div.wrap
+  div(document)
     img(src="\#{image}")
     header 
       i.icon-user
@@ -27,12 +27,14 @@ template(ns="profile")
       i.icon-thumbs-up-alt
       span.likes \#{likes}
   script.
-
-    $(shadow.content)
+    setTimeout(function (){
+      shadow.instances
+    }, 500)
+    $(shadow.document)
     .on('click','.icon-thumbs-up-alt',function (){
       //- debugger
       shadow = Root
-      var likes = $('.likes', shadow.content)
+      var likes = $('.likes', shadow.document)
       var path = likes.attr('path')
       var num = Prop(path, JOM.Collection)+1
       Prop(path, JOM.Collection, num)
@@ -40,20 +42,19 @@ template(ns="profile")
     })
     .on('click','img',function (){
       shadow = Root
-      var img = $('img', shadow.content)
+      var img = $('img', shadow.document)
       var value = "http://hhhhold.com/90x90?"+ new Date().getTime()
       var path = img.attr('path')
       Prop(path, JOM.Collection, value)
     })
     
-    $('.editable', shadow.content).each(function(i, el){
+    $('.editable', shadow.document).each(function(i, el){
       
       $(el).children('span').each(function (i, span){
-        new_span = $('<span/>',{contenteditable: true, text: $(span).text() })
-        $(span).text("").append(new_span)
+        $(span).attr({contenteditable: true})
       })
     })
-    .on('blur', function(){
+    .on('blur', 'span', function(){
       debugger
       var path = $(this).attr('path')
       var val = $(this).val()

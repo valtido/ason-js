@@ -24,12 +24,32 @@ select
 
 class JOM
   constructor: ()->
-    @Schema = {}
-    @Data = {}
+    @Schema     = {}
+    @Data       = {}
     @Collection = {}
-    @Component = {}
-    @Template = {}
+    @Component  = {}
+    @Template   = {}
+
+    @collections()
     return @
+
+  collections: ->
+    Observe @Collection, (changes) ->
+      for key, change of changes
+        element = $(shadow.document).find("[path='#{change.path}']")
+
+        # automatically change the text
+        jom = element.data 'jom'
+        element.text change.value if jom?.text? is true
+
+        # automatically change the attributes
+        if jom?.attrs?
+          for key, attr of jom.attrs
+            element.attr key, change.value
+
+        $(element).trigger 'jom.change', change.value
+        $(shadow.host).trigger 'change', change.value
+        @
 
 
 JOM = new JOM()

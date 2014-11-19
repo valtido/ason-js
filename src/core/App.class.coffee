@@ -14,6 +14,6 @@ class App
         @single app
   single: (app) ->
     # prepare collections
-    new Collection app.collections
+    new Collection app
 
 new App()

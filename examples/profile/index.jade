@@ -12,12 +12,14 @@ block content
       collections : {"profile": 'data.json'}
     }
   //- script(src="/core/Template.class.js")
-  script(src="/core/Prop.class.js")
-  script(src="/core/jsonpath.js")
-  script(src="/core/JOM.class.js")
-  script(src="/core/Collection.class.js")
-  script(src="/core/Component.class.js")
-  script(src="/core/App.class.js")
+  script(src="/src/core/Shadow.class.js")
+  script(src="/src/core/Collection.class.js")
+  script(src="/src/core/Observe.class.js")
+  script(src="/src/core/Prop.class.js")
+  script(src="/src/core/jsonpath.js")
+  script(src="/src/core/JOM.class.js")
+  script(src="/src/core/Component.class.js")
+  script(src="/src/core/App.class.js")
 
   //- attr `ns` is used if collection is not used
   //- collection is a optional in-case collection has a different name
@@ -26,6 +28,7 @@ block content
 
   //- omit the collection attribute, to use ns as a fallback
   component(ns="profile" repeat)
+  //- component(ns="profile")
   //- Use the collection attr
   //- component(ns="profile" repeat collection="user[0]")
 
@@ -42,6 +45,9 @@ block content
     $('body')
     .on('dblescape', function(){
       $('component').toggle()
+    })
+    .on('change', "component" , function (event){
+      debugger
     })
     .on('keyup', function (event){
       if(event.which==27){

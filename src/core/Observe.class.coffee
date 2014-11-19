@@ -1,7 +1,8 @@
 class Observe
   constructor: (root, callback, curr=null, path = null)->
     curr = curr or root
-
+    throw new Error "Observe: Object missing." if not root
+    throw new Error "Observe: Callback should be a function." if typeof callback isnt "function"
     type_of_curr = curr.constructor.name
     if type_of_curr is "Array"
       base = path
@@ -65,50 +66,3 @@ class Observe
           result[i] = part
           original[i] = change
         callback result, original
-class Collection
-  get: (name)->
-    JOM.Collection[name]
-
-  constructor: (name=null)->
-    app = ason.app
-    collections = app.collections
-
-    throw new Error "Collection: no collections found." unless collections
-
-    result = []
-    type = collections.constructor.name
-    switch type
-      when "Object"
-        for key, collection of collections
-          item = @single key, collection
-          result.push item
-
-      when "String"
-        item = @single collections, "#{collections}.json"
-        result.push item
-      else
-        throw new Error "Collection: unexpect type `#{type}`"
-    result
-
-  single: (name, src)->
-    $.getJSON src
-    .done (response)->
-      JOM.Collection[name] = response
-      $ "body"
-      .trigger "collection:#{name}.ready", -> response
-
-
-Observe JOM.Collection, (changes) ->
-  for key, change of changes
-    element = $(shadow.content).findAll("[path='#{change.path}']")
-
-    # automatically change the text
-    jom = element.data 'jom'
-    element.text change.value if jom?.text? is true
-
-    # automatically change the attributes
-    if jom?.attrs?
-      for key, attr of jom.attrs
-        element.attr key, change.value
-
-    $(element).trigger 'jom.change', change.value
