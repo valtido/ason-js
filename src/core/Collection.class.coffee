@@ -17,11 +17,11 @@ class Collection
     switch type
       when "Object"
         for key, collection of collections
-          item = @single key, collection
+          item = @create key, collection
           result.push item
 
       when "String"
-        item = @single collections, "#{collections}.json"
+        item = @create collections, "#{collections}.json"
         result.push item
       else
         throw new Error "Collection: unexpect type `#{type}`"
@@ -31,11 +31,31 @@ class Collection
     - @name name of the collection
     - @src the source of the file
     ###
+    JOM.Collection[name] = {}
+    Object.defineProperty(JOM.Collection[name],'ready',{value: false})
     $.getJSON src
-    .done (response)->
+    .done (response)=>
       JOM.Collection[name] = response
-      $ "body"
-      .trigger "collection:#{name}.ready", -> response
+      JOM.Collection[name].ready = true
+
+  observe: (collection)->
+    Observe collection, (changes) ->
+      for key, change of changes
+        change.name = shadow.ns
+        element = $(shadow.document).find("[path='#{shadow.ns}#{change.path}']")
+
+        # automatically change the text
+        jom = element.data 'jom'
+        element.text change.value if jom?.text? is true
+
+        # automatically change the attributes
+        if jom?.attrs?
+          for key, attr of jom.attrs
+            element.attr key, change.value
+
+        $(element).trigger 'jom.change', change.value
+        $(shadow.host).trigger 'change', change
+        @
   get: (@name)->
     ###
     returns a collection by name

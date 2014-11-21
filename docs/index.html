@@ -145,13 +145,23 @@
           <a href="src\core\JOM.class.coffee.html"><h1>JOM.class.coffee</h1></a>
         </div>
         <div class="module-content">
-          <p> Jade Lang: convert to HTML using:  <a href="http://html2jade.org/">http://html2jade.org/</a>
-select
+          <h1 id="json-object-model">Json Object Model</h1>
+<p> required: Schema Tree &amp;&amp; Machine Data &amp;&amp; ~Human Data (~ optional)
+ @tree is schema, describes how data should be structured (hierarchically)
+ @human are data to display to user,
+   e.g: a list of data from a drop down.
+   animal = [&#39;dog&#39;,&#39;cat&#39;,&#39;horse&#39;,&#39;mouse&#39;]
+ @machine are data, which machine can manipulate
+   this usually indicates the current state of type of pets of a user
+   animal = [&#39;cat&#39;]</p>
+<p>the above would yield a dropdown: (jade style, convert to html if you wish)
+Jade Lang: convert to HTML using:  <a href="http://html2jade.org/">http://html2jade.org/</a></p>
+<pre><code>select
   option(value=&quot;dog&quot;)
   option(value=&quot;cat&quot; selected=&quot;selected&quot;)
   option(value=&quot;horse&quot;)
-  option(value=&quot;mouse&quot;)</p>
-
+  option(value=&quot;mouse&quot;)
+</code></pre>
           
           <h3>Classes</h3>
           <ul class="classlist">

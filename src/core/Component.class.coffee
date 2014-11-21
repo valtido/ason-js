@@ -1,48 +1,67 @@
 class Component
-  constructor: (selector, @repeated = false, @index = 0) ->
+  constructor: (selector) ->
     throw new Error "Component: reqires JOM." unless JOM
     component        = $ selector
+    @$element        = component
     @element         = component.get 0
     @current_element = @element
     @ns              = component.attr 'ns'
     @repeat          = component.attr("repeat") isnt undefined
     @collection      = {}
     @collection_attr = component.attr('collection') || @ns
+    @template_attr   = component.attr('template') || @ns
 
     throw new Error "Component: `ns` attr is required." unless @ns
-    throw new Error "Component: `collection` attr is required." unless @collection_attr
-    component.attr 'collection', @collection_attr
-    @collection_loader()
+    throw new Error "Component: `template` not found" unless JOM.Template[@ns]
+
+    # set attributes
+    component.attr
+      'collection' : @collection_attr
+      'template'   : @template_attr
 
     # check if component has already been set up before
-    @template_loader() unless JOM.Template[@ns]
+    @template = JOM.Template[@ns]
+    # @template_loader() unless JOM.Template[@ns]
+    # @template = JOM.Template[@ns] if JOM.Template[@ns]
+    @collection_loader()
+
 
     JOM.Component[@ns] = @
     @
   collection_loader : ()->
-    $ 'body'
-    .on "collection:#{@ns}.ready", (event, response)=>
-      collection  = response()
+    times = 0
+    wait = =>
+      setTimeout( =>
+        throw new Error "Component: collection timeout" if times > 15
+        if JOM.Collection[@ns]?.ready isnt true
+          wait()
+          times++
+        else
+          console.log "done"
+          done()
+
+      , 500)
+
+    done = =>
+      collection = Prop @collection_attr, JOM.Collection
       @collection = collection
 
-      throw new Error "Component: collection data not found" unless collection
+      throw new Error "Component: no data found" unless collection
 
       # repeat, clones itself and re constructs a new component
       is_array    = @collection.constructor.name is "Array"
       is_repeated = @repeat isnt false
 
+
       if is_array is true and is_repeated is false
-        @collection      = @collection.shift()
-        @current_collection = @collection
-        before           = @collection_attr
-        @collection_attr = "#{@collection_attr}[0]"
-        $(@element).attr 'collection', @collection_attr
-        @shadow()
+        before = @collection_attr
+        @collection = [@collection[0]]
+        @$element.attr "collection", "#{@collection_attr}[0]"
+
         # @shadow() # constructs a single instance not a repeater
         console?.warn? "Component: collection `#{before}`, should be repeated"
-        return @
-      return @repeater() if is_array and is_repeated
-
+      @repeater()
+    wait()
   shadow: ->
     # create a shadow for component
     shadow   = @current_element.createShadowRoot()
@@ -56,30 +75,16 @@ class Component
     shadow.appendChild clone
     @current_element = shadow
     @data_transform()
-  template_loader: ->
-    importer  = $ "link[template='#{@ns}']"
-    throw new Error "Component: Template not imported" if importer.length isnt 1
-    importer = $(importer).get 0
-
-    $template  = $ 'template', importer.import
-    throw new Error "Component: template not found" if $template is undefined
-
-    template = $template.get 0
-
-    # import template once
-    clone = document.importNode template.content, true
-    @template         = template
-    JOM.Template[@ns] = template
-
-    @template
   repeater: ->
     # generate clones if it's an array
     tmp      = $ '<component />'
     for collection, key in @collection
       path = "#{@collection_attr}[#{key}]"
       clone = tmp.clone()
-      clone.attr 'ns', @ns
-      clone.attr 'collection', path
+      clone.attr
+        'repeated'   : 'yes'
+        'ns'         : @ns
+        'collection' : path
       clone.insertBefore @element
       @current_collection = Prop path, JOM.Collection
 
@@ -103,7 +108,7 @@ class Component
       if value isnt undefined
         return value
       else
-        console?.warn? "Component: Collection data not found. `%s` in %o",match, @current_element
+        console?.warn? "Component: no data found. `%s` in %o",match, element.get 0
         if ason.env is "production"
           return ""
         return match
