@@ -36,5 +36,15 @@ class JOM
 
     return @
 
+  val: (path, value)->
+    collection = window.JOM.Collection
+    get_jom_path     = Prop path, @Collection
+    is_path_defined  = get_jom_path isnt undefined
+    is_value_defined = value isnt undefined
+    throw new Error "JOM: `#{path}` is `#{get_jom_path}` in JOM.Collection" unless path and is_path_defined
+    Prop path, collection unless is_value_defined
+
+    #all good now, do change collection values, from path
+    Prop path, collection, value
 
 JOM = new JOM()

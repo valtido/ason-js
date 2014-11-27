@@ -1,6 +1,7 @@
 extends ../../_layout
 block html_import
   link(rel="import" href="template.html")
+    
 block content
   script.
     ason.env = "production"
@@ -9,19 +10,11 @@ block content
       title       : "Profile",
       description : "Holds profile information about a user.",
       schema      : "schema.js",
-      collections : {"profile": 'data.json'}
+      collections : {"profile": 'data.json', "users":[]}
     }
-  //- script(src="/core/Template.class.js")
-  script(src="/src/core/JOM.class.js")
-  script(src="/src/core/Template.class.js")
-  script(src="/src/core/Shadow.class.js")
-  script(src="/src/core/Collection.class.js")
-  script(src="/src/core/Observe.class.js")
-  script(src="/src/core/Prop.class.js")
-  script(src="/src/core/jsonpath.js")
-  script(src="/src/core/Component.class.js")
-  script(src="/src/core/App.class.js")
+  
 
+  
   //- attr `ns` is used if collection is not used
   //- collection is a optional in-case collection has a different name
   //-     how ever it is advisable that the ns and collection be the same
@@ -34,7 +27,8 @@ block content
   //- component(ns="profile" repeat collection="user[0]")
 
 
-
+  div.v(style="background: white;") 
+    
 
 
 
@@ -42,31 +36,8 @@ block content
   //- change this late on
   //- The double escape experiment
   script(type="text/javascript").
-    $('body').get(0).times_escaped = 0;
     $('body')
-    .on('dblescape', function(){
-      $('component').toggle()
-    })
     .on('change', "component" , function (event, changes){
       changes
       //- debugger
-    })
-    .on('keyup', function (event){
-      if(event.which==27){
-        that = this
-        this.times_escaped++;
-        setTimeout (function (){
-          if (that.times_escaped >= 2){
-            //pressed it twice at least
-            clearTimeout(timer);
-            that.times_escaped = 0;
-            $(that).trigger('dblescape')
-          }
-        }, 50)
-        var timer = setTimeout(function(){
-          that.times_escaped = 0;
-        },500)
-        
-        
-      }
     })

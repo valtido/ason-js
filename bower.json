@@ -18,6 +18,8 @@
   "dependencies": {
     "jquery": "~2.1.1",
     "tv4": "~1.1.4",
-    "platform": "Polymer/platform#~0.4.2"
+    "platform": "Polymer/platform#~0.4.2",
+    "jquery-ui": "~1.11.2",
+    "uri.js": "~1.14.1"
   }
 }

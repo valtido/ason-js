@@ -1,63 +1,99 @@
 template(ns="profile")
   style.
     @import url("/assets/-/fontello/css/fontello.css");
-    :host {display: block; padding: 20px; background: #fff; min-height: 90px; margin-bottom: 10px;}
+    @import url("/assets/css/main.css");
+    :host {display: block; padding: 20px; background: #fff;  margin-bottom: 10px;}
     header {font-size: 30px;margin-bottom: 20px;}
     .icon-location {font-size: 25px; color: #900;}
     img {float: right;border: 5px solid #f0f0f0; }
     i { width: 40px; display: inline-block; color: #333; text-align: center;margin-right: 10px;}
     i.icon-thumbs-up-alt {cursor: pointer;}
+    i.icon-thumbs-up-alt:hover{opacity: 0.5}
     header span span{padding-left: 5px;}
     header span span:first-child{padding-left: 0px;}
+    header span span:empty {display: none;}
+    
+    div.back form{padding: 10px; background: whitesmoke;}
+    div.back label {width: 100px; display: inline-block;}
+    
+    template{display:block;}
+    #wrap .front,
+    #wrap .back {}
+    #wrap .front { }
+    #wrap .back {   display:none;}
+
   div(document)
-    img(src="\#{image}")
-    header 
-      i.icon-user
-      span.editable
-        span \#{name.first}
-        span \#{name.middle}
-        span \#{name.last}
-    div
-      i.icon-calendar
-      span \#{dob}
-    div
-      i.icon-location
-      span \#{location}
-    div(visible)
-      i.icon-thumbs-up-alt
-      span.likes \#{likes}
+    div#wrap
+      div.back
+        form
+          div
+            label Firstname
+            input(type="text" value="\#{name.first}")
+      div.front
+        img(src="\#{image}")
+        header 
+          i.icon-user
+          span.editable
+            span \#{name.first}
+            span \#{name.middle}
+            span \#{name.last}
+        div
+          i.icon-calendar
+          span \#{dob}
+        div
+          i.icon-location
+          span \#{location}
+        div(visible)
+          i.icon-thumbs-up-alt
+          span.likes \#{likes}
   script.
     setTimeout(function (){
       shadow.instances
     }, 500)
+    var show_hide = function (){
+      if ($(this).is(':visible'))
+        $(this).hide().siblings().show()
+      else
+        $(this).show().siblings().hide()
+    }
+    $('.front',shadow.document) .on('dblclick', show_hide)
+    $('.back',shadow.document) .on('dblclick', show_hide)
     $(shadow.document)
+    .on('keyup','input', function(){
+      var jom = $(this).get(0).jom
+      var attrs = jom && jom.attrs? jom.attrs:{}
+      var path = attrs.value.path
+      var val   = $(this).val()
+      JOM.val(path, val)
+      //- val
+    })
     .on('click','.icon-thumbs-up-alt',function (){
-      //- debugger
-      shadow = Root
+      shadow    = Root
       var likes = $('.likes', shadow.document)
-      var path = likes.attr('path')
-      var num = Prop(path, JOM.Collection)+1
-      Prop(path, JOM.Collection, num)
+      var path  = likes.get(0).jom.text.path
+      var value = likes.get(0).jom.text.value
+      value = parseInt(value)
+      var num   = JOM.val(path, value+1)
       
     })
     .on('click','img',function (){
-      shadow = Root
-      var img = $('img', shadow.document)
+      shadow    = Root
+      var img   = $('img', shadow.document)
       var value = "http://hhhhold.com/90x90?"+ new Date().getTime()
-      var path = img.attr('path')
+      var path  = img.attr('path')
       Prop(path, JOM.Collection, value)
     })
     
     $('.editable', shadow.document).each(function(i, el){
-      
       $(el).children('span').each(function (i, span){
         $(span).attr({contenteditable: true})
       })
     })
-    .on('blur', 'span', function(){
-      debugger
+    $(shadow.document)
+    .on('input', '[contenteditable]', function(){
       var path = $(this).attr('path')
-      var val = $(this).val()
+      var val  = $(this).text()
       
       Prop(path, JOM.Collection, val)
+      console.log("%o %s", $(this),val)
     })

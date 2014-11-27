@@ -2,20 +2,57 @@ doctype
 html
   head
     meta(charset="utf-8")
-    
-    link(rel="stylesheet" href="/assets/css/main.css")
-    link(rel="stylesheet" href="/assets/-/fontello/css/fontello.css")
-    script(src="/bower_components/platform/platform.js")
-    script(src="/bower_components/jquery/dist/jquery.min.js")
-    script(src="/src/core/import_checker.js")
-    script(src="/src/core/Ason.class.js")
     unless yield 
       block html_import
         link()
+    link(rel="stylesheet" href="/assets/css/main.css")
+    link(rel="stylesheet" href="/assets/-/fontello/css/fontello.css")
+    script(src="/bower_components/platform/platform.js")
+    script(src="/bower_components/jquery/dist/jquery.js")
+    script(src="/bower_components/jquery-ui/jquery-ui.min.js")
+    script(src="/bower_components/uri.js/src/URI.min.js")
+    script(src="/src/core/import_checker.js")
+      
+      
+    script(src="/src/core/Ason.class.js")
+    script(src="/src/core/jsonpath.js")
+    script(src="/src/core/Prop.class.js")
+    script(src="/src/core/Observe.class.js")
+    script(src="/src/core/JOM.class.js")
+    script(src="/src/core/Template.class.js")
+    script(src="/src/core/Shadow.class.js")
+    script(src="/src/core/Collection.class.js")
+    script(src="/src/core/Component.class.js")
+    script(src="/src/core/App.class.js")
+        
   body
     if yield
       != yield
     else
       block content
         
-    
+  script.
+    $('body').get(0).times_escaped = 0;
+    $('body')
+    .on('dblescape', function(){
+      $('component').toggle()
+    })
+    .on('keyup', function (event){
+      if(event.which==27){
+        that = this
+        this.times_escaped++;
+        setTimeout (function (){
+          if (that.times_escaped >= 2){
+            //pressed it twice at least
+            clearTimeout(timer);
+            that.times_escaped = 0;
+            $(that).trigger('dblescape')
+          }
+        }, 50)
+        var timer = setTimeout(function(){
+          that.times_escaped = 0;
+        },500)
+        
+        
+      }
+    })

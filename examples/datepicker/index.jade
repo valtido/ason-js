@@ -1,0 +1,17 @@
+extends ../../_layout
+block html_import
+  link(rel="import" href="template.html")
+
+block content
+  script.
+    ason.app = {
+      ns          : "datepicker",
+      title       : "Datepicker",
+      description : "A simple date picker.",
+      schema      : "schema.js",
+      collections : {"datepicker":[
+        {date : "23/07/2014"},
+        {date : "23/06/2014"}
+      ]}
+    }
+  component(ns="datepicker")

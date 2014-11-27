@@ -19,10 +19,12 @@ class Component
       'collection' : @collection_attr
       'template'   : @template_attr
 
+    console?info? "Component: template set up"
     # check if component has already been set up before
     @template = JOM.Template[@ns]
     # @template_loader() unless JOM.Template[@ns]
     # @template = JOM.Template[@ns] if JOM.Template[@ns]
+    console?info? "Component: loading collections"
     @collection_loader()
 
 
@@ -37,9 +39,8 @@ class Component
           wait()
           times++
         else
-          console.log "done"
           done()
-
+          console?.info? "Component: collection promise done"
       , 500)
 
     done = =>
@@ -77,6 +78,7 @@ class Component
     @data_transform()
   repeater: ->
     # generate clones if it's an array
+    @repeat_index = 0
     tmp      = $ '<component />'
     for collection, key in @collection
       path = "#{@collection_attr}[#{key}]"
@@ -90,6 +92,8 @@ class Component
 
       @current_element = clone.get 0
       @shadow()
+      @repeat_index++
+    @repeat_index = 0
     @element.remove()
 
   data_transform : ->
@@ -98,61 +102,70 @@ class Component
     path_type = null
     # text handlers
     regx = /#{[\w|\[|\]|\.|"|']*}*/g
+    get_key_only = (str)->
+      return str.slice 2, -1
     replacer = (match)->
-      key = match.slice 2, -1
+      key   = get_key_only match
       value = Prop key, that.current_collection
-      element.attr 'prop', key
-      collection = $(shadow.host).attr 'collection'
-      path       = "#{collection}.#{key}"
-      element.attr 'path', path
+
       if value isnt undefined
         return value
       else
         console?.warn? "Component: no data found. `%s` in %o",match, element.get 0
-        if ason.env is "production"
-          return ""
+        if ason.env is "production" then return ""
         return match
 
-    all_text = $(@current_element.children).findAll ":contains(\#{)"
+    all_text   = $(@current_element.children).findAll ":contains(\#{)"
     nodes_only = all_text.filter(-> return $(this).children().length==0 )
-
+    base       = "#{@collection_attr}[#{@repeat_index}]"
     # text nodes
-    text = nodes_only.each( (i, el)->
+    text = nodes_only.each( (i, el)=>
       element = $ el
-      if regx.test element.text()
-        txt = element
-        .text()
-        .replace regx, replacer
+      raw_text = element.text()
+      if regx.test raw_text
+        txt = raw_text.replace regx, replacer
 
-        path = element.attr 'path'
-        jom = element.data('jom') or {}
-        jom['text'] = true
+        path        = "#{base}.#{get_key_only raw_text}"
+        jom         = el.jom or {}
+        jom['text'] =
+          path   : path
+          value  : txt
+          element: el
 
-        element
-        .text txt
-        .data 'jom', jom
-
+        el.jom = jom
         prop = Prop path,
                     JOM.Collection,
                     $(el).value()
-
+        element
+        .text txt
     )
 
-    # attributes handler
+    # attributes handler// select all elements first
     all = $(@current_element.children).findAll('*').each (i,el)->
       element = $ el
       attrs = el.attributes
-      for attr, i in attrs
-        name = attr.name
-        value = attr.value
-          .replace regx, replacer
-        if regx.test attr.value
-          jom = element.data('jom') || {attrs:{}}
-          jom['attrs'][name] = value
 
-          element
-          .attr name, value
-          .data 'jom', jom
+      if attrs.length
+        for attr, i in attrs
+          name = attr.name
+          value = attr.value
+            .replace regx, replacer
+          if regx.test attr.value
+            jom = el.jom || {attrs:{}}
+            path        = "#{base}.#{get_key_only attr.value}"
+            jom.attrs[name] =
+              name : name
+              value   : value
+              path    : path
+              element : el
+            JOM.val path, value
+
+            # Object.defineProperty
+            element
+            .attr name, value
+            el.jom = jom
+
+
     @current_element
 
 unless $.fn.findAll?

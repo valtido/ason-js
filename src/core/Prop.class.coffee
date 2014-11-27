@@ -6,6 +6,7 @@
   set = (path, obj, val) ->
     parsed = parse(path)
     setPathValue parsed, val, obj
+    val
   get = (path, obj)->
     parsed = parse(path)
     getPathValue parsed, obj
@@ -37,7 +38,7 @@
         else tmp = tmp[part.i]  if defined(part.i)
         res = tmp  if i is (l - 1)
       else
-        res = 'undefined'
+        res = undefined
       i++
     res
 
@@ -69,6 +70,7 @@
           tmp = {}
         else tmp = []  if defined(part.i)
       i++
+    tmp
   defined = (val) ->
     not (not val and "undefined" is typeof val)
   window['Prop'] = Prop
