@@ -6,7 +6,7 @@ class Component
     @element         = component.get 0
     @current_element = @element
     @ns              = component.attr 'ns'
-    @repeat          = component.attr("repeat") isnt undefined
+    @repeat          = component.attr("repeat") or "false"
     @collection      = {}
     @collection_attr = component.attr('collection') || @ns
     @template_attr   = component.attr('template') || @ns
@@ -18,6 +18,7 @@ class Component
     component.attr
       'collection' : @collection_attr
       'template'   : @template_attr
+      'repeat'     : @repeat
 
     console?info? "Component: template set up"
     # check if component has already been set up before
@@ -44,23 +45,9 @@ class Component
       , 500)
 
     done = =>
-      collection = Prop @collection_attr, JOM.Collection
-      @collection = collection
+      @collection = JOM.val @collection_attr
+      throw new Error "Component: no data found" unless @collection
 
-      throw new Error "Component: no data found" unless collection
-
-      # repeat, clones itself and re constructs a new component
-      is_array    = @collection.constructor.name is "Array"
-      is_repeated = @repeat isnt false
-
-
-      if is_array is true and is_repeated is false
-        before = @collection_attr
-        @collection = [@collection[0]]
-        @$element.attr "collection", "#{@collection_attr}[0]"
-
-        # @shadow() # constructs a single instance not a repeater
-        console?.warn? "Component: collection `#{before}`, should be repeated"
       @repeater()
     wait()
   shadow: ->
@@ -70,23 +57,37 @@ class Component
     # clone    = template.content.cloneNode(true)
     $(template.content.childNodes).findAll('script').each (i,n)->
       unless /^shadow = Root/.test(n.text)
-        n.text = "shadow = Root\n" + n.text
+        n.text = """(function (shadow, doc, host){
+                    #{n.text}
+                    })(shadow = Root, shadow.document, shadow.host)"""
       n
     clone    = document.importNode template.content, true
     shadow.appendChild clone
     @current_element = shadow
     @data_transform()
+  can_repeat: ->
+    if @repeat is "auto"
+      if @collection.constructor.name is "Array"
+        return true
+      return false
+    if @repeat is "false"
+      return false
+    return true
+
   repeater: ->
     # generate clones if it's an array
     @repeat_index = 0
-    tmp      = $ '<component />'
+    tmp      = @$element
     for collection, key in @collection
+      # debugger
+      return false if @repeat_index > 0 and @can_repeat() is false
       path = "#{@collection_attr}[#{key}]"
       clone = tmp.clone()
       clone.attr
         'repeated'   : 'yes'
         'ns'         : @ns
         'collection' : path
+        'repeat'     : false
       clone.insertBefore @element
       @current_collection = Prop path, JOM.Collection
 
@@ -101,7 +102,7 @@ class Component
     element   = null
     path_type = null
     # text handlers
-    regx = /#{[\w|\[|\]|\.|"|']*}*/g
+    regx = /\${[\w|\[|\]|\.|"|']*}*/g
     get_key_only = (str)->
       return str.slice 2, -1
     replacer = (match)->
@@ -115,7 +116,7 @@ class Component
         if ason.env is "production" then return ""
         return match
 
-    all_text   = $(@current_element.children).findAll ":contains(\#{)"
+    all_text   = $(@current_element.children).findAll ":contains(\${)"
     nodes_only = all_text.filter(-> return $(this).children().length==0 )
     base       = "#{@collection_attr}[#{@repeat_index}]"
     # text nodes

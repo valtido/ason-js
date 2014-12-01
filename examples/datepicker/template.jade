@@ -4,16 +4,16 @@ template(ns="datepicker")
     :host {display: block; padding: 20px; background: #fff;  margin-bottom: 10px;}
     .calendar{padding: 20px; background: red; display: none;}
 
-  div(document) 
+  div(body)
     div
       i.icon-calendar
-      span \#{date}
+      span ${date}
       div.calendar  Show Calendar
+    content
+    
   script.
-    doc = shadow.document
-    $("[document]", doc)
+    //- debugger
+    $(doc)
     .on("click", "i", function(event){
-      debugger
       $('.calendar', doc).toggle()
     })
-    

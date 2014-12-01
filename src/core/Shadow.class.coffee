@@ -11,7 +11,11 @@ class Shadow
       @traverseAncestry()
 
 
-  @property  "document", get : -> $(@root).children().filter('[document]')
+  @property  "body", get : ->
+    doc = $(@root).children().filter('[body]').get 0
+    unless doc?.length
+      doc = $(@root).children().wrapAll('<div body />').parent().get 0
+    doc
   @property  "host",    get : -> @root.host
   @property  "instances", get : ->
     @elements = $(document).find("component[ns='#{@ns}']")
