@@ -1,0 +1,16 @@
+extends ../../_layout
+block assets
+  link(rel="asset" source="template.html" type="text/template" name="news")
+  link(rel="asset" source="fake.json" type="text/collection" name="news")
+
+block content
+  h1 test page
+
+  component(template="template.html" collection="news")
+  
+  script.
+    setTimeout(function(){
+      var c = jom.collections
+      news = c.model('news')
+      debugger
+    }, 2500)

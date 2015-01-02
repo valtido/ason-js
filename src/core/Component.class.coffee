@@ -4,9 +4,7 @@ class Component
     component        = $ selector
     @$element        = component
     @element         = component.get 0
-    @current_element = @element
     @ns              = component.attr 'ns'
-    @repeat          = component.attr("repeat") or "false"
     @collection      = {}
     @collection_attr = component.attr('collection') || @ns
     @template_attr   = component.attr('template') || @ns
@@ -18,7 +16,6 @@ class Component
     component.attr
       'collection' : @collection_attr
       'template'   : @template_attr
-      'repeat'     : @repeat
 
     console?info? "Component: template set up"
     # check if component has already been set up before
@@ -47,86 +44,51 @@ class Component
     done = =>
       @collection = JOM.val @collection_attr
       throw new Error "Component: no data found" unless @collection
-
-      @repeater()
+      @create_shadow()
     wait()
-  shadow: ->
+
+  create_shadow: ->
     # create a shadow for component
-    shadow   = @current_element.createShadowRoot()
-    template = @template
+    @shadow   = @element.createShadowRoot()
     # clone    = template.content.cloneNode(true)
-    $(template.content.childNodes).findAll('script').each (i,n)->
-      unless /^shadow = Root/.test(n.text)
-        n.text = """(function (shadow, doc, host){
-                    #{n.text}
-                    })(shadow = Root, shadow.document, shadow.host)"""
-      n
-    clone    = document.importNode template.content, true
-    shadow.appendChild clone
-    @current_element = shadow
+    clone    = document.importNode @template.content, true
+    @shadow.appendChild clone
+
+    @doc = $(@shadow.children).findAll('[body]').get 0
+    $(@shadow.children).findAll('link[rel="asset"]').each (i,asset)=>
+      asset.root = @shadow
     @data_transform()
-  can_repeat: ->
-    if @repeat is "auto"
-      if @collection.constructor.name is "Array"
-        return true
-      return false
-    if @repeat is "false"
-      return false
-    return true
-
-  repeater: ->
-    # generate clones if it's an array
-    @repeat_index = 0
-    tmp      = @$element
-    for collection, key in @collection
-      # debugger
-      return false if @repeat_index > 0 and @can_repeat() is false
-      path = "#{@collection_attr}[#{key}]"
-      clone = tmp.clone()
-      clone.attr
-        'repeated'   : 'yes'
-        'ns'         : @ns
-        'collection' : path
-        'repeat'     : false
-      clone.insertBefore @element
-      @current_collection = Prop path, JOM.Collection
-
-      @current_element = clone.get 0
-      @shadow()
-      @repeat_index++
-    @repeat_index = 0
-    @element.remove()
+    new AssetManager(@doc)
 
   data_transform : ->
-    that      = @
-    element   = null
-    path_type = null
-    # text handlers
-    regx = /\${[\w|\[|\]|\.|"|']*}*/g
+    # text handlers example: ${name.first}
+    regx = "\\?\$\{(?:\w|\[|\]|\.|\"|\'|\n|)*\}"
+
     get_key_only = (str)->
       return str.slice 2, -1
-    replacer = (match)->
+    replacer = (match)=>
       key   = get_key_only match
-      value = Prop key, that.current_collection
-
+      value = JOM.val "#{@collection_attr}.#{key}"
       if value isnt undefined
         return value
       else
-        console?.warn? "Component: no data found. `%s` in %o",match, element.get 0
+        console?.warn? "Com: no data found. `%s` in %o",match, element.get 0
         if ason.env is "production" then return ""
         return match
 
-    all_text   = $(@current_element.children).findAll ":contains(\${)"
+    all_text   = $(@doc).find('*').filter ->
+      return (new RegExp(regx,"g")).test $(this).text()
+
     nodes_only = all_text.filter(-> return $(this).children().length==0 )
-    base       = "#{@collection_attr}[#{@repeat_index}]"
+
     # text nodes
     text = nodes_only.each( (i, el)=>
-      element = $ el
-      raw_text = element.text()
-      if regx.test raw_text
-        txt = raw_text.replace regx, replacer
+      $el = $ el
+      raw_text = $el.text()
+      if new RegExp(regx,"g").test raw_text
+        txt = raw_text.replace new RegExp(regx,"g"), replacer
 
-        path        = "#{base}.#{get_key_only raw_text}"
+        path        = @collection_attr
         jom         = el.jom or {}
         jom['text'] =
           path   : path
@@ -134,16 +96,14 @@ class Component
           element: el
 
         el.jom = jom
-        prop = Prop path,
-                    JOM.Collection,
-                    $(el).value()
-        element
+        prop = JOM.val path, $(el).value()
+        $el
         .text txt
     )
 
     # attributes handler// select all elements first
-    all = $(@current_element.children).findAll('*').each (i,el)->
-      element = $ el
+    all = $(@doc).findAll('*').each (i,el)=>
+      $el = $ el
       attrs = el.attributes
 
       if attrs.length
@@ -152,40 +112,18 @@ class Component
           value = attr.value
             .replace regx, replacer
           if regx.test attr.value
-            jom = el.jom || {attrs:{}}
-            path        = "#{base}.#{get_key_only attr.value}"
+            jom  = el.jom || {attrs:{}}
+            path = @collection_attr
             jom.attrs[name] =
-              name : name
+              name    : name
               value   : value
               path    : path
               element : el
+
             JOM.val path, value
 
             # Object.defineProperty
-            element
+            $el
             .attr name, value
             el.jom = jom
-
-
-    @current_element
-
-unless $.fn.findAll?
-  $.fn.findAll = (selector) ->
-    return this.find(selector).add(this.filter(selector))
-unless $.fn.value?
-  $.fn.value = (val, text=false)->
-    if val
-      $(this).data('value',arguments[0])
-      if text is true
-        txt = $.trim val
-        $(this).text txt
-      $(this).trigger 'jom.change'
-      return $(this)
-
-    return $(this).data 'value'
-
-$ ->
-
-  $('component').each (i, element)->
-    new Component element
-    this
+    @doc

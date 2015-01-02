@@ -5,7 +5,7 @@
   "authors": [
     "Valtid Caushi <valtid.caushi@peerius.com>"
   ],
-  "description": "Simple Json Form submiter",
+  "description": "Experimental ASON",
   "main": "index.j",
   "license": "MIT",
   "ignore": [
@@ -20,6 +20,9 @@
     "tv4": "~1.1.4",
     "platform": "Polymer/platform#~0.4.2",
     "jquery-ui": "~1.11.2",
-    "uri.js": "~1.14.1"
+    "uri.js": "~1.14.1",
+    "es6-shim": "~0.22.1",
+    "jsonpath": "*",
+    "underscore": "~1.7.0"
   }
 }

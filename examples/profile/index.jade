@@ -1,9 +1,9 @@
 extends ../../_layout
 block html_import
-  link(rel="import" href="template.html")
+  link(rel="asset" source="template.html" type="text/html")
     
-block content
   script.
+    ason = {}
     ason.env = "production"
     ason.app = {
       ns          : "profile",
@@ -13,6 +13,7 @@ block content
       collections : {"profile": 'data.json', "users":[]}
     }
   
+block content
 
   
   //- attr `ns` is used if collection is not used
@@ -21,7 +22,8 @@ block content
   //-     to retain the one-point-of-reference idiology
 
   //- omit the collection attribute, to use ns as a fallback
-  component(ns="profile" repeat)
+  for item in [0,1,2]
+    component(ns="profile" collection="profile[#{item}]")
   //- component(ns="profile")
   //- Use the collection attr
   //- component(ns="profile" repeat collection="user[0]")

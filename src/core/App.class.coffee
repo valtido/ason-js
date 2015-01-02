@@ -1,5 +1,14 @@
 class App
+  component_handler = ->
+    $('component').each (i, element)->
+      new Component element
+      this
+
   collection_handler = (app, collections) ->
+    unless Collection isnt undefined
+      setTimeout @collection_handler, 50
+      return false
+
     for name, collection of collections
       app.collections = new Collection ("#{name}").toLowerCase(), collection
   constructor: (app) ->
@@ -11,13 +20,14 @@ class App
 
     # prepare collections
     collection_handler @, app.collections
-
+    component_handler @
     app
-
 $ ->
-  apps = ason.app or []
-  apps = [apps] if apps.constructor.name.toLowerCase() is "object"
-  for app in apps
-    new App app
+  $ 'body'
+  .on 'assets_ready', ->
+    apps = window.ason?.app? or []
+    apps = [apps] if apps.constructor.name.toLowerCase() is "object"
+    for app in apps
+      new App app
 
-  apps
+    apps

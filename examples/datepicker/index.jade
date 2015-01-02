@@ -1,6 +1,6 @@
 extends ../../_layout
 block html_import
-  link(rel="import" href="template.html")
+  link(rel="asset" source="template.html" type="text/html")
 
 block content
   script.
@@ -14,7 +14,7 @@ block content
         {date : "10/06/2013"}
       ]}
     }
-  component(ns="datepicker")
+  component(ns="datepicker" collection="datepicker[0]")
     data(key="value") Valtid
     
   select

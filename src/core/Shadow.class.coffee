@@ -12,10 +12,10 @@ class Shadow
 
 
   @property  "body", get : ->
-    doc = $(@root).children().filter('[body]').get 0
+    doc = $(@root).children().filter('[body]')
     unless doc?.length
       doc = $(@root).children().wrapAll('<div body />').parent().get 0
-    doc
+    doc.get 0
   @property  "host",    get : -> @root.host
   @property  "instances", get : ->
     @elements = $(document).find("component[ns='#{@ns}']")

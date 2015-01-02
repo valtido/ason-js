@@ -1,8 +1,13 @@
+# Observe collection, (changes) =>
+#   for key, change of changes
+#     change.name
+
 class Observe
   constructor: (root, callback, curr=null, path = null)->
     curr = curr or root
     throw new Error "Observe: Object missing." if not root
-    throw new Error "Observe: Callback should be a function." if typeof callback isnt "function"
+    if typeof callback isnt "function"
+      throw new Error "Observe: Callback should be a function."
     type_of_curr = curr.constructor.name
     if type_of_curr is "Array"
       base = path
@@ -35,7 +40,9 @@ class Observe
           # console.log change
           part =
             path: new_path
-            value : change.object[change.index] or change.object[change.name] or change.object
+            value : change.object[change.index] or
+                    change.object[change.name] or
+                    change.object
             # json : JSON.stringify(change.object)
           # if change.type is "add" and typeof part.value is "object"
 

@@ -22,5 +22,4 @@ class Ason
         .attr 'key'
       @app[get_key] = new App app
 
-$ ->
-  window["x"] = new Ason()
+new Ason()

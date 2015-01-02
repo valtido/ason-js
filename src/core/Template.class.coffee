@@ -20,20 +20,41 @@ class Template extends JOM
     importers.each (i, importer) =>
       $template  = $ 'template', importer.import
       throw new Error "Template: template not found" if $template is undefined
-      template = $template.get 0
+      @template = $template.get 0
       @ns = $template.attr 'ns'
 
       throw new Error "Template: `ns` attr is required." unless @ns
 
       # import template once
-      clone             = document.importNode template.content, true
-      @template         = template
-      JOM.Template[@ns] = template
+      @handle_template_scripts()
+      clone             = document.importNode @template.content, true
+      JOM.Template[@ns] = @template
 
       console?.info? "templates: loading %c `%s`", "color: blue", @ns
 
       @template
 
+  handle_template_scripts: ->
+    escapeRegExp = (str) ->
+      str.replace /[-\/\\^$*+?.()|[\]{}]/g, '\\$&'
 
+    scripts = @template.content.querySelectorAll('script')
+    $(scripts).not('[src]').each (i,script)->
+      front              = "(function (shadow, body, host, root, document){"
+      reg                = new RegExp("^#{escapeRegExp(front)}")
+      is_script_prepared = reg.test(script.text.trim())
+
+      # unless is_script_prepared
+      script.text = """#{front}
+                  #{script.text}
+                  }).apply(
+                    (shadow = Root) && shadow.body,
+                    [shadow = Root,
+                     shadow.body,
+                     shadow.host,
+                     shadow.root,
+                     shadow.root]
+                  )"""
+      return script
 
 new Template "template"
