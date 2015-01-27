@@ -1,14 +1,20 @@
 class JOM
-  collections = new Collections()
-  components = new Component()
+  stack =
+    templates : []
+    components : []
+    collections : []
   constructor: ->
-    @templates
+    window["jom"] = @
+    # @templates
+    @tasks()
     @
   tasks: ->
     setTimeout =>
-      @templates
+      stack.templates = new Templates()
+      stack.collections = new Collections()
+      stack.components = new Components()
       @tasks()
-    , 10
+    , 1000
   @getter 'assets', ->
     links = $ 'link[rel="asset"]'
     all = links.filter(-> $(@).data('finalized') isnt true ).each (i, asset)->
@@ -25,24 +31,20 @@ class JOM
     assets.json = all.filter(-> $(@).attr('type') in json_content)
     assets.html = all.filter(-> $(@).attr('type') in html_content)
     assets
-  @getter 'templates', ->
-    importers = $ "link[rel=import]"
-    templates = $ "template"
-    importers.each (i, importer)->
-      template = $ 'template', importer.import
-      template = template.filter(->$(@).prop('filtered') isnt true)
-      template.prop 'filtered', true
-      templates = templates.add template if template.length
-
-    templates.filter(-> $(@).prop('finalized') isnt true ).each (i, template)->
-      $(template).prop 'finalized', true
-    templates.prependTo document.head
-  @getter 'collections', ->
-    collections
 
 
-  @getter 'components', ->
-    components
+  @getter 'shadow',     -> new Shadow()
+  @getter 'templates',  -> stack.templates
+  @getter 'collections',-> stack.collections
+  @getter 'components', -> stack.components
+  @getter 'components_old', ->
+    result = []
+    new Components()
 
+    $ 'component'
+    .each (i,component)->
+      result.push component
+
+    return result
 
 jom = JOM = new JOM()

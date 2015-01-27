@@ -1,17 +1,4 @@
-Function::getter = (prop, get) ->
-  Object.defineProperty @prototype, prop, {
-    get, configurable: yes,enumerable: false
-  }
-
-Function::setter = (prop, set) ->
-  Object.defineProperty @prototype, prop, {
-    set, configurable: yes, enumerable: false
-  }
-
-Function::property = (prop, desc) ->
-  Object.defineProperty @prototype, prop, desc
-
-stack = []
+asset_stack = []
 AssetManager = ->
   running = false
   context = document.head
@@ -37,8 +24,8 @@ AssetManager = ->
     _json    = []
     _schema  = []
     # before
-    while stack.length
-      item = stack[0]
+    while asset_stack.length
+      item = asset_stack[0]
       asset = item.asset
       switch item.type
         when "text/template"
@@ -65,7 +52,7 @@ AssetManager = ->
       update_status item, 'init'
       result.onload = load
       result.onerror = error
-      stack.shift()
+      asset_stack.shift()
     include _css
     include _html
     include _js
@@ -131,7 +118,7 @@ AssetManager = ->
     collection = $(asset).attr "name"
 
     unless collection && collection.length
-      throw new Error "Asset: Collection ID is required"
+      throw new Error "Asset: Collection `name` attr is required"
     # script(src="example.js" type="text/javascript")
     script = document.createElement "script"
     if item.source
@@ -141,18 +128,19 @@ AssetManager = ->
           console?.warn? "Asset: `%o` should be an Array", response
         text = JSON.stringify response
         script.innerText = script.textContent = text
-        script.collection = response
-        waitForJOM -> JOM.collections.model collection, response
+        script.data =
+          name: collection
+          json: response
+
       xhr.fail error
     else
       text = $(asset).text()
       script.innerText = script.textContent = text
       script.collection = response
-      waitForJOM -> JOM.collections.model collection, response
     # only for reference, include origin
     script.setAttribute 'origin', item.source if item.source
     script.setAttribute 'type', 'text/collection'
-    script.setAttribute 'collection', collection
+    script.setAttribute 'name', collection
     script
   js = (item, asset)->
     # script(src="example.js" type="text/javascript")
@@ -167,13 +155,6 @@ AssetManager = ->
     style.setAttribute 'rel', 'stylesheet'
     style.setAttribute 'type', (item.type or 'text/css')
     style
-  waitForJOM = (callback)->
-    setTimeout ->
-      if typeof JOM is "undefined"
-        waitForJOM callback
-      else
-        callback.call @
-    , 50
 
   include = (result) ->
     for item in result
@@ -183,7 +164,7 @@ AssetManager = ->
     $asset = $(asset)
     type   = $asset.attr 'type'
     source = $asset.attr 'source'
-    stack.push
+    asset_stack.push
       source : source
       type   : type
       asset  : asset

@@ -5,12 +5,13 @@ block assets
 
 block content
   h1 test page
-
-  component(template="template.html" collection="news")
+  component(template="template.html" collection="news:[0]")
+    option(key="value1")
+    option(key="value2")
   
   script.
-    setTimeout(function(){
-      var c = jom.collections
-      news = c.model('news')
+    $('body')
+    .on('change', 'component', function(event){
       debugger
-    }, 2500)
+      $(this)
+    })
