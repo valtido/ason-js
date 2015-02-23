@@ -18,9 +18,9 @@ module.exports = function(config) {
       {pattern: '../bower_components/jquery/dist/jquery.min.map', included: false},
       {pattern: '../bower_components/jquery/dist/jquery.min.js', included: true},
       {pattern: '../bower_components/tv4/tv4.js', included: true},
+      {pattern: '../lib/main.js', included: true},//actual library
       {pattern: '../test/helper.coffee', included: true},
       {pattern: '../test/mock/**/*.js', included: true},
-      {pattern: '../core/**/*.class.coffee', included: true},
       {pattern: '../test/unit/**/*.Spec.coffee', included: true}
     ],
 
