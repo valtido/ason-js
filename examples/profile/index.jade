@@ -1,7 +1,7 @@
 extends ../../_layout
-block html_import
-  link(rel="asset" source="template.html" type="text/html")
-    
+block assets
+  link(rel="asset" source="template.html" type="text/template" name="profile")
+  link(rel="asset" source="data.json" type="text/collection" name="profile")
   script.
     ason = {}
     ason.env = "production"
@@ -14,32 +14,4 @@ block html_import
     }
   
 block content
-
-  
-  //- attr `ns` is used if collection is not used
-  //- collection is a optional in-case collection has a different name
-  //-     how ever it is advisable that the ns and collection be the same
-  //-     to retain the one-point-of-reference idiology
-
-  //- omit the collection attribute, to use ns as a fallback
-  for item in [0,1,2]
-    component(ns="profile" collection="profile[#{item}]")
-  //- component(ns="profile")
-  //- Use the collection attr
-  //- component(ns="profile" repeat collection="user[0]")
-
-
-  div.v(style="background: white;") 
-    
-
-
-
-    
-  //- change this late on
-  //- The double escape experiment
-  script(type="text/javascript").
-    $('body')
-    .on('change', "component" , function (event, changes){
-      changes
-      //- debugger
-    })
+  component(template="template.html" collection="profile:[0]")

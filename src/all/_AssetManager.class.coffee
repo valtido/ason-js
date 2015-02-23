@@ -128,9 +128,9 @@ AssetManager = ->
           console?.warn? "Asset: `%o` should be an Array", response
         text = JSON.stringify response
         script.innerText = script.textContent = text
-        script.data =
+        script.collection =
           name: collection
-          json: response
+          data: response
 
       xhr.fail error
     else

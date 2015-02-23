@@ -2,7 +2,6 @@ class Collection
   changeStack = []
   saveStack = []
   autoSaveValue: false
-  data = []
   doSave = ->
     for item in changeStack
       # todo: proper ajax
@@ -17,13 +16,14 @@ class Collection
 
     @autoSave = options.autoSave if options.autoSave
     @name = $el.attr "name"
+    @data = []
   ready: (callback)->
     setTimeout =>
-      data = @el.data
-      unless data && data.json
+      collection = @el.collection
+      unless collection and collection.name and collection.data
         @ready.call @, callback
       else
-        @data = @el.data.json
+        @data = @el.collection.data
         # todo: schema
         @schema = {}
         callback.apply @, [@data, @name, changeStack, @autoSave, @doSave]
@@ -36,12 +36,12 @@ class Collection
       throw new Error "Collection: autoSave should be a `boolean` value"
     if value is true
       @save()
-  find: (where, callback)->
+  find: (where = {}, callback)->
     result = _.where @data, where
     err = false
     callback.call @, err, result if callback
     return result
-  findByPath: (path)->
+  findByPath: (path, data)->
     jom.collections.findByPath path, @data
   on: (type, path, callback)->
     switch type
@@ -69,13 +69,6 @@ class Collections
       collection = new Collection n
       collection.ready (data, name, changeStack, autoSave, doSave)->
         stack[name] = collection
-        Observe stack[name].data, (changes)->
-          console.log("Observer: change detected")
-          for item in changeStack
-            item.call item, changes
-          if autoSave is true
-            doSave.call collection
-        , null, name
 
   constructor: ->
     all = $ 'script[type="text/collection"]'
@@ -106,6 +99,6 @@ class Collections
     else result = stack
     for item in split
       return result if result is undefined
-      result = result[item] or undefined
+      result = result[item]
 
     result

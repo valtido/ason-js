@@ -1,22 +1,19 @@
 template
-  content(select="option")
   div(style="background: red;")
     div test template should show up
     div.text_div ${text}
+    div.count(value="${count} - ${all}") ${count} Hits
+    div.count(value="${count}") ${count}
+    div.count 
+      span ${count}
+      span - 
+      span ${all}
   script.
-
-    collection
-    .on('change', 'text', function(event, changes){
-      $('.text_div').text(text_div)
-    })
-    console.log( $(document) )
     $(body)
-    .on('click','div', function(){
-      //- Object.defineProperty window, "Root",
-        //- get: -> new Shadow()
+    .on('change.attr.value','div', function(){
       debugger
-      collection.find({}).text = 'valtid'
-      
-      console.log("We neeed to issue changes to the collection")
+    })
+    .on('click','.text_div', function(){
+      data.count++
     })
  

@@ -1,4 +1,4 @@
-template(ns="profile")
+template
   style.
     @import url("/assets/-/fontello/css/fontello.css");
     @import url("/assets/css/main.css");
@@ -21,79 +21,47 @@ template(ns="profile")
     #wrap .back {}
     #wrap .front { }
     #wrap .back {   display:none;}
+    .hidden{display: none;}
+      
 
-  div(body)
-    div#wrap
-      div.back
-        form
-          div
-            label Firstname
-            input(type="text" value="${name.first}")
-      div.front
-        img(src="${image}")
-        header 
-          i.icon-user
-          span.editable
-            span ${name.first}
-            span ${name.middle}
-            span ${name.last}
-        div
-          i.icon-calendar
-          span ${dob}
-        div
-          i.icon-location
-          span ${location}
-        div(visible)
-          i.icon-thumbs-up-alt
-          span.likes ${likes}
+  div#wrap
+    div.back
+      div
+        label Firstname
+        input(type="text" value="${name.first}")
+    div.front
+      img.img(src="${image}")
+      header 
+        i.icon-user
+        span.editable
+          span ${name.first}
+          span ${name.middle}
+          span ${name.last}
+      div
+        i.icon-calendar
+        span ${dob}
+      div
+        i.icon-location
+        span ${location}
+        ul.hidden.location_list
+          li.item Manchester
+          li.item Liverpool
+          li.item Brighton
+      div(visible)
+        i.icon-thumbs-up-alt
+        span.likes ${likes}
   script.
-    setTimeout(function (){
-      shadow.instances
-    }, 500)
-    var show_hide = function (){
-      if ($(this).is(':visible'))
-        $(this).hide().siblings().show()
-      else
-        $(this).show().siblings().hide()
-    }
-    $('.front',shadow.document) .on('dblclick', show_hide)
-    $('.back',shadow.document) .on('dblclick', show_hide)
-    $(shadow.document)
-    .on('keyup','input', function(){
-      var jom = $(this).get(0).jom
-      var attrs = jom && jom.attrs? jom.attrs:{}
-      var path = attrs.value.path
-      var val   = $(this).val()
-      JOM.val(path, val)
-      //- val
+    $(body)
+    .on("click", ".location_list .item", function(){
+      var value = $.trim($(this).text());
+      data.location = value;
     })
-    .on('click','.icon-thumbs-up-alt',function (){
-      shadow    = Root
-      var likes = $('.likes', shadow.document)
-      var path  = likes.get(0).jom.text.path
-      var value = likes.get(0).jom.text.value
-      value = parseInt(value)
-      var num   = JOM.val(path, value+1)
-      
+    .on("click", "i.icon-location", function(){
+      $(body).find(".location_list").toggle();
     })
-    .on('click','img',function (){
-      shadow    = Root
-      var img   = $('img', shadow.document)
-      var value = "http://hhhhold.com/90x90?"+ new Date().getTime()
-      var path  = img.attr('path')
-      Prop(path, JOM.Collection, value)
+    .on("click", ".img", function(){
+      data.image = "http://placehold.it/100x100?2";
     })
-    
-    $('.editable', shadow.document).each(function(i, el){
-      $(el).children('span').each(function (i, span){
-        $(span).attr({contenteditable: true})
-      })
-    })
-    $(shadow.document)
-    .on('input', '[contenteditable]', function(){
-      var path = $(this).attr('path')
-      var val  = $(this).text()
-      
-      Prop(path, JOM.Collection, val)
-      console.log("%o %s", $(this),val)
+    .on("click", "i.icon-thumbs-up-alt", function(){
+      data.likes++;
     })

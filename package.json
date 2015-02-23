@@ -8,6 +8,8 @@
     "test": "test"
   },
   "scripts": {
+    "start": "harp server",
+    "debug": "node-debug --debug-brk=0 ./bin/www",
     "test": "bower install && node node_modules/karma/bin/karma start test/karma.config.js --single-run --browsers PhantomJS",
     "build": "coffeebar -o lib src"
   },
@@ -41,6 +43,7 @@
     "karma-phantomjs-launcher": "^0.1.4",
     "karma-requirejs": "^0.2.2",
     "karma-safari-launcher": "^0.1.1",
+    "node-sass": "^2.0.1",
     "requirejs": "^2.1.14"
   },
   "engines": {
