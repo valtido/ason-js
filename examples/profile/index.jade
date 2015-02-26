@@ -3,14 +3,11 @@ block assets
   link(rel="asset" source="template.html" type="text/template" name="profile")
   link(rel="asset" source="data.json" type="text/collection" name="profile")
   script.
-    ason = {}
-    ason.env = "production"
-    ason.app = {
-      ns          : "profile",
+    jom.env = "production"
+    jom.app = {
       title       : "Profile",
       description : "Holds profile information about a user.",
-      schema      : "schema.js",
-      collections : {"profile": 'data.json', "users":[]}
+      schema      : "schema.js"
     }
   
 block content

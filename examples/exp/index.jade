@@ -1,0 +1,15 @@
+extends ../../_layout
+block assets
+  link(rel="asset" source="template.html" type="text/html")
+  link(rel="asset" source="data.json" type="text/collection" name="expressions")
+  style.
+    #exp{background: white;}
+
+block content
+  script.
+    jom.env = "production";
+    jom.app = {
+      title       : "Expressions",
+      description : "A Working expressions"
+    }
+  component#exp(template="template.html" collection="expressions:[0]")

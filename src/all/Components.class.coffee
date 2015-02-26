@@ -16,9 +16,9 @@ class Component
 
     throw new Error "Component: `length` is > 1" if num > 1
 
-    @template_url = el.attr 'template'
-    path = el.attr 'collection'
-    split = path.split(':')
+    @template_url    = el.attr 'template'
+    path             = el.attr 'collection'
+    split            = path.split(':')
     @collection_name = split[0]
     @collection_path = split.slice(1).join(':')
     return @
@@ -26,13 +26,13 @@ class Component
     setTimeout =>
       template   = jom.templates.find_by_url(@template_url)
       collection = jom.collections.model(@collection_name)
-      @data = collection.findByPath @collection_path
+      @data      = collection.findByPath @collection_path
 
       unless template and collection.data?.length > 0 and @element
         @ready.call @, callback
       else
         @template = template.cloneNode(true)
-        body = document.createElement('div')
+        body      = document.createElement('div')
         body.setAttribute 'body',""
         children = @template.content.children
         $(children).appendTo body
@@ -41,7 +41,7 @@ class Component
 
         @transform()
 
-        @element.template = @template
+        @element.template   = @template
         @element.collection = @collection
 
         callback.apply @, [@element]
@@ -126,7 +126,7 @@ class Component
     raw_text = $el.text()
     if test raw_text
       txt  = raw_text.replace new RegExp(regx,"gmi"), replacer
-      path  = get_key_only raw_text
+      path = get_key_only raw_text
 
       $el.text txt
       @bind "node", element, path
@@ -149,7 +149,7 @@ class Component
         args = ["Component: no data found. `%s` in %o",match, element]
         console?.warn?.apply console, args
 
-        if ason?.env is "production" then return ""
+        if jom?.env is "production" then return ""
         return match
 
     nodes = content
@@ -172,7 +172,7 @@ class Component
           item.callback change.value
 
   occurrences = (string, subString, allowOverlapping = true) ->
-    string += ""
+    string    += ""
     subString += ""
     return string.length + 1  if subString.length <= 0
     n    = 0

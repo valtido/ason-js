@@ -42,7 +42,7 @@ class Collection
     callback.call @, err, result if callback
     return result
   findByPath: (path, data)->
-    jom.collections.findByPath path, @data
+    jom.collections.findByPath path, (data or @data)
   on: (type, path, callback)->
     switch type
       when "change"
@@ -53,7 +53,6 @@ class Collection
         throw new Error "Collection: Event not found `#{type}`"
     @
 
-  change: (callback)-> changeStack.push callback
   save: (callback)->
     saveStack.push callback
     throw new Error "should save now!!!!"

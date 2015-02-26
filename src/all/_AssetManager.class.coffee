@@ -63,7 +63,7 @@ AssetManager = ->
     ready()
     running = false
   ready = ->
-    if (window.ason and window.ason.app is undefined) or document.body is null
+    if (window.jom and window.jom.app is undefined) or document.body is null
       setTimeout ->
         ready()
       , 50

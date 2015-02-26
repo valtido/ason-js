@@ -1,0 +1,13 @@
+extends ../../_layout
+block assets
+  link(rel="asset" source="template.html" type="text/template" name="number")
+  link(rel="asset" source="data.json" type="text/collection" name="number")
+  script.
+    jom.env = "production"
+    jom.app = {
+      title       : "Profile",
+      description : "Holds number information about a user.",
+    }
+  
+block content
+  component(template="template.html" collection="number:[0]")

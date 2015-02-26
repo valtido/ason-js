@@ -1,4 +1,4 @@
-[![License][LicenseIMGURL]][LicenseURL] [![NPM version][NPMIMGURL]][NPMURL] [![Dependency Status](https://gemnasium.com/valtido/ason-js.svg)](https://gemnasium.com/valtido/JSONForm) [![Build Status](https://travis-ci.org/valtido/ason-js.svg?branch=master)](https://travis-ci.org/valtido/ason-js)
+[![License][LicenseIMGURL]][LicenseURL] [![NPM version][NPMIMGURL]][NPMURL] [![Dependency Status](https://gemnasium.com/valtido/jom.svg)](https://gemnasium.com/valtido/JSONForm) [![Build Status](https://travis-ci.org/valtido/jom.svg?branch=master)](https://travis-ci.org/valtido/jom)
 ===============
 [NPMIMGURL]:                https://img.shields.io/npm/v/minify.svg?style=flat
 [NPMURL]:                   //npmjs.org/package/minify
@@ -7,7 +7,7 @@
 [Eradication of Forms]:     http://wp.me/p2HjHX-5x "Eradication of Forms"
 [Asset Manager]:            http://wp.me/p2HjHX-5J
 
-ason JS (All about JSON)
+jom (All about JSON)
 ========
 
 This is an experimental frontend tool, which will help speed up dev workflow by achiving the followings:

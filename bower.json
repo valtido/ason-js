@@ -1,11 +1,11 @@
 {
-  "name": "ASON",
+  "name": "jom",
   "version": "0.0.1",
-  "homepage": "https://github.com/valtido/ason-js",
+  "homepage": "https://github.com/valtido/jom",
   "authors": [
     "Valtid Caushi <valtid.caushi@peerius.com>"
   ],
-  "description": "Experimental ASON",
+  "description": "Experimental jom",
   "main": "index.j",
   "license": "MIT",
   "ignore": [

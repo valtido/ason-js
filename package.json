@@ -16,14 +16,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/valtido/ason-js.git"
+    "url": "https://github.com/valtido/jom.git"
   },
   "author": "Valtid Caushi <valtido@hotmail.com> (http://www.valtido.com/)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/valtido/ason-js/issues"
+    "url": "https://github.com/valtido/jom/issues"
   },
-  "homepage": "https://github.com/valtido/ason-js",
+  "homepage": "https://github.com/valtido/jom",
   "dependencies": {
     "underscore": "^1.6.0"
   },
