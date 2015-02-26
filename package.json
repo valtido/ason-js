@@ -10,7 +10,7 @@
   "scripts": {
     "start": "harp server",
     "debug": "node-debug --debug-brk=0 ./bin/www",
-    "test": "bower install && node node_modules/karma/bin/karma start test/karma.config.js --single-run --browsers PhantomJS",
+    "test": "bower install && grunt clean coffee && node node_modules/karma/bin/karma start test/karma.config.js --single-run --browsers PhantomJS",
     "ltest": "bower install && node node_modules/karma/bin/karma start test/karma.config.js --browsers PhantomJS",
     "build": "coffeebar -o lib src"
   },
