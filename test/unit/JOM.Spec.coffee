@@ -1,5 +1,6 @@
 describe "JOM", ->
   it "should be defined", ->
+    console.log JOM
     expect(JOM).toBeDefined()
 
   it "Key features to be present", ->

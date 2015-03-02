@@ -1,5 +1,8 @@
 [
   {
     "expression": "colour=\"red\""
+  },
+  {
+    "label": "i"
   }
 ]

@@ -17,13 +17,7 @@ template
       div.right
         div.dashboard Dash
         ul.inputs
-          li.item
-            div
-              input(type="checkbox")
-              label Male
-            div
-              input(type="checkbox")
-              label Female
+          component(template="../number/template.html" collection="num")
           li.item
             div
               input(type="checkbox")
