@@ -17,6 +17,7 @@ module.exports = function(config) {
     files: [
       {pattern: '../bower_components/jquery/dist/jquery.min.map', included: false},
       {pattern: '../bower_components/jquery/dist/jquery.min.js', included: true},
+      {pattern: '../assets/js/Object.observe.js', included: true},//Phantomjs helper
       {pattern: '../src/all/_utils.coffee', included: true},//actual library
       {pattern: '../src/all/_AssetManager.class.coffee', included: true},//actual library
       {pattern: '../src/all/Observe.class.coffee', included: true},//actual library
