@@ -3,7 +3,7 @@ describe "collections", ->
     setTimeout ->
       x = {}
       done() if jom.collections.list
-    , 1000
+    , 100
 
   it "should exists", ->
     expect(jom).toBeDefined()

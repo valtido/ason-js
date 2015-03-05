@@ -3,7 +3,7 @@ describe "templates", ->
     setTimeout ->
       x = {}
       done() if jom.templates.list
-    , 1000
+    , 100
 
   it "should exists", ->
     expect(jom).toBeDefined()

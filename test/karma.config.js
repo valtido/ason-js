@@ -15,6 +15,7 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
+      {pattern: '../bower_components/es6-shim/es6-shim.js', included: false},
       {pattern: '../bower_components/jquery/dist/jquery.min.map', included: false},
       {pattern: '../bower_components/jquery/dist/jquery.min.js', included: true},
       {pattern: '../assets/js/Object.observe.js', included: true},//Phantomjs helper

@@ -14,7 +14,7 @@ class JOM
       stack.collections = new Collections()
       stack.components = new Components()
       @tasks()
-    , 1000
+    , 100
   @getter 'assets', ->
     links = $ 'link[rel="asset"]'
     all = links.filter(-> $(@).data('finalized') isnt true ).each (i, asset)->
