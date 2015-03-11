@@ -17,10 +17,9 @@
   ],
   "dependencies": {
     "jquery": "~2.1.1",
-    "platform": "Polymer/platform#~0.4.2",
-    "jquery-ui": "~1.11.2",
     "es6-shim": "~0.22.1",
     "jsonpath": "*",
-    "underscore": "~1.7.0"
+    "underscore": "~1.7.0",
+    "jjv": "~1.0.2"
   }
 }

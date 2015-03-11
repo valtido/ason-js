@@ -18,13 +18,17 @@ class Template
         callback.apply @, [@template.get(0)]
     , 100
 class Templates
-  stack = []
   element_to_template = (all_plain_elements) ->
-    all_plain_elements.each (i, n)->
+    all_plain_elements.each (i, n)=>
       n.template = true
       template = new Template n
-      template.ready (element)->
-        stack.push element
+      template.ready (element)=>
+        name = $(element).attr 'name'
+        if name is undefined
+          throw new Error "Templates: template name is required"
+        @[name] =
+          name: name
+          element: element
   constructor: ->
     all = $ 'link[rel="import"]'
 
@@ -38,8 +42,15 @@ class Templates
     existing = all.filter -> ("template" of @)
 
     element_to_template.call @, plain if plain.length > 0
-
-  list: -> stack
+  find_by_name: (name)->
+    for item of @
+      return item if item.name is name and name isnt undefined
   find_by_url: (url)->
-    for item in stack
+    for item of @
       return item if item.url is url and url isnt undefined
+  @getter 'list', ->
+    obj = {}
+    for item in @
+      obj[item.name] = item
+
+    obj

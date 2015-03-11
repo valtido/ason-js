@@ -5,7 +5,7 @@ module.exports = function(config) {
   config.set({
 
     // base path that will be used to resolve all patterns (eg. files, exclude)
-    basePath: '',
+    basePath: '../',
 
 
     // frameworks to use
@@ -15,26 +15,16 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
-      {pattern: '../bower_components/es6-shim/es6-shim.js', included: false},
-      {pattern: '../bower_components/jquery/dist/jquery.min.map', included: false},
-      {pattern: '../bower_components/jquery/dist/jquery.min.js', included: true},
-      {pattern: '../assets/js/Object.observe.js', included: true},//Phantomjs helper
-      {pattern: '../src/all/_utils.coffee', included: true},//actual library
-      {pattern: '../src/all/_AssetManager.class.coffee', included: true},//actual library
-      {pattern: '../src/all/Observe.class.coffee', included: true},//actual library
-      {pattern: '../src/all/Collections.class.coffee', included: true},//actual library
-      {pattern: '../src/all/Components.class.coffee', included: true},//actual library
-      {pattern: '../src/all/Shadow.class.coffee', included: true},//actual library
-      {pattern: '../src/all/Templates.class.coffee', included: true},//actual library
-      {pattern: '../src/all/JOM.class.coffee', included: true},//actual library
-      {pattern: '../test/helper.coffee', included: true},
-      {pattern: '../test/unit/**/*.Spec.coffee', included: true}
+      {pattern: 'bower_components/jquery/dist/jquery.js', included: true},
+      {pattern: 'bower_components/jjv/lib/jjv.js', included: true},
+      {pattern: 'dist/jom.js', included: true},
+      {pattern: 'test/unit/js/**/*.js', included: true}
+      // {pattern: 'test/unit/all.min.map', included: false}
     ],
 
 
     // list of files to exclude
-    exclude: [
-    ],
+    exclude: [    ],
 
 
     // preprocess matching files before serving them to the browser
@@ -44,13 +34,18 @@ module.exports = function(config) {
       // do not include tests or libraries
       // (these files will be instrumented by Istanbul via Ibrik unless
       // specified otherwise in coverageReporter.instrumenter)
-      '../src/**/*.coffee': ['coffee'],
+      // 'src/**/*.coffee': ['coffee'],
+      'dist/jom.js': ['coverage'],
+      // 'dest/jom.js': ['coverage'],
+      // 'src/**/*.js': ['coverage'],
 
       // note: project files will already be converted to
       // JavaScript via coverage preprocessor.
       // Thus, you'll have to limit the CoffeeScript preprocessor
       // to uncovered files.
-      '../test/**/*.coffee': ['coffee']
+      // 'test/**/*.coffee': ['coffee'],
+      'test/unit/all.js': ['coverage'],
+      // 'test/**/*.js': ['coverage']
     },
 
     coffeePreprocessor: {
@@ -74,7 +69,12 @@ module.exports = function(config) {
     // optionally, configure the reporter
     coverageReporter: {
       type : 'html',
-      dir : 'coverage/'
+      dir : 'coverage/',
+      subdir: function(browser) {
+        // normalization process to keep a consistent browser name accross different
+        // OS
+        return browser.toLowerCase().split(/[ /-]/)[0];
+      }
     },
     // web server port
     port: 9876,
@@ -98,7 +98,7 @@ module.exports = function(config) {
     // 'chrome_without_security'
     // 'firefox_without_security'
     // 'Safari','Firefox'
-    browsers: ['chrome_without_security'],
+    browsers: ['Chrome'],
 
       customLaunchers : {
        chrome_without_security: {
@@ -106,7 +106,7 @@ module.exports = function(config) {
          flags : "--disable-web-security"
        },
        firefox_without_security: {
-         base: "Chrome",
+         base: "Firefox",
          flags : "--disable-web-security"
        }
       },

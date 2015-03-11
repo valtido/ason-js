@@ -1,3 +1,0 @@
-mock = {}
-
-window['mock'] = mock

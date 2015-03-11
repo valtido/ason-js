@@ -18,6 +18,8 @@ class Component
 
     @template_url    = el.attr 'template'
     path             = el.attr 'collection'
+    throw new Error "jom: template is required" if @template_url is undefined
+    throw new Error "jom: collection is required" if path is undefined
     split            = path.split(':')
     @collection_name = split[0]
     @collection_path = split.slice(1).join(':')

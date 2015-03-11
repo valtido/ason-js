@@ -1,18 +1,17 @@
 class Shadow
   constructor : ->
     @root = document.currentScript?.parentNode ||
-            arguments.callee.caller.caller.arguments[0].target
+            arguments.callee?.caller?.caller?.arguments[0]?.target
     @traverseAncestry()
     @root
   traverseAncestry : ->
-    if @root.parentNode
+    if @root?.parentNode
       @root = @root.parentNode
       @traverseAncestry()
 
 
-  @property  "body", get : ->
-    return $(@root).children().filter('[body]').get 0
-  @property  "host",    get : -> @root.host
+  @getter "body", -> $(@root).children().filter('[body]').get 0
+  @getter "host", -> @root.host
 
 
 

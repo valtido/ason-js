@@ -1,40 +1,143 @@
 module.exports = (grunt) ->
-
+  require('load-grunt-tasks')(grunt)
+  readOptionalJSON = (filepath) ->
+    data = {}
+    try
+      data = grunt.file.readJSON(filepath)
+    catch e
+    data
+  gzip = require( "gzip-js" )
+  console.log gzip
   # Project configuration.
   grunt.initConfig
     pkg: grunt.file.readJSON("package.json")
+    dst: readOptionalJSON "dist/.destination.json"
+    "compare_size":
+      files: [ "dist/<%= pkg.name %>.js", "dist/<%= pkg.name %>.min.js" ]
+      options:
+        compress:
+          gz: ( contents )-> return gzip.zip( contents, {} ).length
+        cache: "build/.sizecache.json"
+
     clean:
       options:
         force: true
-      files: ['lib/**/*','lib/*main*']
-    watch:
-      scripts:
-        files: ['src/**/*.coffee']
-        tasks: ['clean','coffee']
+      files: [
+        'src/js/**/*'
+        'src/map/**/*'
+        'dist/**/*'
+        'test/unit/js/**/*.js'
+        'coverage'
+      ]
     coffee:
-      compileWithMapsDir:
+      source:
+        expand: true
+        cwd: "src/coffee/"
+        src: ["**/*.coffee"]
+        dest: "src/js/"
+        ext: ".js"
         options:
           bare: true
+          sourceMap:true
+          sourceMapDir: "src/map/"
+      tests:
+        expand: true
+        cwd: "test/unit/coffee/"
+        src: ["**/*.coffee"]
+        dest: "test/unit/js/"
+        ext: ".js"
+        options:
+          bare: true
+          sourceMap:true
+          sourceMapDir: "test/unit/map/"
+
+
+    concat:
+      core:
+        src: [
+          # 'bower_components/jquery/dist/jquery.js'
+          # 'bower_components/jjv/lib/jjv.js'
+          'src/js/observer.js'
+          'src/js/_utils.js'
+          'src/js/assetManager.js'
+          'src/js/shadow.js'
+          'src/js/collection.js'
+          'src/js/component.js'
+          'src/js/template.js'
+          'src/js/jom.js'
+        ]
+        dest: 'dist/<%= pkg.name %>.js'
+      tests:
+        src: ["test/unit/js/**/*"]
+        dest: 'test/unit/all.js'
+
+    uglify:
+      core:
+        options:
+          preserveComments: false
           sourceMap: true
-          joinExt: '_src.js'
+          sourceMapName: "dist/jom.min.map"
+          report: "min"
+          beautify:
+            "ascii_only": true
+          banner: '/*! <%= pkg.name %> <%= pkg.version %> |
+                  @author Valtid Caushi
+                  @date <%= grunt.template.today("dd-mm-yyyy") %> */\n'
+          compress:
+            "hoist_funs": false
+            loops: false
+            unused: false
         files:
-          'lib/main.js': [
-            'src/all/_utils.coffee'
-            'src/all/_AssetManager.class.coffee'
-            'src/all/Shadow.class.coffee'
-            'src/all/Collections.class.coffee'
-            'src/all/Components.class.coffee'
-            'src/all/Observe.class.coffee'
-            'src/all/Templates.class.coffee'
-            'src/all/JOM.class.coffee'
-          ]
+          'dist/<%= pkg.name %>.min.js': 'dist/<%= pkg.name %>.js'
+      tests:
+        options:
+          preserveComments: false
+          sourceMap: true
+          sourceMapName: "test/unit/all.min.map"
+          report: "min"
+          beautify:
+            "ascii_only": true
+          banner: '/*! <%= pkg.name %> <%= pkg.version %> |
+                  @author Valtid Caushi
+                  @date <%= grunt.template.today("dd-mm-yyyy") %> */\n'
+          compress:
+            "hoist_funs": false
+            loops: false
+            unused: false
+        files:
+          'test/unit/all.min.js': 'test/unit/all.js'
+    karma:
+      single:
+        configFile: 'test/karma.config.js'
+        singleRun: true
+        browsers: ['PhantomJS']
+      continuous:
+        configFile: 'test/karma.config.js'
+        singleRun: true
+        browsers: ['PhantomJS']
+      dev:
+        configFile: 'test/karma.config.js'
+        # reporters: 'dots'
+      unit:
+        configFile: 'test/karma.config.js'
+        background: true
+        singleRun: false
 
+    watch:
+      files: [ "<%= coffee.source.src %>", "<%= coffee.tests.src %>" ]
+      tasks: ['build', 'karma:single']
+  # Load the plugin that provides the "autoload" task.
 
-
-
-  # Load the plugin that provides the "uglify" task.
-  grunt.loadNpmTasks "grunt-contrib-clean"
-  grunt.loadNpmTasks "grunt-contrib-coffee"
-  grunt.loadNpmTasks "grunt-contrib-watch"
   # Default task(s).
-  grunt.registerTask "default", ["clean", "coffee", "watch" ]
+  grunt.registerTask "build", [
+    "clean"
+    "coffee:source", "coffee:tests"
+    "concat:*:*"
+    "uglify:*:*"
+    "compare_size"
+  ]
+  grunt.registerTask "test",
+    ['build',"karma:single"]
+
+  grunt.registerTask "dev", ["build", "karma:single","watch"]
+  grunt.registerTask "default", ["build", "karma:single"]
