@@ -7,7 +7,6 @@ module.exports = (grunt) ->
     catch e
     data
   gzip = require( "gzip-js" )
-  console.log gzip
   # Project configuration.
   grunt.initConfig
     pkg: grunt.file.readJSON("package.json")
@@ -38,7 +37,7 @@ module.exports = (grunt) ->
         ext: ".js"
         options:
           bare: true
-          sourceMap:true
+          sourceMap:false
           sourceMapDir: "src/map/"
       tests:
         expand: true
@@ -59,7 +58,7 @@ module.exports = (grunt) ->
           # 'bower_components/jjv/lib/jjv.js'
           'src/js/observer.js'
           'src/js/_utils.js'
-          'src/js/assetManager.js'
+          'src/js/asset.js'
           'src/js/shadow.js'
           'src/js/collection.js'
           'src/js/component.js'
@@ -75,9 +74,11 @@ module.exports = (grunt) ->
       core:
         options:
           preserveComments: false
-          sourceMap: true
+          sourceMap: false
           sourceMapName: "dist/jom.min.map"
           report: "min"
+          mangle:
+            toplevel: false
           beautify:
             "ascii_only": true
           banner: '/*! <%= pkg.name %> <%= pkg.version %> |
@@ -95,6 +96,8 @@ module.exports = (grunt) ->
           sourceMap: true
           sourceMapName: "test/unit/all.min.map"
           report: "min"
+          mangle:
+            toplevel: false
           beautify:
             "ascii_only": true
           banner: '/*! <%= pkg.name %> <%= pkg.version %> |
@@ -107,6 +110,15 @@ module.exports = (grunt) ->
         files:
           'test/unit/all.min.js': 'test/unit/all.js'
     karma:
+      ff:
+        configFile: 'test/karma.config.js'
+        singleRun: true
+        browsers: ['Firefox']
+      chrome:
+        configFile: 'test/karma.config.js'
+        singleRun: true
+        browsers: ['Chrome']
+        # browsers: ['chrome_without_security']
       single:
         configFile: 'test/karma.config.js'
         singleRun: true
@@ -117,7 +129,8 @@ module.exports = (grunt) ->
         browsers: ['PhantomJS']
       dev:
         configFile: 'test/karma.config.js'
-        # reporters: 'dots'
+        singleRun: true
+        browsers: ['Chrome']
       unit:
         configFile: 'test/karma.config.js'
         background: true
@@ -125,13 +138,13 @@ module.exports = (grunt) ->
 
     watch:
       files: [ "<%= coffee.source.src %>", "<%= coffee.tests.src %>" ]
-      tasks: ['build', 'karma:single']
+      tasks: ['build', 'karma:dev']
   # Load the plugin that provides the "autoload" task.
 
   # Default task(s).
   grunt.registerTask "build", [
     "clean"
-    "coffee:source", "coffee:tests"
+    # "coffee:source", "coffee:tests"
     "concat:*:*"
     "uglify:*:*"
     "compare_size"
@@ -139,5 +152,5 @@ module.exports = (grunt) ->
   grunt.registerTask "test",
     ['build',"karma:single"]
 
-  grunt.registerTask "dev", ["build", "karma:single","watch"]
+  grunt.registerTask "dev", ["build", "karma:chrome","watch"]
   grunt.registerTask "default", ["build", "karma:single"]

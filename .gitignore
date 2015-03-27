@@ -30,3 +30,6 @@ dist
 
 # Users Environment Variables
 .lock-wscript
+
+src/**/*.js
+test/**/*.js

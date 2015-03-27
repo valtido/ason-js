@@ -1,6 +1,5 @@
 // Karma configuration
 // Generated on Tue Aug 19 2014 10:58:18 GMT+0100 (GMT Daylight Time)
-
 module.exports = function(config) {
   config.set({
 
@@ -15,6 +14,8 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
+      // {pattern: 'test/helper.js', included: true},
+      {pattern: 'bower_components/webcomponentsjs/webcomponents.js', included: true},
       {pattern: 'bower_components/jquery/dist/jquery.js', included: true},
       {pattern: 'bower_components/jjv/lib/jjv.js', included: true},
       {pattern: 'dist/jom.js', included: true},
@@ -103,7 +104,7 @@ module.exports = function(config) {
       customLaunchers : {
        chrome_without_security: {
          base: "Chrome",
-         flags : "--disable-web-security"
+         flags : ["--disable-web-security", "--harmony"]
        },
        firefox_without_security: {
          base: "Firefox",

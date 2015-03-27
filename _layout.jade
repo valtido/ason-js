@@ -3,11 +3,13 @@ html
   head
     meta(charset="utf-8")
     link(rel="asset" type="text/css" source="/assets/css/main.css")
-    script(src="/lib/main.js")
-
+    script.
+      document.createElement("component")
     link(rel="asset" type="text/css" source="/assets/-/fontello/css/fontello.css")
-    link(rel="asset" type="text/javascript" source="/bower_components/platform/platform.js")
-    link(rel="asset" type="text/javascript" source="/bower_components/es6-shim/es6-shim.min.js")
+    script(src="/bower_components/webcomponentsjs/webcomponents.min.js")
+    script(src="/bower_components/jquery/dist/jquery.min.js")
+    script(src="/bower_components/jjv/lib/jjv.js")
+    script(src="/dist/jom.js")
   
     block assets
   body

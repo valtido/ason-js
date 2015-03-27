@@ -20,6 +20,7 @@
     "es6-shim": "~0.22.1",
     "jsonpath": "*",
     "underscore": "~1.7.0",
-    "jjv": "~1.0.2"
+    "jjv": "~1.0.2",
+    "webcomponentsjs": "~0.5.5"
   }
 }
