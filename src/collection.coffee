@@ -10,6 +10,7 @@ class Collection
     @attach_schema schema
     @attach_data data
     @errors = null
+    @observing = false
 
   attach_data: (data = [])->
     length = data.length || Object.keys(data).length

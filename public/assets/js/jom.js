@@ -1,3 +1,108 @@
+var Observe;
+
+Observe = (function() {
+  function Observe(root, callback, curr, path) {
+    var base, item, key, new_path, type_of_curr, _i, _len;
+    if (curr == null) {
+      curr = null;
+    }
+    if (path == null) {
+      path = null;
+    }
+    curr = curr || root;
+    if (!root) {
+      throw new Error("Observe: Object missing.");
+    }
+    if (typeof callback !== "function") {
+      throw new Error("Observe: Callback should be a function.");
+    }
+    type_of_curr = curr.constructor.name;
+    if (type_of_curr === "Array") {
+      base = path;
+      for (key = _i = 0, _len = curr.length; _i < _len; key = ++_i) {
+        item = curr[key];
+        if (typeof item === "object") {
+          new_path = (base || '') + "[" + key + "]";
+          new Observe(root, callback, item, new_path);
+          new_path = "";
+        }
+      }
+    }
+    if (type_of_curr === "Object") {
+      base = path;
+      for (key in curr) {
+        item = curr[key];
+        if (typeof item === "object") {
+          if (base) {
+            new_path = base + "." + key;
+          }
+          if (!base) {
+            new_path = "" + key;
+          }
+          new Observe(root, callback, item, new_path);
+          new_path = "";
+        }
+      }
+    }
+    if (curr.constructor.name === "Array") {
+      base = path;
+      Array.observe(curr, function(changes) {
+        var original, result;
+        result = {};
+        original = {};
+        changes.forEach(function(change, i) {
+          var index_or_name, is_add, part;
+          index_or_name = change.index > -1 ? change.index : change.name;
+          new_path = (base || '') + "[" + index_or_name + "]";
+          part = {
+            path: new_path,
+            value: change.object[change.index] || change.object[change.name] || change.object
+          };
+          is_add = change.addedCount > 0 || change.type === "add";
+          if (typeof part.value === "object" && is_add) {
+            new Observe(root, callback, part.value, part.path);
+            new_path = "";
+          }
+          result[i] = part;
+          return original[i] = change;
+        });
+        return callback(result, original);
+      });
+    } else if (curr.constructor.name === "Object") {
+      base = path;
+      Object.observe(curr, function(changes) {
+        var original, result;
+        result = {};
+        original = {};
+        changes.forEach(function(change, i) {
+          var is_add, part;
+          if (base) {
+            new_path = base + "." + change.name;
+          }
+          if (!base) {
+            new_path = "" + change.name;
+          }
+          part = {
+            path: new_path,
+            value: change.object[change.name]
+          };
+          is_add = change.type === "add" || change.addedCount > 0;
+          if (typeof part.value === "object" && is_add) {
+            new Observe(root, callback, part.value, part.path);
+            new_path = "";
+          }
+          result[i] = part;
+          return original[i] = change;
+        });
+        return callback(result, original);
+      });
+    }
+  }
+
+  return Observe;
+
+})();
+
 Function.prototype.getter = function(prop, get) {
   return Object.defineProperty(this.prototype, prop, {
     get: get,
@@ -171,6 +276,7 @@ Collection = (function() {
     this.attach_schema(schema);
     this.attach_data(data);
     this.errors = null;
+    this.observing = false;
   }
 
   Collection.prototype.attach_data = function(data) {
@@ -354,7 +460,11 @@ Component = (function() {
           new_text = collection.findByPath($.trim(path));
           $(node).text(text.replace(regx, new_text));
           _this.handles.push(node);
-          node.handle = path;
+          node.handle = {
+            type: "node",
+            path: path,
+            full: collection.stich(collection.name, path)
+          };
         }
         _ref = node.attributes;
         for (key = _i = 0, _len = _ref.length; _i < _len; key = ++_i) {
@@ -366,7 +476,12 @@ Component = (function() {
             new_text = collection.findByPath($.trim(path));
             attr.value = text.replace(regx, new_text);
             _this.handles.push(node);
-            node.handle = path;
+            node.handle = {
+              attr: attr,
+              type: "attr",
+              path: path,
+              full: collection.stich(collection.name, path)
+            };
           }
         }
         return node;
@@ -479,18 +594,7 @@ JOM = (function() {
   };
 
   JOM.prototype.load_assets = function() {
-    var imported;
-    imported = $.map($("foot link[rel=import]"), function(link, i) {
-      var links, template;
-      if (link["import"] !== null) {
-        template = $(link["import"]).find("template").get(0);
-        links = $(template.content).find("link[rel=asset]").filter(function(i, link) {
-          return "asset" in link === false;
-        });
-        return links;
-      }
-    });
-    return $('head link[rel="asset"]').add(imported).each(function(i, asset) {
+    return $('head link[rel="asset"]').each(function(i, asset) {
       var exists;
       exists = $(stack.asset).filter(function() {
         return this.source === $(asset).attr("source");
@@ -540,6 +644,35 @@ JOM = (function() {
     });
   };
 
+  JOM.prototype.observe = function(component, collection) {
+    if (collection.observing === true) {
+      return false;
+    }
+    collection.observing = true;
+    new Observe(collection.data, function(changes) {
+      var change, key, path, _results;
+      _results = [];
+      for (key in changes) {
+        change = changes[key];
+        path = collection.stich(collection.name, change.path);
+        _results.push($(component.handles).each(function(i, handle) {
+          if (handle.handle.full === path) {
+            switch (handle.handle.type) {
+              case "attr":
+                return $(handle).attr(handle.handle.attr.name, change.value);
+              case "node":
+                return $(handle).text(change.value);
+              default:
+                throw new Error("unexpected handle type");
+            }
+          }
+        }));
+      }
+      return _results;
+    });
+    return true;
+  };
+
   JOM.prototype.assemble_components = function() {
     return $.each(stack.component, function(i, component) {
       var collection, template, _ref;
@@ -556,6 +689,7 @@ JOM = (function() {
           $(component.root.children).remove();
           component.handle_template_scripts(component.template.cloned);
           component.root.appendChild(component.template.cloned);
+          jom.observe(component, component.collection);
           component.show();
           return component.ready = true;
         }

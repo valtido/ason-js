@@ -34,7 +34,7 @@ module.exports = function(grunt) {
     },
     concat: {
       core: {
-        src: ['src/observer.js', 'src/utils.js', 'src/asset.js', 'src/shadow.js', 'src/collection.js', 'src/component.js', 'src/template.js', 'src/jom.js'],
+        src: ['src/observe.js', 'src/utils.js', 'src/asset.js', 'src/shadow.js', 'src/collection.js', 'src/component.js', 'src/template.js', 'src/jom.js'],
         dest: 'dist/<%= pkg.name %>.js'
       },
       tests: {

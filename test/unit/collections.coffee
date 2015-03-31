@@ -23,6 +23,7 @@ describe "collections: ", ->
     expect(collection.findByPath).toBeDefined()
     expect(collection.stich).toBeDefined()
     expect(collection.errors).toEqual null
+    expect(collection.observing).toEqual false
 
   it "should fail to add a new collection", ->
     expect(-> new Collection())
@@ -170,5 +171,5 @@ describe "collections: ", ->
       profile_data = undefined
       collection = new Collection "profile", profile_data
       collection.data = undefined
-      console.debug collection.data
+
       expect( collection.findByPath "[0]" ).toEqual profile_data

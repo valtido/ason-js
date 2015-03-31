@@ -31,17 +31,17 @@ class JOM
             foot.find("script[source='#{asset.source}']").get(0).data = response
         foot.append asset.element
   load_assets: ()->
-    imported =  $.map $("foot link[rel=import]"), (link, i)->
-      if link.import isnt null
-        template = $(link.import).find("template").get(0)
-        links = $(template.content).find "link[rel=asset]"
-        .filter (i,link)->
-          "asset" of link is false
-
-        return links
+    # imported =  $.map $("foot link[rel=import]"), (link, i)->
+    #   if link.import isnt null
+    #     template = $(link.import).find("template").get(0)
+    #     links = $(template.content).find "link[rel=asset]"
+    #     .filter (i,link)->
+    #       "asset" of link is false
+    #
+    #     return links
 
     $('head link[rel="asset"]')
-    .add imported
+    # .add imported
     .each (i, asset)->
       exists = $ stack.asset
       .filter ->
@@ -79,6 +79,27 @@ class JOM
         data = collection.data
         stack.collection[name] = new Collection name, data
 
+  observe: (component, collection)->
+    if collection.observing is true
+      return false
+
+    collection.observing = true
+
+    new Observe collection.data, (changes)->
+      for key, change of changes
+        path = collection.stich collection.name, change.path
+        $(component.handles).each (i, handle)->
+          if handle.handle.full is path
+            switch handle.handle.type
+              when "attr"
+                $(handle).attr handle.handle.attr.name, change.value
+              when "node"
+                $(handle).text change.value
+              else
+                throw new Error "jom: unexpected handle type"
+
+    return true
+
   assemble_components: ->
     $.each stack.component, (i, component)->
       if  component.ready isnt true
@@ -102,6 +123,7 @@ class JOM
           component.handle_template_scripts component.template.cloned
 
           component.root.appendChild component.template.cloned
+          jom.observe component, component.collection
           component.show()
           component.ready = true
 

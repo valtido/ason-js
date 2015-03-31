@@ -73,24 +73,31 @@ class Component
               text = $(node).text()
 
               if $(node).children().length is 0 and regx.test(text) is true
-                key = text.match(regx)[1]
-                path = collection.stich @path, key
+                key      = text.match(regx)[1]
+                path     = collection.stich @path, key
                 new_text = collection.findByPath $.trim path
                 $(node).text text.replace regx, new_text
                 @handles.push node
-                node.handle = path
+                node.handle =
+                  type: "node"
+                  path : path
+                  full : collection.stich collection.name, path
 
               for attr, key in node.attributes
                 if regx.test attr.value
                   # TODO: fix the attributes, and allow multiple access
-                  text = attr.value
-                  key=text.match(regx)[1]
-                  path = collection.stich @path, key
+                  text     = attr.value
+                  key      =text.match(regx)[1]
+                  path     = collection.stich @path, key
                   new_text = collection.findByPath $.trim path
 
                   attr.value = text.replace regx, new_text
                   @handles.push node
-                  node.handle = path
+                  node.handle =
+                    attr: attr
+                    type: "attr"
+                    path: path
+                    full: collection.stich collection.name, path
               node
     $content
   handle_template_scripts: (content) ->
