@@ -39,7 +39,7 @@ describe "Shadow", ->
     shad.appendChild c
 
     sh.root = com.shadowRoot
-    sh.traverseAncestry(true)
+    sh.traverseAncestry parentNode: shad
 
     expect(sh.host.tagName.toLowerCase()).toBe "component"
 
@@ -58,6 +58,7 @@ describe "Shadow", ->
     shad.appendChild c
 
     sh.root = com.shadowRoot
-    sh.traverseAncestry(false)
+
+    sh.traverseAncestry null
 
     expect(sh.host.tagName.toLowerCase()).toBe "component"

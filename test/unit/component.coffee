@@ -94,7 +94,7 @@ describe "components", ->
          root       = shadow.root,
          component  = host.component,
          collection = component.collection,
-         data       = component.data
+         data       = component.collection.findByPath(component.path)
         ]
       )
       """
@@ -134,3 +134,86 @@ describe "components", ->
 
       expect(component.handles.length).toEqual 2
       expect(new_content).toEqual expected_content
+
+    it "should replace handles attributes with data", ->
+      data =
+        handlebar:
+          and:
+            path: "thing"
+        dog: ["Rocky"]
+      collection = new Collection "profile", data
+
+      c = "<component template=profile collection=profile />"
+      component = new Component c
+
+      content = """
+      <div>
+        <div>I will test</div>
+        <div>some
+          <span>${handlebar.and.path}</span>
+          even if it has an array
+          <span value="${dog[0]}"></span>
+        </div>
+      </div>
+      """
+      new_content = component.handlebars content, collection
+      expected_content = "I will test some thing even if it has an array"
+
+
+      new_content      = $.trim($(new_content).text()).replace /[\s]+/g, " "
+      expected_content = $.trim(expected_content).replace /[\s]+/g, " "
+
+      expect(component.handles.length).toEqual 2
+      expect(new_content).toEqual expected_content
+
+  describe "defines; ",->
+    it "should define a template", ->
+      c = "<component template=profile collection=profile />"
+      component = new Component c
+
+      t = "<template name=user><div body></div></template>"
+      template = new Template t
+
+      component.define_template template
+
+      expect(component.template).toBe template
+
+    it "should throw an error when defining a template", ->
+      c = "<component template=profile collection=profile />"
+      component = new Component c
+
+      t = "<template name=user><div body></div></template>"
+
+      expect(-> component.define_template t)
+      .toThrow new Error "jom: template cant be added"
+
+    it "should define a collection", ->
+      c = "<component template=profile collection=profile />"
+      component = new Component c
+
+      data = [ name: "valtid" ]
+      collection = new Collection "profile", data
+
+      component.define_collection collection
+
+      expect(component.collection).toBe collection
+
+    it "should throw an error when defining a collection", ->
+      c = "<component template=profile collection=profile />"
+      component = new Component c
+
+      collection = [ name: "valtid" ]
+
+      expect(-> component.define_collection collection)
+      .toThrow new Error "jom: collection cant be added"
+
+  describe "shadowRoot",->
+    it "should wrap if shadowRoot is not native", ->
+      c = "<component template=profile collection=profile />"
+      $c = $ c
+      x = $c.get(0)
+
+      expect(x.createShadowRoot).toBeDefined()
+
+      component = new Component x
+      expect(x.createShadowRoot).toBeDefined()

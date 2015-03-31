@@ -1,7 +1,7 @@
 class Component
   disabled   = false
-  regx  = /\${([^{}]+)}/
-  regxG = /\${([^{}]+)}/g
+  regx  = /\${([^\s{}]+)}/
+  regxG = /\${([^\s{}]+)}/g
 
   constructor: (component)->
     throw new Error "jom: component is required" if component is undefined
@@ -18,7 +18,8 @@ class Component
     @attr    = template: template, collection: collection
 
     @element = $component.get 0
-    @element = wrap @element if @element.createShadowRoot is undefined
+
+    @element = wrap @element if not @element.createShadowRoot
 
     @hide()
     @ready = false
@@ -72,8 +73,7 @@ class Component
               text = $(node).text()
 
               if $(node).children().length is 0 and regx.test(text) is true
-                key = text.match(regx)?[1] or throw new Error "jom: key missing"
-
+                key = text.match(regx)[1]
                 path = collection.stich @path, key
                 new_text = collection.findByPath $.trim path
                 $(node).text text.replace regx, new_text
@@ -81,9 +81,16 @@ class Component
                 node.handle = path
 
               for attr, key in node.attributes
-                console.warn attr
                 if regx.test attr.value
-                  ""
+                  # TODO: fix the attributes, and allow multiple access
+                  text = attr.value
+                  key=text.match(regx)[1]
+                  path = collection.stich @path, key
+                  new_text = collection.findByPath $.trim path
+
+                  attr.value = text.replace regx, new_text
+                  @handles.push node
+                  node.handle = path
               node
     $content
   handle_template_scripts: (content) ->
@@ -99,17 +106,17 @@ class Component
 
       # unless is_script_prepared
       script.text = """#{front}
-                  #{script.text}
-                  }).apply(
-                    (shadow = jom.shadow) && shadow.body,
-                    [
-                     shadow     = shadow,
-                     body       = shadow.body,
-                     host       = shadow.host,
-                     root       = shadow.root,
-                     component  = host.component,
-                     collection = component.collection,
-                     data       = component.data
-                    ]
-                  )"""
+                #{script.text}
+                }).apply(
+                  (shadow = jom.shadow) && shadow.body,
+                  [
+                   shadow     = shadow,
+                   body       = shadow.body,
+                   host       = shadow.host,
+                   root       = shadow.root,
+                   component  = host.component,
+                   collection = component.collection,
+                   data       = component.collection.findByPath(component.path)
+                  ]
+                )"""
       return script

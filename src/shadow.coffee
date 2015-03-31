@@ -5,10 +5,10 @@ class Shadow
             null
     @traverseAncestry()
     @root
-  traverseAncestry : ->
-    if @root?.parentNode
-      @root = @root.parentNode
-      @traverseAncestry()
+  traverseAncestry : (parent) ->
+    if @root?.parentNode or parent
+      @root = @root.parentNode or parent
+      @traverseAncestry(@root.parentNode)
 
 
   @getter "body", -> ($(@root).children().filter('[body]').get 0) or null

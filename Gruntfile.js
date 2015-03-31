@@ -30,50 +30,35 @@ module.exports = function(grunt) {
       options: {
         force: true
       },
-      files: ['src/js/**/*', 'src/map/**/*', 'dist/**/*', 'test/unit/js/**/*.js', 'coverage']
-    },
-    coffee: {
-      source: {
-        expand: true,
-        cwd: "src/coffee/",
-        src: ["**/*.coffee"],
-        dest: "src/js/",
-        ext: ".js",
-        options: {
-          bare: true,
-          sourceMap: false,
-          sourceMapDir: "src/map/"
-        }
-      },
-      tests: {
-        expand: true,
-        cwd: "test/unit/coffee/",
-        src: ["**/*.coffee"],
-        dest: "test/unit/js/",
-        ext: ".js",
-        options: {
-          bare: true,
-          sourceMap: true,
-          sourceMapDir: "test/unit/map/"
-        }
-      }
+      files: ['public/assets/js/jom.js', 'dist/**/*', 'coverage']
     },
     concat: {
       core: {
-        src: ['src/js/observer.js', 'src/js/_utils.js', 'src/js/asset.js', 'src/js/shadow.js', 'src/js/collection.js', 'src/js/component.js', 'src/js/template.js', 'src/js/jom.js'],
+        src: ['src/observer.js', 'src/utils.js', 'src/asset.js', 'src/shadow.js', 'src/collection.js', 'src/component.js', 'src/template.js', 'src/jom.js'],
         dest: 'dist/<%= pkg.name %>.js'
       },
       tests: {
-        src: ["test/unit/js/**/*"],
-        dest: 'test/unit/all.js'
+        src: ["test/unit/**/*.js"],
+        dest: 'test/unit.js'
+      },
+      copy: {
+        src: "<%= concat.core.src %>",
+        dest: 'public/assets/js/jom.js'
+      },
+      copy_min: {
+        src: "dist/jom.min.js",
+        dest: 'public/assets/js/jom.min.js'
+      },
+      copy_map: {
+        src: "dist/jom.min.js.map",
+        dest: 'public/assets/js/jom.min.js.map'
       }
     },
     uglify: {
       core: {
         options: {
           preserveComments: false,
-          sourceMap: false,
-          sourceMapName: "dist/jom.min.map",
+          sourceMap: true,
           report: "min",
           mangle: {
             toplevel: false
@@ -96,7 +81,6 @@ module.exports = function(grunt) {
         options: {
           preserveComments: false,
           sourceMap: true,
-          sourceMapName: "test/unit/all.min.map",
           report: "min",
           mangle: {
             toplevel: false
@@ -112,7 +96,7 @@ module.exports = function(grunt) {
           }
         },
         files: {
-          'test/unit/all.min.js': 'test/unit/all.js'
+          'test/unit.min.js': 'test/unit.js'
         }
       }
     },
@@ -149,7 +133,7 @@ module.exports = function(grunt) {
       }
     },
     watch: {
-      files: ["<%= coffee.source.src %>", "<%= coffee.tests.src %>"],
+      files: ["src/**/*.coffee", "test/**/*.coffee"],
       tasks: ['build', 'karma:dev']
     }
   });

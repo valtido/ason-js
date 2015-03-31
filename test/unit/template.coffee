@@ -29,9 +29,16 @@ describe "Template", ->
     expect(-> template = new Template t)
     .toThrow new Error "jom: template name attr is required"
 
-
   it "should throw error if no body found", ->
     t = "<template name=profile> <div> My text </div> </template>"
 
     expect(-> template = new Template t)
     .toThrow new Error "jom: template body attr is required"
+
+  it "should produce a clone of the template", ->
+    t = "<template name=user><div body></div></template>"
+    template = new Template t
+
+    template.clone()
+    expect(template.cloned).toBeDefined()
+    expect(template.cloned).not.toEqual null

@@ -165,3 +165,10 @@ describe "collections: ", ->
       collection = new Collection "profile", profile_data
 
       expect( collection.findByPath "[0]" ).toEqual profile_data
+
+    it "should not find undefined", ->
+      profile_data = undefined
+      collection = new Collection "profile", profile_data
+      collection.data = undefined
+      console.debug collection.data
+      expect( collection.findByPath "[0]" ).toEqual profile_data

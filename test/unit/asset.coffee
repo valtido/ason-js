@@ -115,7 +115,7 @@ describe "Asset", ->
     expect(a.content_type.media).toBe "json"
     expect(a.content_type.params).toBe null
 
-  it "should accept collection", ->
+  xit "should accept collection", ->
     asset = "<link rel='asset' source='test' type='text/collection' />"
     a = new Asset asset
     expect(a.name).toBe null

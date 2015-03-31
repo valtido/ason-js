@@ -15,11 +15,11 @@ module.exports = function(config) {
     // list of files / patterns to load in the browser
     files: [
       // {pattern: 'test/helper.js', included: true},
-      {pattern: 'bower_components/webcomponentsjs/webcomponents.js', included: true},
-      {pattern: 'bower_components/jquery/dist/jquery.js', included: true},
-      {pattern: 'bower_components/jjv/lib/jjv.js', included: true},
+      {pattern: 'public/bower_components/webcomponentsjs/webcomponents.js', included: true},
+      {pattern: 'public/bower_components/jquery/dist/jquery.js', included: true},
+      {pattern: 'public/bower_components/jjv/lib/jjv.js', included: true},
       {pattern: 'dist/jom.js', included: true},
-      {pattern: 'test/unit/js/**/*.js', included: true}
+      {pattern: 'test/unit.js', included: true}
       // {pattern: 'test/unit/all.min.map', included: false}
     ],
 
@@ -45,7 +45,7 @@ module.exports = function(config) {
       // Thus, you'll have to limit the CoffeeScript preprocessor
       // to uncovered files.
       // 'test/**/*.coffee': ['coffee'],
-      'test/unit/all.js': ['coverage'],
+      // 'test/unit.js': ['coverage'],
       // 'test/**/*.js': ['coverage']
     },
 
@@ -70,7 +70,7 @@ module.exports = function(config) {
     // optionally, configure the reporter
     coverageReporter: {
       type : 'html',
-      dir : 'coverage/',
+      dir : 'public/coverage/',
       subdir: function(browser) {
         // normalization process to keep a consistent browser name accross different
         // OS

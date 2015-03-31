@@ -24,7 +24,12 @@ class JOM
     $.each stack.asset, (i, asset)->
       if asset.queued? isnt true
         asset.queued = true
-        $('html>foot').append asset.element
+        foot = $ 'html>foot'
+        if asset.content_type.part is "text/json"
+          $.getJSON(asset.source)
+          .done (response)->
+            foot.find("script[source='#{asset.source}']").get(0).data = response
+        foot.append asset.element
   load_assets: ()->
     imported =  $.map $("foot link[rel=import]"), (link, i)->
       if link.import isnt null
@@ -50,7 +55,9 @@ class JOM
     .each (i, component)->
       if "component" of component is false
         component.component = true
-        stack.component.push new Component component
+        c = new Component component
+        stack.component.push c
+        component.component = c
 
   load_templates: ()->
     $("foot link[rel=import]")
@@ -58,7 +65,7 @@ class JOM
       link.import isnt null
     .each (i, link)->
       template = link.import.querySelector "template"
-      if "template" of template is false
+      if "template" of template is false and link.import isnt undefined
         template.template = true
         name = $(template).attr 'name'
         stack.template[name] = new Template template
@@ -66,10 +73,11 @@ class JOM
   load_collections: ()->
     $("foot script[type='text/json']")
     .each (i, collection)->
-      if "collection" of collection is false
+      if "collection" of collection is false and collection.data isnt undefined
         collection.collection = true
         name = $(collection).attr "name"
-        stack.collection[name] = new Collection name
+        data = collection.data
+        stack.collection[name] = new Collection name, data
 
   assemble_components: ->
     $.each stack.component, (i, component)->
@@ -77,18 +85,16 @@ class JOM
         template   = jom.template[component.attr.template]
         collection = jom.collection[component.attr.collection]
         if template isnt undefined and
-           component isnt undefined
+           collection isnt undefined and
+           collection.data?.length
 
           component.define_template template
           component.define_collection collection
           component.template.clone()
           component.hide()
-
           component.root.appendChild $('<div>Loading...</div>').get 0
 
-          debugger
-          component.handlebars component.template.cloned
-          component.template.cloned
+          component.handlebars component.template.cloned, component.collection
 
           # clean up loading
           $(component.root.children).remove()

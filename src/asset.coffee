@@ -44,9 +44,9 @@ class Asset
                             type='text/javascript'
                             async=true
                             />"
-      when 'text/json', "text/collection"
-        element = "<script  src='#{@source}'
-                            type='text/json'
+      when 'text/json'
+        element = "<script  source='#{@source}'
+                            type='#{part}'
                             async='true'
                             name='#{@name}'
                             />"
