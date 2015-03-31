@@ -8,6 +8,9 @@ class JOM
     @clear_stack()
     # @template
     @tasks()
+    @env = "production"
+    @app =
+      title: "JOM is Awesome"
     @
   tasks: ->
     setTimeout =>

@@ -458,6 +458,9 @@ Component = (function() {
           key = text.match(regx)[1];
           path = collection.stich(_this.path, key);
           new_text = collection.findByPath($.trim(path));
+          if (new_text === void 0 && jom.env === "production") {
+            new_text = "";
+          }
           $(node).text(text.replace(regx, new_text));
           _this.handles.push(node);
           node.handle = {
@@ -474,6 +477,9 @@ Component = (function() {
             key = text.match(regx)[1];
             path = collection.stich(_this.path, key);
             new_text = collection.findByPath($.trim(path));
+            if (new_text === void 0 && jom.env === "production") {
+              new_text = "";
+            }
             attr.value = text.replace(regx, new_text);
             _this.handles.push(node);
             node.handle = {
@@ -560,6 +566,10 @@ JOM = (function() {
     this.clear_cache();
     this.clear_stack();
     this.tasks();
+    this.env = "production";
+    this.app = {
+      title: "JOM is Awesome"
+    };
     this;
   }
 
@@ -663,7 +673,7 @@ JOM = (function() {
               case "node":
                 return $(handle).text(change.value);
               default:
-                throw new Error("unexpected handle type");
+                throw new Error("jom: unexpected handle type");
             }
           }
         }));

@@ -76,6 +76,9 @@ class Component
                 key      = text.match(regx)[1]
                 path     = collection.stich @path, key
                 new_text = collection.findByPath $.trim path
+
+                if new_text is undefined and jom.env is "production"
+                  new_text = ""
                 $(node).text text.replace regx, new_text
                 @handles.push node
                 node.handle =
@@ -90,6 +93,9 @@ class Component
                   key      =text.match(regx)[1]
                   path     = collection.stich @path, key
                   new_text = collection.findByPath $.trim path
+
+                  if new_text is undefined and jom.env is "production"
+                    new_text = ""
 
                   attr.value = text.replace regx, new_text
                   @handles.push node

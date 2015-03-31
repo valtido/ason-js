@@ -23,7 +23,7 @@ template(name="profile")
     #wrap .back {   display:none;}
     .hidden{display: none;}
       
-  link(rel="asset" source="/assets/css/main.css" type="text/css")
+  
 
   div#wrap(body)
     div.back
@@ -64,6 +64,5 @@ template(name="profile")
       data.image = "http://placehold.it/100x100?2";
     })
     .on("click", "i.icon-thumbs-up-alt", function(){
-      debugger
       data.likes++;
     })

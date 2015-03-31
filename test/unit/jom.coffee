@@ -38,6 +38,8 @@ describe "jom: ", ->
 
     expect(jom.tasks).toBeDefined()
     expect(jom.resolve).toBeDefined()
+    expect(jom.env).toBeDefined()
+    expect(jom.app).toBeDefined()
 
   it "path resolver", ->
     expect(jom.resolve "/location").toBe "/location"
