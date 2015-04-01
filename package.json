@@ -10,7 +10,7 @@
   "scripts": {
     "start": "harp server",
     "debug": "node-debug --debug-brk=0 ./bin/www",
-    "test": "cd public && bower install && cd ../ && grunt dev",
+    "test": "export CHROME_BIN=/usr/bin/chromium-browser && cd public && bower install && cd ../ && grunt dev",
     "dev": "grunt",
     "test2": "node --harmony node_modules/karma/bin/karma start test/karma.config.js --browsers PhantomJS --verbose",
     "test3": "node --harmony node_modules/karma/bin/karma start test/karma.config.js",
