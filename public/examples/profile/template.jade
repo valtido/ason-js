@@ -17,42 +17,59 @@ template(name="profile")
     div.back label {width: 100px; display: inline-block;}
     
     template{display:block;}
-    #wrap .front,
-    #wrap .back {}
-    #wrap .front { }
-    #wrap .back {   display:none;}
+    .likes{-webkit-user-select: none;user-select: none;-moz-user-select: none;-ms-user-select: none;}
+    .front,.back{backface-visibility: hidden; width:100%;}
     .hidden{display: none;}
-      
-  
+    .edit{right: 5px; position: absolute; top: -15px;}
+    [body]{position: relative;perspective: 1000;}
+    
+    .show_edit .edit{transform: rotateY(180deg); right: auto; left: 5px;}
+    .show_edit .flip{transform: rotateY(180deg);}
+    .show_edit .flip .back{ display:block; }
+    .show_edit .flip .front{ display:none; }
+    .flip{transition: 0.6s;  transform-style: preserve-3d;}
+    .front { z-index: 2;  transform: rotateY(0deg); display: block;    }
+    .back {  transform: rotateY(180deg); display: none; }
 
   div#wrap(body)
-    div.back
-      div
-        label Firstname
-        input(type="text" value="${name.first}")
-    div.front
-      img.img(src="${image}")
-      header 
-        i.icon-user
-        span.editable
-          span ${name.first}
-          span ${name.middle}
-          span ${name.last}
-      div
-        i.icon-calendar
-        span ${dob}
-      div
-        i.icon-location
-        span ${location}
-        ul.hidden.location_list
-          li.item Manchester
-          li.item Liverpool
-          li.item Brighton
-      div(visible)
-        i.icon-thumbs-up-alt
-        span.likes ${likes}
+    div.flip.clearfix
+      a.edit(href="#") Edit
+      div.back
+        div
+          label Firstname
+          input(type="text" value="${name.first}")
+        div
+          label Middle
+          input(type="text" value="${name.middle}")
+        div
+          label Last
+          input(type="text" value="${name.last}")
+      div.front
+        img.img(src="${image}")
+        header 
+          i.icon-user
+          span.editable
+            span ${name.first}
+            span ${name.middle}
+            span ${name.last}
+        div
+          i.icon-calendar
+          span ${dob}
+        div
+          i.icon-location
+          span ${location}
+          ul.hidden.location_list
+            li.item Manchester
+            li.item Liverpool
+            li.item Brighton
+        div(visible)
+          i.icon-thumbs-up-alt
+          span.likes ${likes}
   script.
     $(body)
+    .on("click", ".edit", function(){
+      $(body).toggleClass("show_edit")
+    })
     .on("click", ".location_list .item", function(){
       var value = $.trim($(this).text());
       data.location = value;
@@ -65,4 +82,5 @@ template(name="profile")
     })
     .on("click", "i.icon-thumbs-up-alt", function(){
       data.likes++;
+      console.info("likes: ",data.likes)
     })

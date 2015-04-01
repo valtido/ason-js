@@ -447,8 +447,36 @@ Component = (function() {
     return this.collection = collection;
   };
 
-  Component.prototype.handlebars = function(content, collection) {
-    var $content, nodes;
+  Component.prototype.trigger = function(changes, collection) {
+    var change, key, _results;
+    if (collection.name === this.collection.name) {
+      _results = [];
+      for (key in changes) {
+        change = changes[key];
+        if (change.path.slice(0, this.path.length) === this.path) {
+          _results.push($(this.handles).each(function(i, handle) {
+            if (handle.handle.path === change.path) {
+              switch (handle.handle.type) {
+                case "attr":
+                  return $(handle).attr(handle.handle.attr.name, change.value);
+                case "node":
+                  return $(handle).text(change.value);
+                default:
+                  throw new Error("jom: unexpected handle type");
+              }
+            }
+          }));
+        } else {
+          _results.push(void 0);
+        }
+      }
+      return _results;
+    }
+  };
+
+  Component.prototype.handlebars = function(content, component) {
+    var $content, collection, nodes;
+    collection = component.collection;
     $content = $(content);
     nodes = $content.findAll('*').not('script, style, link').each((function(_this) {
       return function(i, node) {
@@ -504,10 +532,10 @@ Component = (function() {
     scripts = $(content).find('script');
     return $(scripts).not('[src]').eq(0).each(function(i, script) {
       var front, is_script_prepared, reg;
-      front = "(function(shadow,body, host, root, component, collection, data){";
+      front = "";
       reg = new RegExp("^" + (escapeRegExp(front)));
       is_script_prepared = reg.test(script.text);
-      script.text = front + "\n" + script.text + "\n}).apply(\n  (shadow = jom.shadow) && shadow.body,\n  [\n   shadow     = shadow,\n   body       = shadow.body,\n   host       = shadow.host,\n   root       = shadow.root,\n   component  = host.component,\n   collection = component.collection,\n   data       = component.collection.findByPath(component.path)\n  ]\n)";
+      script.text = "(function(){\nvar\nshadow     = jom.shadow,\nbody       = shadow.body,\nhost       = shadow.host,\nroot       = shadow.root,\ncomponent  = host.component,\ncollection = component.collection,\ndata       = component.collection.findByPath(component.path)\n;\n\n" + script.text + "\n})()";
       return script;
     });
   };
@@ -554,7 +582,9 @@ Template = (function() {
 var JOM, jom;
 
 JOM = (function() {
-  var cache, stack;
+  var cache, observer, stack;
+
+  observer = {};
 
   cache = {};
 
@@ -582,6 +612,7 @@ JOM = (function() {
         _this.load_collections();
         _this.inject_assets();
         _this.assemble_components();
+        _this.watch_collections();
         return _this.tasks();
       };
     })(this), 100);
@@ -654,8 +685,14 @@ JOM = (function() {
     });
   };
 
-  JOM.prototype.observe = function(component, collection) {
-    if (collection.observing === true) {
+  JOM.prototype.observe = function() {
+    if (component instanceof Component === false) {
+      throw new Error("jom: observe component missing");
+    }
+    if (collection instanceof Collection === false) {
+      throw new Error("jom: observe collection missing");
+    }
+    if (this.collection.observing === true) {
       return false;
     }
     collection.observing = true;
@@ -695,16 +732,35 @@ JOM = (function() {
           component.template.clone();
           component.hide();
           component.root.appendChild($('<div>Loading...</div>').get(0));
-          component.handlebars(component.template.cloned, component.collection);
+          component.handlebars(component.template.cloned, component);
           $(component.root.children).remove();
           component.handle_template_scripts(component.template.cloned);
           component.root.appendChild(component.template.cloned);
-          jom.observe(component, component.collection);
           component.show();
           return component.ready = true;
         }
       }
     });
+  };
+
+  JOM.prototype.watch_collections = function() {
+    var collection, key, _ref, _results;
+    _ref = stack.collection;
+    _results = [];
+    for (key in _ref) {
+      collection = _ref[key];
+      if (collection.observing === false) {
+        collection.observing = true;
+        _results.push(new Observe(collection.data, function(changes) {
+          return $.each(stack.component, function(i, component) {
+            return component.trigger(changes, collection);
+          });
+        }));
+      } else {
+        _results.push(void 0);
+      }
+    }
+    return _results;
   };
 
   JOM.prototype.resolve = function(path) {

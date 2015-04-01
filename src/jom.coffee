@@ -1,4 +1,5 @@
 class JOM
+  observer= {}
   cache = {}
   stack = {}
   constructor: ->
@@ -20,6 +21,7 @@ class JOM
       @load_collections()
       @inject_assets()
       @assemble_components()
+      @watch_collections()
       @tasks()
     , 100
 
@@ -82,8 +84,13 @@ class JOM
         data = collection.data
         stack.collection[name] = new Collection name, data
 
-  observe: (component, collection)->
-    if collection.observing is true
+  observe: ->
+    if component instanceof Component is false
+      throw new Error "jom: observe component missing"
+    if collection instanceof Collection is false
+      throw new Error "jom: observe collection missing"
+
+    if @collection.observing is true
       return false
 
     collection.observing = true
@@ -118,7 +125,7 @@ class JOM
           component.hide()
           component.root.appendChild $('<div>Loading...</div>').get 0
 
-          component.handlebars component.template.cloned, component.collection
+          component.handlebars component.template.cloned, component
 
           # clean up loading
           $(component.root.children).remove()
@@ -126,9 +133,17 @@ class JOM
           component.handle_template_scripts component.template.cloned
 
           component.root.appendChild component.template.cloned
-          jom.observe component, component.collection
+
           component.show()
           component.ready = true
+
+  watch_collections: ->
+    for key, collection of stack.collection
+      if collection.observing is false
+        collection.observing = true
+        new Observe collection.data, (changes)->
+          $.each stack.component, (i, component)->
+            component.trigger changes, collection
 
   resolve: (path)->
     # console.log "LOCO", location.href

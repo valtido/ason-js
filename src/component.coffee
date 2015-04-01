@@ -62,9 +62,22 @@ class Component
 
     @collection = collection
 
+  trigger: (changes, collection)->
+    if collection.name is @collection.name
+      for key, change of changes
+        if change.path.slice(0, @path.length) is @path
+          $(@handles).each (i, handle)->
+            if handle.handle.path is change.path
+              switch handle.handle.type
+                when "attr"
+                  $(handle).attr handle.handle.attr.name, change.value
+                when "node"
+                  $(handle).text change.value
+                else
+                  throw new Error "jom: unexpected handle type"
 
-
-  handlebars: (content, collection)->
+  handlebars: (content, component)->
+    collection = component.collection
     $content = $ content
     # console.log content
     nodes = $content
@@ -113,23 +126,22 @@ class Component
     scripts = $(content).find 'script'
 
     $(scripts).not('[src]').eq(0).each (i,script)->
-      front = "(function(shadow,body, host, root, component, collection, data){"
+      front = ""
       reg                = new RegExp("^#{escapeRegExp(front)}")
       is_script_prepared = reg.test(script.text)
 
       # unless is_script_prepared
-      script.text = """#{front}
+      script.text = """(function(){
+                var
+                shadow     = jom.shadow,
+                body       = shadow.body,
+                host       = shadow.host,
+                root       = shadow.root,
+                component  = host.component,
+                collection = component.collection,
+                data       = component.collection.findByPath(component.path)
+                ;
+
                 #{script.text}
-                }).apply(
-                  (shadow = jom.shadow) && shadow.body,
-                  [
-                   shadow     = shadow,
-                   body       = shadow.body,
-                   host       = shadow.host,
-                   root       = shadow.root,
-                   component  = host.component,
-                   collection = component.collection,
-                   data       = component.collection.findByPath(component.path)
-                  ]
-                )"""
+                })()"""
       return script

@@ -1,0 +1,19 @@
+h1 Test
+
+script.
+  var shad, a, b;
+  shad = "shad"
+  a = "a"
+  b = "b"
+  debugger
+  (function(shad, body, comp){
+    var shad, a, b;
+    shad = "a"
+    a = "a"
+    b = "a"
+  }).apply(function(){}, [shad, a, b]);
+  
+  
+  shad; 
+  a; 
+  b;

@@ -35,6 +35,7 @@ describe "jom: ", ->
 
     expect(jom.inject_assets).toBeDefined()
     expect(jom.assemble_components).toBeDefined()
+    expect(jom.watch_collections).toBeDefined()
 
     expect(jom.tasks).toBeDefined()
     expect(jom.resolve).toBeDefined()
@@ -63,7 +64,6 @@ describe "jom: ", ->
       component  : []
 
   describe "assets, ", ->
-
     it "should push new assets", ->
       expect(jom.asset.length).toEqual 0
 
@@ -228,13 +228,16 @@ describe "jom: ", ->
 
       expect(component.disable()).toBe true
 
-  describe "observer, ", ->
+  describe "watch_collections, ", ->
+    beforeEach (done)->
+      setTimeout ->
+        done()
+      , 1
     it "should not watch if it's already watched", ->
       data = [ name: "valtid" ]
       collection = new Collection "profile", data
       jom.collection.profile = collection
       # this is the flag to testing for duplicate observers
-      collection.observing = true
 
       c = "<component template=profile collection=profile />"
 
@@ -245,27 +248,7 @@ describe "jom: ", ->
       expect(jom.component.length).toEqual 1
 
       component = jom.component[0]
-
-      expect(collection.observing).toBe true
-      expect(jom.collection.profile.observing).toBe true
-
-      expect( jom.observe(component, collection) ).toBe false
-
-      expect(jom.collection.profile.observing).toBe true
-
-    it "should watch collections for changes", ->
-      data = [ name: "valtid" ]
-      collection = new Collection "profile", data
-      jom.collection.profile = collection
-
-      c = "<component template=profile collection=profile />"
-
-      expect($('body>component').length).toEqual 0
-      $('body').append(c)
-      jom.load_components()
-      expect($('body>component').length).toEqual 1
-      expect(jom.component.length).toEqual 1
-
-      expect(collection.observing).toBe false
-      expect(jom.observe(component, collection)).toBe true
-      expect(collection.observing).toBe true
+      collection.data[0].name = "Tom"
+      component.trigger = (changes, collection)->
+        expect(changes.path).toBe "[0].name"
+        expect(changes.value).toBe "Tom"

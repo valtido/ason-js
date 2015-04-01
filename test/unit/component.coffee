@@ -43,6 +43,7 @@ describe "components", ->
 
     expect(component.handlebars).toBeDefined()
     expect(component.handle_template_scripts).toBeDefined()
+    expect(component.trigger).toBeDefined()
 
   describe "required properties",->
 
@@ -83,20 +84,18 @@ describe "components", ->
       new_content = component.handle_template_scripts content
 
       expected_content = """
-      (function(shadow,body, host, root, component, collection, data){
+      (function(){
+                var
+                shadow     = jom.shadow,
+                body       = shadow.body,
+                host       = shadow.host,
+                root       = shadow.root,
+                component  = host.component,
+                collection = component.collection,
+                data       = component.collection.findByPath(component.path)
+                ;
        var a = 1;
-      }).apply(
-        (shadow = jom.shadow) && shadow.body,
-        [
-         shadow     = shadow,
-         body       = shadow.body,
-         host       = shadow.host,
-         root       = shadow.root,
-         component  = host.component,
-         collection = component.collection,
-         data       = component.collection.findByPath(component.path)
-        ]
-      )
+      })()
       """
       new_content      = $.trim($(new_content).text()).replace /[\s]+/g, " "
       expected_content = $.trim(expected_content).replace /[\s]+/g, " "
@@ -114,6 +113,7 @@ describe "components", ->
 
       c = "<component template=profile collection=profile />"
       component = new Component c
+      component.define_collection collection
 
       content = """
       <div>
@@ -125,7 +125,7 @@ describe "components", ->
         </div>
       </div>
       """
-      new_content = component.handlebars content, collection
+      new_content = component.handlebars content, component
       expected_content = "I will test some thing even if it has an array Rocky"
 
 
@@ -145,6 +145,7 @@ describe "components", ->
 
       c = "<component template=profile collection=profile />"
       component = new Component c
+      component.define_collection collection
 
       content = """
       <div>
@@ -156,7 +157,7 @@ describe "components", ->
         </div>
       </div>
       """
-      new_content = component.handlebars content, collection
+      new_content = component.handlebars content, component
       expected_content = "I will test some thing even if it has an array"
 
 
