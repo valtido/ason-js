@@ -10,7 +10,7 @@
   "scripts": {
     "start": "harp server",
     "debug": "node-debug --debug-brk=0 ./bin/www",
-    "test": "bower install && grunt test",
+    "test": "cd public && bower install && cd ../ && grunt test",
     "dev": "grunt",
     "test2": "node --harmony node_modules/karma/bin/karma start test/karma.config.js --browsers PhantomJS --verbose",
     "test3": "node --harmony node_modules/karma/bin/karma start test/karma.config.js",

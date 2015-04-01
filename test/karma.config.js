@@ -1,6 +1,15 @@
 // Karma configuration
 // Generated on Tue Aug 19 2014 10:58:18 GMT+0100 (GMT Daylight Time)
 module.exports = function(config) {
+
+  var sourcePreprocessors = 'coverage';
+  function isDebug(argument) {
+      return argument === '--debug';
+  }
+  if (process.argv.some(isDebug)) {
+      sourcePreprocessors = [];
+  }
+
   config.set({
 
     // base path that will be used to resolve all patterns (eg. files, exclude)
@@ -15,8 +24,9 @@ module.exports = function(config) {
     // list of files / patterns to load in the browser
     files: [
       // {pattern: 'test/helper.js', included: true},
-      {pattern: 'public/bower_components/webcomponentsjs/webcomponents.js', included: true},
+      {pattern: 'public/bower_components/webcomponentsjs/webcomponents.js', included: false},
       {pattern: 'public/bower_components/jquery/dist/jquery.js', included: true},
+      {pattern: 'test/_helper.js', included: true},
       {pattern: 'public/bower_components/jjv/lib/jjv.js', included: true},
       {pattern: 'dist/jom.js', included: true},
       {pattern: 'test/unit.js', included: true}
@@ -36,7 +46,7 @@ module.exports = function(config) {
       // (these files will be instrumented by Istanbul via Ibrik unless
       // specified otherwise in coverageReporter.instrumenter)
       // 'src/**/*.coffee': ['coffee'],
-      'dist/jom.js': ['coverage'],
+      'dist/jom.js': sourcePreprocessors,
       // 'dest/jom.js': ['coverage'],
       // 'src/**/*.js': ['coverage'],
 
