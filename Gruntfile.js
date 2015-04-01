@@ -140,5 +140,5 @@ module.exports = function(grunt) {
   grunt.registerTask("build", ["clean", "concat:*:*", "uglify:*:*", "compare_size"]);
   grunt.registerTask("test", ['build', "karma:single"]);
   grunt.registerTask("dev", ["build", "karma:chrome", "watch"]);
-  return grunt.registerTask("default", ["build", "karma:single"]);
+  return grunt.registerTask("default", ["build", "karma:chrome"]);
 };

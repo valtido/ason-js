@@ -33,3 +33,4 @@ dist
 
 src/**/*.js
 test/**/*.js
+!test/_helper.js

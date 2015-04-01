@@ -138,4 +138,4 @@ module.exports = (grunt) ->
     ['build',"karma:single"]
 
   grunt.registerTask "dev", ["build", "karma:chrome","watch"]
-  grunt.registerTask "default", ["build", "karma:single"]
+  grunt.registerTask "default", ["build", "karma:chrome"]
