@@ -24,7 +24,7 @@ module.exports = function(config) {
     // list of files / patterns to load in the browser
     files: [
       // {pattern: 'test/helper.js', included: true},
-      {pattern: 'public/bower_components/webcomponentsjs/webcomponents.js', included: false},
+      {pattern: 'public/bower_components/webcomponentsjs/webcomponents.js', included: true},
       {pattern: 'public/bower_components/jquery/dist/jquery.js', included: true},
       {pattern: 'test/_helper.js', included: true},
       {pattern: 'public/bower_components/jjv/lib/jjv.js', included: true},
