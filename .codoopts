@@ -4,7 +4,7 @@
 --private
 --quiet
 --extension  coffee
---output     ./doc
+--output     ./public/doc
 ./src
 -
 LICENSE

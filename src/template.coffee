@@ -1,9 +1,8 @@
 # Template class, keeps an instance of template information
 # Each template can only exist once
-
 class Template
-  # template is
-  # @param template [HTMLElement]
+  # Template constructor
+  # @param template [HTMLElement | String ]
   # @return Template
   constructor: (template = null)->
     $template = $ template
