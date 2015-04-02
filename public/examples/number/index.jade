@@ -1,7 +1,7 @@
 extends ../../_layout
 block assets
   link(rel="asset" source="template.html" type="text/template" name="number")
-  link(rel="asset" source="data.json" type="text/collection" name="number")
+  link(rel="asset" source="data.json" type="text/json" name="number")
   script.
     jom.env = "production"
     jom.app = {
@@ -10,4 +10,4 @@ block assets
     }
   
 block content
-  component(template="template.html" collection="number:[0]")
+  component(template="number" collection="number")

@@ -1,0 +1,16 @@
+[
+  {
+    "name":{
+      "first"    : "Valtid",
+      "last"     : "Caushi"
+    },
+    "location" : "London"
+  },
+  {
+    "name":{
+      "first"    : "John",
+      "last"     : "Doe"
+    },
+    "location" : "New York"
+  }
+]

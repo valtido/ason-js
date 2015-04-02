@@ -15,117 +15,91 @@ block content
   component(template="profile" collection="profile" path="[1]")
   component(template="profile" collection="profile" path="[2]")
   
-  textarea(class="hide")
-    
-  
   h1 html
   pre.template
     code(class="language-jade").
       template(name="profile")
         style.
-          /* See Style code */
+          @import url("/assets/-/fontello/css/fontello.css");
+          @import url("/assets/css/main.css");
+          :host {display: block; padding: 20px; background: #fff;  margin-bottom: 10px;}
+          header {font-size: 30px;margin-bottom: 20px;}
+          .icon-location {font-size: 25px; color: #900;}
+          img {float: right;border: 5px solid #f0f0f0; }
+          i { width: 40px; display: inline-block; color: #333; text-align: center;margin-right: 10px;}
+          i.icon-thumbs-up-alt {cursor: pointer;}
+          i.icon-thumbs-up-alt:hover{opacity: 0.5}
+          header span span{padding-left: 5px;}
+          header span span:first-child{padding-left: 0px;}
+          header span span:empty {display: none;}
+          
+          div.back form{padding: 10px; background: whitesmoke;}
+          div.back label {width: 100px; display: inline-block;}
+          
+          .likes{-webkit-user-select: none;user-select: none;-moz-user-select: none;-ms-user-select: none;}
+          .front,.back{backface-visibility: hidden; width:100%;}
+          .hidden{display: none;}
+          .edit{right: 5px; position: absolute; top: -15px;}
+          [body]{position: relative;perspective: 1000;}
+          
+          .show_edit .edit{transform: rotateY(180deg); right: auto; left: 5px;}
+          .show_edit .flip{transform: rotateY(180deg);}
+          .show_edit .flip .back{ display:block; }
+          .show_edit .flip .front{ display:none; }
+          .flip{transition: 0.6s;  transform-style: preserve-3d;}
+          .front { z-index: 2;  transform: rotateY(0deg); display: block;    }
+          .back {  transform: rotateY(180deg); display: none; }
+      
+        div#wrap(body)
+          div.flip.clearfix
+            a.edit(href="#") Edit
+            div.back
+              div
+                label Firstname
+                input(type="text" value="${name.first}")
+              div
+                label Middle
+                input(type="text" value="${name.middle}")
+              div
+                label Last
+                input(type="text" value="${name.last}")
+            div.front
+              img.img(src="${image}")
+              header 
+                i.icon-user
+                span.editable
+                  span ${name.first}
+                  span ${name.middle}
+                  span ${name.last}
+              div
+                i.icon-calendar
+                span ${dob}
+              div
+                i.icon-location
+                span ${location}
+                ul.hidden.location_list
+                  li.item Manchester
+                  li.item Liverpool
+                  li.item Brighton
+              div(visible)
+                i.icon-thumbs-up-alt
+                span.likes ${likes}
         script.
-          /* See Script code*/
-        div(body)
-          div#wrap(body)
-            div.flip.clearfix
-              a.edit(href="#") Edit
-              div.back
-                div
-                  label Firstname
-                  input(type="text" value="${name.first}")
-                div
-                  label Middle
-                  input(type="text" value="${name.middle}")
-                div
-                  label Last
-                  input(type="text" value="${name.last}")
-              div.front
-                img.img(src="${image}")
-                header 
-                  i.icon-user
-                  span.editable
-                    span ${name.first}
-                    span ${name.middle}
-                    span ${name.last}
-                div
-                  i.icon-calendar
-                  span ${dob}
-                div
-                  i.icon-location
-                  span ${location}
-                  ul.hidden.location_list
-                    li.item Manchester
-                    li.item Liverpool
-                    li.item Brighton
-                div(visible)
-                  i.icon-thumbs-up-alt
-                  span.likes ${likes}
-        
-  h1 Re-Use
-    pre
-      code(class="language-jade")
-        component(template="[template_name]" collection="[collection_name]")
-  h1 style
-  pre
-    code(class="language-css").
-      /*import icons*/
-      @import url("/assets/-/fontello/css/fontello.css");
-      /*import external css main file*/
-      @import url("/assets/css/main.css");
-      
-      /* `: host` refers to the component tag read more on.
-      * http://dev.w3.org/csswg/css-scoping/#host-selector
-      */
-      :host {display: block; padding: 20px; background: #fff;  margin-bottom: 10px;}
-      header {font-size: 30px;margin-bottom: 20px;}
-      .icon-location {font-size: 25px; color: #900;}
-      img {float: right;border: 5px solid #f0f0f0; }
-      i { width: 40px; display: inline-block; color: #333; text-align: center;margin-right: 10px;}
-      i.icon-thumbs-up-alt {cursor: pointer;}
-      i.icon-thumbs-up-alt:hover{opacity: 0.5}
-      header span span{padding-left: 5px;}
-      header span span:first-child{padding-left: 0px;}
-      header span span:empty {display: none;}
-      
-      div.back form{padding: 10px; background: whitesmoke;}
-      div.back label {width: 100px; display: inline-block;}
-      
-      template{display:block;}
-      .likes{-webkit-user-select: none;user-select: none;-moz-user-select: none;-ms-user-select: none;}
-      .front,.back{backface-visibility: hidden; width:100%;}
-      .hidden{display: none;}
-      .edit{right: 5px; position: absolute; top: -15px;}
-      [body]{position: relative;perspective: 1000;}
-      
-      .show_edit .edit{transform: rotateY(180deg); right: auto; left: 5px;}
-      .show_edit .flip{transform: rotateY(180deg);}
-      .show_edit .flip .back{ display:block; }
-      .show_edit .flip .front{ display:none; }
-      .flip{transition: 0.6s;  transform-style: preserve-3d;}
-      .front { z-index: 2;  transform: rotateY(0deg); display: block;    }
-      .back {  transform: rotateY(180deg); display: none; }
-  
-  h1 script
-  pre
-    code(class="language-javascript").
-      $(body)
-      .on("click", ".edit", function(){
-        $(body).toggleClass("show_edit")
-      })
-      .on("click", ".location_list .item", function(){
-        var value = $.trim($(this).text());
-        data.location = value;
-      })
-      .on("click", "i.icon-location", function(){
-        $(body).find(".location_list").toggle();
-      })
-      .on("click", ".img", function(){
-        data.image = "http://placehold.it/100x100?2";
-      })
-      .on("click", "i.icon-thumbs-up-alt", function(){
-        data.likes++;
-        console.info("likes: ",data.likes)
-      })
-
-      
+          $(body)
+          .on("click", ".edit", function(){
+            $(body).toggleClass("show_edit")
+          })
+          .on("click", ".location_list .item", function(){
+            var value = $.trim($(this).text());
+            data.location = value;
+          })
+          .on("click", "i.icon-location", function(){
+            $(body).find(".location_list").toggle();
+          })
+          .on("click", ".img", function(){
+            data.image = "http://placehold.it/100x100?2";
+          })
+          .on("click", "i.icon-thumbs-up-alt", function(){
+            data.likes++;
+            console.info("likes: ",data.likes)
+          })

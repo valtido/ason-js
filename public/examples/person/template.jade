@@ -1,0 +1,37 @@
+template(name="my_template")
+  style.
+    div[body]{background: white; padding: 20px;}
+    span{padding-right: 20px;display: inline-block; width: 100px;}
+    div{margin-bottom: 10px;}
+  div(body)
+    div
+      span Firstname:
+      span ${name.first}
+    div
+      span Lastname:
+      span ${name.last}
+    div 
+      span Location
+      span ${location}
+    br
+    hr
+    br
+    div
+      span Change name:
+      input.first(type="text" value="${name.first}")
+      input.last(type="text" value="${name.last}")
+    div
+      span Location:
+      input.location(type="text" value="${location}")
+  script.
+    $(body)
+    .on('change keyup',".location", function(event){
+      data.location = $(this).val()
+    })
+    .on('change keyup',".first", function(event){
+      data.name.first = $(this).val()
+    })
+    .on('change keyup',".last", function(event){
+      data.name.last = $(this).val()
+    })
+    ;
