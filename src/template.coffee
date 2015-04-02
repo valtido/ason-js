@@ -1,4 +1,10 @@
+# Template class, keeps an instance of template information
+# Each template can only exist once
+
 class Template
+  # template is
+  # @param template [HTMLElement]
+  # @return Template
   constructor: (template = null)->
     $template = $ template
     throw new Error "jom: template is required" if $template.length is 0

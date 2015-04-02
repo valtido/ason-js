@@ -1,0 +1,11 @@
+--name       "JOM"
+--readme     README.md
+--title      "JOM Documentation"
+--private
+--quiet
+--extension  coffee
+--output     ./doc
+./src
+-
+LICENSE
+CHANGELOG.md

@@ -1,7 +1,5 @@
 [![License][LicenseIMGURL]][LicenseURL] [![NPM version][NPMIMGURL]][NPMURL] [![Dependency Status](https://gemnasium.com/valtido/jom.svg)](https://gemnasium.com/valtido/jom) [![Build Status](https://travis-ci.org/valtido/jom.svg?branch=master)](https://travis-ci.org/valtido/jom)
-
-[![Dependency Status](https://gemnasium.com/valtido/jom.svg)](https://gemnasium.com/valtido/jom)
-===============
+==
 [NPMIMGURL]:                https://img.shields.io/npm/v/minify.svg?style=flat
 [NPMURL]:                   //npmjs.org/package/minify
 [LicenseIMGURL]:            https://img.shields.io/badge/license-MIT-317BF9.svg?style=flat
@@ -14,7 +12,7 @@ JOM (JSON Object Model)
 ==
 Why jom? it just sounds good.
 
-Objective
+Objective:
 ==
 This is an experimental front-end tool, which will help speed up dev work-flow by
 achieving the following:
@@ -35,11 +33,21 @@ to organise your files better as well as share the component with others.
 
 A good example would be a date-picker, color-picker, or tabs and many more UI
 tools you can think of.
+TODO:
+==
+- [ ] Documentation
+- [ ] Communicate with the server with the same data structure [data structure]
 
+Dependencies:
+==
+- jQuery
+http://jquery.com/
+- Web Components: https://github.com/webcomponents/webcomponentsjs
+- jjv : https://github.com/acornejo/jjv (optional unless json schema is used)
 Downloading:
+==
 
-
-Getting started
+Getting started:
 ==
 
 ```jade
@@ -118,3 +126,18 @@ template(name="my_template")
   }
 ]
 ```
+
+
+DOC
+==
+
+##Templates
+Templates are simple HTML files, should start with `<template name="[name]">`
+
+- Templates require
+
+
+
+
+t
+==
