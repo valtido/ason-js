@@ -40,71 +40,72 @@ TODO:
 
 Dependencies:
 ==
-- jQuery
-http://jquery.com/
+- jQuery: http://jquery.com/
 - Web Components: https://github.com/webcomponents/webcomponentsjs
 - jjv : https://github.com/acornejo/jjv (optional unless json schema is used)
+
 Downloading:
 ==
+Will add later
 
 Getting started:
 ==
 
 ```jade
-//- index.jade
+  //- index.jade
 
-head
-  //- Load JOM itself
-  script(type="text/javascript" src="jom.min.js")
+  head
+    //- Load JOM itself
+    script(type="text/javascript" src="jom.min.js")
 
-  //- load assets (order is not relevent)
-  link(rel="asset" source="data.json" type="text/template" name="my_template")
-  link(rel="asset" source="data.json" type="text/json" name="my_collection")
-body
-  //- use the new component
-  component(template="my_template" collection="my_collection" path="[0]")
-```
+    //- load assets (order is not relevent)
+    link(rel="asset" source="data.json" type="text/template" name="my_template")
+    link(rel="asset" source="data.json" type="text/json" name="my_collection")
+  body
+    //- use the new component
+    component(template="my_template" collection="my_collection" path="[0]")
 
-```jade
-//- /template.jade
-template(name="my_template")
-  style.
-    div[body]{background: white; padding: 20px;}
-    span{padding-right: 20px;display: inline-block; width: 100px;}
-    div{margin-bottom: 10px;}
-  div(body)
-    div
-      span Firstname:
-      span ${name.first}
-    div
-      span Lastname:
-      span ${name.last}
-    div
-      span Location
-      span ${location}
-    br
-    hr
-    br
-    div
-      span Change name:
-      input.first(type="text" value="${name.first}")
-      input.last(type="text" value="${name.last}")
-    div
-      span Location:
-      input.location(type="text" value="${location}")
-  script.
-    $(body)
-    .on('change keyup',".location", function(event){
-      data.location = $(this).val()
-    })
-    .on('change keyup',".first", function(event){
-      data.name.first = $(this).val()
-    })
-    .on('change keyup',".last", function(event){
-      data.name.last = $(this).val()
-    })
-    ;
 
+
+
+  //- /template.jade
+  template(name="my_template")
+    style.
+      div[body]{background: white; padding: 20px;}
+      span{padding-right: 20px;display: inline-block; width: 100px;}
+      div{margin-bottom: 10px;}
+    div(body)
+      div
+        span Firstname:
+        span ${name.first}
+      div
+        span Lastname:
+        span ${name.last}
+      div
+        span Location
+        span ${location}
+      br
+      hr
+      br
+      div
+        span Change name:
+        input.first(type="text" value="${name.first}")
+        input.last(type="text" value="${name.last}")
+      div
+        span Location:
+        input.location(type="text" value="${location}")
+    script.
+      $(body)
+      .on('change keyup',".location", function(event){
+        data.location = $(this).val()
+      })
+      .on('change keyup',".first", function(event){
+        data.name.first = $(this).val()
+      })
+      .on('change keyup',".last", function(event){
+        data.name.last = $(this).val()
+      })
+      ;
 ```
 
 ```json
@@ -126,18 +127,3 @@ template(name="my_template")
   }
 ]
 ```
-
-
-DOC
-==
-
-##Templates
-Templates are simple HTML files, should start with `<template name="[name]">`
-
-- Templates require
-
-
-
-
-t
-==

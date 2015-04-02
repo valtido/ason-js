@@ -14,7 +14,8 @@
     "dev": "grunt",
     "test2": "node --harmony node_modules/karma/bin/karma start test/karma.config.js --browsers PhantomJS --verbose",
     "test3": "node --harmony node_modules/karma/bin/karma start test/karma.config.js",
-    "build": "grunt build"
+    "build": "grunt build",
+    "docs": "codo ./src --output ./public/doc"
   },
   "repository": {
     "type": "git",
