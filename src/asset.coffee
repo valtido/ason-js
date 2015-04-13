@@ -1,4 +1,28 @@
+# Base class for asset management
+# This class is managed by JOM class, which calls different parts
+# this class only keeps vital information about an asset
+#
+#
 class Asset
+
+  # @property [String] uses html name attribute or null if not present
+  @name : null
+  # @property [String] The url string of the source of asset
+  @source : ""
+  # @property [String] original link tag which was used to request asset
+  @origin : ""
+  # @property [Object] full `type/media; charset=utf-8`
+  # @property [Object] part `type/media`
+  # @property [Object] params `UTF-8`
+  # @property [Object] type `UTF-8`
+  # @property [Object] asset's, content type
+  @content_type : {}
+  # @property element [HTMLElement] the new element browser uses to load asset
+  @element : {}
+
+  # Construct a new Asset
+  # @param asset [String, HTMLElement, jQueryElement]
+  # @return [Class_Object] Asset, with it's attributes
   constructor : (asset)->
     $asset   = $ asset
     @rel     = $asset.attr "rel"
@@ -24,8 +48,11 @@ class Asset
     @element = @create_element()
 
     @
-  # create_element: (asset)->
-  create_element: (asset)->
+
+  # creates an element to load the data,
+  # @example <script src="..." type="text/javascript" />
+  # @return [String] element returns an html element as a string
+  create_element: ->
     part = @content_type.part
 
     switch part

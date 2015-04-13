@@ -152,6 +152,16 @@ if ($.fn.value == null) {
 var Asset;
 
 Asset = (function() {
+  Asset.name = null;
+
+  Asset.source = "";
+
+  Asset.origin = "";
+
+  Asset.content_type = {};
+
+  Asset.element = {};
+
   function Asset(asset) {
     var $asset, params, part, split, type;
     $asset = $(asset);
@@ -181,7 +191,7 @@ Asset = (function() {
     this;
   }
 
-  Asset.prototype.create_element = function(asset) {
+  Asset.prototype.create_element = function() {
     var element, part;
     part = this.content_type.part;
     switch (part) {
@@ -257,6 +267,16 @@ var Collection;
 
 Collection = (function() {
   var env;
+
+  Collection.name = "";
+
+  Collection.data = [];
+
+  Collection.schema = {};
+
+  Collection.errors = null;
+
+  Collection.observing = false;
 
   env = jjv();
 

@@ -75,6 +75,7 @@ Getting started:
       span{padding-right: 20px;display: inline-block; width: 100px;}
       div{margin-bottom: 10px;}
     div(body)
+      h1 View
       div
         span Firstname:
         span ${name.first}
@@ -87,6 +88,7 @@ Getting started:
       br
       hr
       br
+      h1 Edit
       div
         span Change name:
         input.first(type="text" value="${name.first}")
@@ -106,6 +108,7 @@ Getting started:
         data.name.last = $(this).val()
       })
       ;
+
 ```
 
 ```json
