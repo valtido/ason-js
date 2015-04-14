@@ -77,16 +77,16 @@ class Collection
 
     return false
 
-  # stiches two or more paths together
-  # @example Stich two paths
-  #   var c = new Collection("my_coll").stich("path","name"); // "path.name"
-  # @example Stich three paths
-  #   var c = new Collection("my_coll").stich("path","name","[0]"); // "path.name[0]"
-  # @param [String] a first string to stich
-  # @param [String] b second string to stich
+  # joines two or more paths together
+  # @example join two paths
+  #   var c = new Collection("my_coll").join("path","name"); // "path.name"
+  # @example join three paths
+  #   var c = new Collection("my_coll").join("path","name","[0]"); // "path.name[0]"
+  # @param [String] a first string to join
+  # @param [String] b second string to join
   # @return [String] A string of a JSON PATH
-  stich : (a, b) ->
-    stich = @stich
+  join : (a, b) ->
+    join = @join
     b      = "#{b}"
     first  = b[0]
     result = if first is "[" then a + b else "#{a}.#{b}"
@@ -98,7 +98,7 @@ class Collection
       arr.push result
       arr.push.apply arr, args
 
-      result = @stich.apply @, arr
+      result = @join.apply @, arr
 
 
     return result

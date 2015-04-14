@@ -97,7 +97,7 @@ class JOM
 
     new Observe collection.data, (changes)->
       for key, change of changes
-        path = collection.stich collection.name, change.path
+        path = collection.join collection.name, change.path
         $(component.handles).each (i, handle)->
           if handle.handle.full is path
             switch handle.handle.type

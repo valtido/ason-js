@@ -263,6 +263,12 @@ Object.defineProperty(window, "Root", {
   }
 });
 
+
+/*
+Collections hold information such as `@data` and `@schema`
+
+`@schema` is an object which
+ */
 var Collection;
 
 Collection = (function() {
@@ -564,6 +570,14 @@ Component = (function() {
 
 })();
 
+
+/*
+Template class, keeps an instance of template information
+Each template can only exist once.
+
+Templates are controlled by the JOM class (main engine), on their own
+they simply hold information about a template.
+ */
 var Template;
 
 Template = (function() {

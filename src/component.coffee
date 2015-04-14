@@ -87,7 +87,7 @@ class Component
 
               if $(node).children().length is 0 and regx.test(text) is true
                 key      = text.match(regx)[1]
-                path     = collection.stich @path, key
+                path     = collection.join @path, key
                 new_text = collection.findByPath $.trim path
 
                 if new_text is undefined and jom.env is "production"
@@ -97,14 +97,14 @@ class Component
                 node.handle =
                   type: "node"
                   path : path
-                  full : collection.stich collection.name, path
+                  full : collection.join collection.name, path
 
               for attr, key in node.attributes
                 if regx.test attr.value
                   # TODO: fix the attributes, and allow multiple access
                   text     = attr.value
                   key      =text.match(regx)[1]
-                  path     = collection.stich @path, key
+                  path     = collection.join @path, key
                   new_text = collection.findByPath $.trim path
 
                   if new_text is undefined and jom.env is "production"
@@ -116,7 +116,7 @@ class Component
                     attr: attr
                     type: "attr"
                     path: path
-                    full: collection.stich collection.name, path
+                    full: collection.join collection.name, path
               node
     $content
   handle_template_scripts: (content) ->

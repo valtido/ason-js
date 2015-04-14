@@ -21,7 +21,7 @@ describe "collections: ", ->
     expect(collection.errors_to_string).toBeDefined()
     expect(collection.is_valid).toBeDefined()
     expect(collection.findByPath).toBeDefined()
-    expect(collection.stich).toBeDefined()
+    expect(collection.join).toBeDefined()
     expect(collection.errors).toEqual null
     expect(collection.observing).toEqual false
 
@@ -140,14 +140,14 @@ describe "collections: ", ->
 
       expect(collection.is_valid()).toEqual true
 
-  describe "stich; ", ->
-    it "should stich two or more strings to json path", ->
+  describe "join; ", ->
+    it "should join two or more strings to json path", ->
       collection = new Collection "profile"
       c = collection
-      expect(c.stich "person","name").toEqual "person.name"
-      expect(c.stich "person[0]","name").toEqual "person[0].name"
-      expect(c.stich "person","[0].name").toEqual "person[0].name"
-      expect(c.stich "person","name","first").toEqual "person.name.first"
+      expect(c.join "person","name").toEqual "person.name"
+      expect(c.join "person[0]","name").toEqual "person[0].name"
+      expect(c.join "person","[0].name").toEqual "person[0].name"
+      expect(c.join "person","name","first").toEqual "person.name.first"
 
   describe "find; ", ->
     it "should find a string ", ->
