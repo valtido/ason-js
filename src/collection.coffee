@@ -3,15 +3,15 @@
 
 class Collection
   # @property [String] Name of the collection from name attr
-  @name = ""
+  @name : ""
   # @property [Array] An array of data for the collection
-  @data = []
+  @data : []
   # @property [Object] a JSON Schema object describing data
-  @schema = {}
+  @schema : {}
   # @property [Object] reported JSON Schema errors when validated is triggered
-  @errors = null
+  @errors : null
   # @property [Boolean] indicates whether the collection observes changes
-  @observing = false
+  @observing : false
 
   env = jjv()
 
@@ -107,7 +107,7 @@ class Collection
   # Does a deep search and returns the object if found or else `undefined`
   # @param [String] path a JSON path to search for
   # @example Find name of a person
-  #   new Collection("person",{name: "valtid"}).findByPath("[0].name");//"valtid"
+  #  new Collection("person",{name: "valtid"}).findByPath("[0].name");//"valtid"
   # @return [mixed] returns different types of `undefined` if nothing found
   findByPath : (path) ->
     regx   = /(\[)(\d+)(\])/g

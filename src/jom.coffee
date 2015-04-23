@@ -84,34 +84,8 @@ class JOM
         data = collection.data
         stack.collection[name] = new Collection name, data
 
-  observe: ->
-    if component instanceof Component is false
-      throw new Error "jom: observe component missing"
-    if collection instanceof Collection is false
-      throw new Error "jom: observe collection missing"
-
-    if @collection.observing is true
-      return false
-
-    collection.observing = true
-
-    new Observe collection.data, (changes)->
-      for key, change of changes
-        path = collection.join collection.name, change.path
-        $(component.handles).each (i, handle)->
-          if handle.handle.full is path
-            switch handle.handle.type
-              when "attr"
-                $(handle).attr handle.handle.attr.name, change.value
-              when "node"
-                $(handle).text change.value
-              else
-                throw new Error "jom: unexpected handle type"
-
-    return true
-
   assemble_components: ->
-    $.each stack.component, (i, component)->
+    $.each stack.component, (i, component)=>
       if  component.ready isnt true
         template   = jom.template[component.attr.template]
         collection = jom.collection[component.attr.collection]
@@ -122,6 +96,9 @@ class JOM
           component.define_template template
           component.define_collection collection
           component.template.clone()
+
+          @repeater component
+
           component.hide()
           component.root.appendChild $('<div>Loading...</div>').get 0
 
@@ -134,15 +111,29 @@ class JOM
 
           component.root.appendChild component.template.cloned
 
+          $('[body] img').each (i, image)->
+            $image = $ image
+            $image.attr 'src', $image.attr "source"
           component.show()
           component.ready = true
-
+  repeater: (component, context = null)->
+    $ '[body] [repeat]', context or component.template.cloned
+    .each (i, repeater)->
+      repeater = $ repeater
+      items = component.repeat repeater
+      items.insertAfter repeater
+      repeater.hide()
   watch_collections: ->
     for key, collection of stack.collection
       if collection.observing is false
         collection.observing = true
-        new Observe collection.data, (changes)->
-          $.each stack.component, (i, component)->
+        new Observe collection.data, (changes)=>
+          $.each stack.component, (i, component)=>
+            $(component.root).find('[repeated]').remove()
+            $(component.root).find('[repeat]').show()
+            @repeater component, component.root
+            component.handlebars component.root, component
+            $(component.root).find('[repeat]').hide()
             component.trigger changes, collection
 
   resolve: (path)->

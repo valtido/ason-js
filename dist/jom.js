@@ -263,12 +263,6 @@ Object.defineProperty(window, "Root", {
   }
 });
 
-
-/*
-Collections hold information such as `@data` and `@schema`
-
-`@schema` is an object which
- */
 var Collection;
 
 Collection = (function() {
@@ -353,9 +347,9 @@ Collection = (function() {
     return false;
   };
 
-  Collection.prototype.stich = function(a, b) {
-    var args, arr, first, result, stich;
-    stich = this.stich;
+  Collection.prototype.join = function(a, b) {
+    var args, arr, first, join, result;
+    join = this.join;
     b = "" + b;
     first = b[0];
     result = first === "[" ? a + b : a + "." + b;
@@ -364,7 +358,7 @@ Collection = (function() {
       arr = [];
       arr.push(result);
       arr.push.apply(arr, args);
-      result = this.stich.apply(this, arr);
+      result = this.join.apply(this, arr);
     }
     return result;
   };
@@ -429,11 +423,13 @@ Component = (function() {
     this.template = null;
     this.collection = null;
     this.path = path || "[0]";
+    this.data = [];
     this.create_shadow();
     this.root = this.element.shadowRoot;
     this.template_ready = false;
     this.collection_ready = false;
     this.handles = [];
+    this.events = [];
     this;
   }
 
@@ -470,7 +466,9 @@ Component = (function() {
     if (!collection || collection instanceof Collection === false) {
       throw new Error("jom: collection cant be added");
     }
-    return this.collection = collection;
+    this.collection = collection;
+    this.data = this.collection.findByPath(this.path);
+    return this.collection;
   };
 
   Component.prototype.trigger = function(changes, collection) {
@@ -480,18 +478,43 @@ Component = (function() {
       for (key in changes) {
         change = changes[key];
         if (change.path.slice(0, this.path.length) === this.path) {
-          _results.push($(this.handles).each(function(i, handle) {
-            if (handle.handle.path === change.path) {
-              switch (handle.handle.type) {
-                case "attr":
-                  return $(handle).attr(handle.handle.attr.name, change.value);
-                case "node":
-                  return $(handle).text(change.value);
-                default:
-                  throw new Error("jom: unexpected handle type");
+          _results.push($(this.handles).each((function(_this) {
+            return function(i, handle) {
+              var event, partial, _i, _j, _len, _len1, _ref, _ref1, _results1;
+              if (handle.handle.path === change.path) {
+                $(handle).trigger('change', change);
+                partial = change.path.replace(_this.path, "").replace(/^\./, "");
+                _ref = _this.events;
+                for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                  event = _ref[_i];
+                  if (event.type === "change:before" && event.path === partial) {
+                    event.callback.call(_this);
+                  }
+                }
+                switch (handle.handle.type) {
+                  case "attr":
+                    $(handle).attr(handle.handle.attr.name, change.value);
+                    break;
+                  case "node":
+                    $(handle).text(change.value);
+                    break;
+                  default:
+                    throw new Error("jom: unexpected handle type");
+                }
+                _ref1 = _this.events;
+                _results1 = [];
+                for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+                  event = _ref1[_j];
+                  if (event.type === "change" && event.path === partial) {
+                    _results1.push(event.callback.call(_this));
+                  } else {
+                    _results1.push(void 0);
+                  }
+                }
+                return _results1;
               }
-            }
-          }));
+            };
+          })(this)));
         } else {
           _results.push(void 0);
         }
@@ -501,16 +524,18 @@ Component = (function() {
   };
 
   Component.prototype.handlebars = function(content, component) {
-    var $content, collection, nodes;
+    var $content, collection;
     collection = component.collection;
     $content = $(content);
-    nodes = $content.findAll('*').not('script, style, link').each((function(_this) {
+    $content.findAll('*').not('script, style, link, [repeat]').filter(function() {
+      return $(this).parents('[repeat]').length === 0;
+    }).each((function(_this) {
       return function(i, node) {
         var attr, key, new_text, path, text, _i, _len, _ref;
         text = $(node).text();
         if ($(node).children().length === 0 && regx.test(text) === true) {
           key = text.match(regx)[1];
-          path = collection.stich(_this.path, key);
+          path = collection.join(_this.path, key);
           new_text = collection.findByPath($.trim(path));
           if (new_text === void 0 && jom.env === "production") {
             new_text = "";
@@ -520,7 +545,7 @@ Component = (function() {
           node.handle = {
             type: "node",
             path: path,
-            full: collection.stich(collection.name, path)
+            full: collection.join(collection.name, path)
           };
         }
         _ref = node.attributes;
@@ -529,7 +554,7 @@ Component = (function() {
           if (regx.test(attr.value)) {
             text = attr.value;
             key = text.match(regx)[1];
-            path = collection.stich(_this.path, key);
+            path = collection.join(_this.path, key);
             new_text = collection.findByPath($.trim(path));
             if (new_text === void 0 && jom.env === "production") {
               new_text = "";
@@ -540,7 +565,7 @@ Component = (function() {
               attr: attr,
               type: "attr",
               path: path,
-              full: collection.stich(collection.name, path)
+              full: collection.join(collection.name, path)
             };
           }
         }
@@ -566,6 +591,47 @@ Component = (function() {
     });
   };
 
+  Component.prototype.on = function(type, path, callback) {
+    var event;
+    event = {
+      type: type,
+      path: path,
+      callback: callback
+    };
+    this.events.push(event);
+    return this;
+  };
+
+  Component.prototype.repeat = function(element, data) {
+    var $element, clone, index, item, key, path, prefix, repeat, x, _i, _len;
+    if (data == null) {
+      data = null;
+    }
+    if (data === null) {
+      data = this.data;
+    }
+    $element = $(element);
+    key = $element.attr('repeat');
+    if (key === void 0) {
+      throw new Error("component: items attr missing");
+    }
+    key = key.match(regx)[1];
+    repeat = $('<div repeated="true" />');
+    path = this.collection.join(this.path, key);
+    data = this.collection.findByPath(path);
+    for (index = _i = 0, _len = data.length; _i < _len; index = ++_i) {
+      item = data[index];
+      clone = $element.clone();
+      clone.attr("repeated", true);
+      clone.attr("repeat", null);
+      clone.attr('repeat-index', index);
+      prefix = this.collection.join(key, "[" + index + "]");
+      x = clone[0].outerHTML.replace(/(\${)([^\s{}]+)(})/g, "$1" + prefix + ".$2$3");
+      repeat.append(x);
+    }
+    return repeat;
+  };
+
   return Component;
 
 })();
@@ -573,14 +639,17 @@ Component = (function() {
 
 /*
 Template class, keeps an instance of template information
-Each template can only exist once.
-
-Templates are controlled by the JOM class (main engine), on their own
-they simply hold information about a template.
+Each template can only exist once
  */
 var Template;
 
 Template = (function() {
+
+  /*
+  Template constructor
+  @param template [HTMLElement | String ]
+  @return Template
+   */
   function Template(template) {
     var $template, t;
     if (template == null) {
@@ -719,61 +788,47 @@ JOM = (function() {
     });
   };
 
-  JOM.prototype.observe = function() {
-    if (component instanceof Component === false) {
-      throw new Error("jom: observe component missing");
-    }
-    if (collection instanceof Collection === false) {
-      throw new Error("jom: observe collection missing");
-    }
-    if (this.collection.observing === true) {
-      return false;
-    }
-    collection.observing = true;
-    new Observe(collection.data, function(changes) {
-      var change, key, path, _results;
-      _results = [];
-      for (key in changes) {
-        change = changes[key];
-        path = collection.stich(collection.name, change.path);
-        _results.push($(component.handles).each(function(i, handle) {
-          if (handle.handle.full === path) {
-            switch (handle.handle.type) {
-              case "attr":
-                return $(handle).attr(handle.handle.attr.name, change.value);
-              case "node":
-                return $(handle).text(change.value);
-              default:
-                throw new Error("jom: unexpected handle type");
-            }
+  JOM.prototype.assemble_components = function() {
+    return $.each(stack.component, (function(_this) {
+      return function(i, component) {
+        var collection, template, _ref;
+        if (component.ready !== true) {
+          template = jom.template[component.attr.template];
+          collection = jom.collection[component.attr.collection];
+          if (template !== void 0 && collection !== void 0 && ((_ref = collection.data) != null ? _ref.length : void 0)) {
+            component.define_template(template);
+            component.define_collection(collection);
+            component.template.clone();
+            _this.repeater(component);
+            component.hide();
+            component.root.appendChild($('<div>Loading...</div>').get(0));
+            component.handlebars(component.template.cloned, component);
+            $(component.root.children).remove();
+            component.handle_template_scripts(component.template.cloned);
+            component.root.appendChild(component.template.cloned);
+            $('[body] img').each(function(i, image) {
+              var $image;
+              $image = $(image);
+              return $image.attr('src', $image.attr("source"));
+            });
+            component.show();
+            return component.ready = true;
           }
-        }));
-      }
-      return _results;
-    });
-    return true;
+        }
+      };
+    })(this));
   };
 
-  JOM.prototype.assemble_components = function() {
-    return $.each(stack.component, function(i, component) {
-      var collection, template, _ref;
-      if (component.ready !== true) {
-        template = jom.template[component.attr.template];
-        collection = jom.collection[component.attr.collection];
-        if (template !== void 0 && collection !== void 0 && ((_ref = collection.data) != null ? _ref.length : void 0)) {
-          component.define_template(template);
-          component.define_collection(collection);
-          component.template.clone();
-          component.hide();
-          component.root.appendChild($('<div>Loading...</div>').get(0));
-          component.handlebars(component.template.cloned, component);
-          $(component.root.children).remove();
-          component.handle_template_scripts(component.template.cloned);
-          component.root.appendChild(component.template.cloned);
-          component.show();
-          return component.ready = true;
-        }
-      }
+  JOM.prototype.repeater = function(component, context) {
+    if (context == null) {
+      context = null;
+    }
+    return $('[body] [repeat]', context || component.template.cloned).each(function(i, repeater) {
+      var items;
+      repeater = $(repeater);
+      items = component.repeat(repeater);
+      items.insertAfter(repeater);
+      return repeater.hide();
     });
   };
 
@@ -785,11 +840,18 @@ JOM = (function() {
       collection = _ref[key];
       if (collection.observing === false) {
         collection.observing = true;
-        _results.push(new Observe(collection.data, function(changes) {
-          return $.each(stack.component, function(i, component) {
-            return component.trigger(changes, collection);
-          });
-        }));
+        _results.push(new Observe(collection.data, (function(_this) {
+          return function(changes) {
+            return $.each(stack.component, function(i, component) {
+              $(component.root).find('[repeated]').remove();
+              $(component.root).find('[repeat]').show();
+              _this.repeater(component, component.root);
+              component.handlebars(component.root, component);
+              $(component.root).find('[repeat]').hide();
+              return component.trigger(changes, collection);
+            });
+          };
+        })(this)));
       } else {
         _results.push(void 0);
       }

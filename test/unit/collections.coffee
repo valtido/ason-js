@@ -16,14 +16,16 @@ describe "collections: ", ->
 
     expect(collection.name).toBeDefined()
     expect(collection.data).toBeDefined()
+    expect(collection.schema).toEqual {}
+    expect(collection.errors).toEqual null
+    expect(collection.observing).toEqual false
+
     expect(collection.attach_data).toBeDefined()
     expect(collection.attach_schema).toBeDefined()
     expect(collection.errors_to_string).toBeDefined()
     expect(collection.is_valid).toBeDefined()
-    expect(collection.findByPath).toBeDefined()
     expect(collection.join).toBeDefined()
-    expect(collection.errors).toEqual null
-    expect(collection.observing).toEqual false
+    expect(collection.findByPath).toBeDefined()
 
   it "should fail to add a new collection", ->
     expect(-> new Collection())

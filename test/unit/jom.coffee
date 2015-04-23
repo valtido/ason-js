@@ -247,8 +247,12 @@ describe "jom: ", ->
       expect($('body>component').length).toEqual 1
       expect(jom.component.length).toEqual 1
 
+      jom.watch_collections()
+
       component = jom.component[0]
-      collection.data[0].name = "Tom"
       component.trigger = (changes, collection)->
-        expect(changes.path).toBe "[0].name"
-        expect(changes.value).toBe "Tom"
+        expect(jom.get_stack().component.length).toEqual 1
+        expect(changes[0].path).toBe "[0].name"
+        expect(changes[0].value).toBe "Tom"
+
+      collection.data[0].name = "Tom"

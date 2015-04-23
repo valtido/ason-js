@@ -27,6 +27,7 @@ class Component
     @template   = null
     @collection = null
     @path       = path || "[0]"
+    @data = []
 
     @create_shadow()
 
@@ -35,6 +36,7 @@ class Component
     @collection_ready = false
 
     @handles = []
+    @events  = []
 
 
     @
@@ -61,13 +63,21 @@ class Component
       throw new Error "jom: collection cant be added"
 
     @collection = collection
-
+    # TODO: improve to findByPath as path could be different
+    @data  = @collection.findByPath @path
+    @collection
   trigger: (changes, collection)->
     if collection.name is @collection.name
       for key, change of changes
         if change.path.slice(0, @path.length) is @path
-          $(@handles).each (i, handle)->
+          $(@handles).each (i, handle)=>
             if handle.handle.path is change.path
+              $(handle).trigger('change', change)
+              partial = change.path.replace(@path,"").replace(/^\./,"")
+              for event in @events
+                if event.type is "change:before" and event.path is partial
+                  event.callback.call @
+
               switch handle.handle.type
                 when "attr"
                   $(handle).attr handle.handle.attr.name, change.value
@@ -76,48 +86,55 @@ class Component
                 else
                   throw new Error "jom: unexpected handle type"
 
+              for event in @events
+                if event.type is "change" and event.path is partial
+                  event.callback.call @
   handlebars: (content, component)->
     collection = component.collection
     $content = $ content
     # console.log content
-    nodes = $content
-            .findAll('*').not('script, style, link')
-            .each (i, node)=>
-              text = $(node).text()
 
-              if $(node).children().length is 0 and regx.test(text) is true
-                key      = text.match(regx)[1]
-                path     = collection.join @path, key
-                new_text = collection.findByPath $.trim path
+    $content
+    .findAll('*')
+    .not('script, style, link, [repeat]')
+    .filter ->
+      $(this).parents('[repeat]').length is 0
+    .each (i, node)=>
+      text = $(node).text()
 
-                if new_text is undefined and jom.env is "production"
-                  new_text = ""
-                $(node).text text.replace regx, new_text
-                @handles.push node
-                node.handle =
-                  type: "node"
-                  path : path
-                  full : collection.join collection.name, path
+      if $(node).children().length is 0 and regx.test(text) is true
+        key      = text.match(regx)[1]
+        path     = collection.join @path, key
+        new_text = collection.findByPath $.trim path
 
-              for attr, key in node.attributes
-                if regx.test attr.value
-                  # TODO: fix the attributes, and allow multiple access
-                  text     = attr.value
-                  key      =text.match(regx)[1]
-                  path     = collection.join @path, key
-                  new_text = collection.findByPath $.trim path
+        if new_text is undefined and jom.env is "production"
+          new_text = ""
+        $(node).text text.replace regx, new_text
+        @handles.push node
+        node.handle =
+          type: "node"
+          path : path
+          full : collection.join collection.name, path
 
-                  if new_text is undefined and jom.env is "production"
-                    new_text = ""
+      for attr, key in node.attributes
+        if regx.test attr.value
+          # TODO: fix the attributes, and allow multiple access
+          text     = attr.value
+          key      =text.match(regx)[1]
+          path     = collection.join @path, key
+          new_text = collection.findByPath $.trim path
 
-                  attr.value = text.replace regx, new_text
-                  @handles.push node
-                  node.handle =
-                    attr: attr
-                    type: "attr"
-                    path: path
-                    full: collection.join collection.name, path
-              node
+          if new_text is undefined and jom.env is "production"
+            new_text = ""
+
+          attr.value = text.replace regx, new_text
+          @handles.push node
+          node.handle =
+            attr: attr
+            type: "attr"
+            path: path
+            full: collection.join collection.name, path
+      node
     $content
   handle_template_scripts: (content) ->
     escapeRegExp = (str) ->
@@ -145,3 +162,33 @@ class Component
                 #{script.text}
                 })()"""
       return script
+
+  on: (type, path, callback)->
+    event =
+      type    : type
+      path    : path
+      callback: callback
+    @events.push event
+
+    return @
+
+
+  repeat: (element, data = null)->
+    data     = @data if data is null
+    $element = $ element
+    key      = $element.attr 'repeat'
+    throw new Error "component: items attr missing" if key is undefined
+    key    = key.match(regx)[1]
+    repeat = $('<div repeated="true" />')
+    path   = @collection.join @path, key
+    data   = @collection.findByPath path
+
+    for item, index in data
+      clone = $element.clone()
+      clone.attr "repeated", true
+      clone.attr "repeat", null
+      clone.attr 'repeat-index', index
+      prefix = @collection.join key, "[#{index}]"
+      x = clone[0].outerHTML.replace /(\${)([^\s{}]+)(})/g, "$1#{prefix}.$2$3"
+      repeat.append x
+    repeat

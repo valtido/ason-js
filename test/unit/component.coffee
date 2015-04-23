@@ -1,5 +1,5 @@
 component = {}
-describe "components", ->
+describe "components:: ", ->
   beforeEach ()->
     component = {}
     $('foot').html("")
@@ -21,6 +21,7 @@ describe "components", ->
     expect(component.collection).toBeDefined()
     expect(component.path).toBeDefined()
     expect(component.element).toBeDefined()
+    expect(component.events).toBeDefined()
 
     expect(component.ready).toBeDefined()
 
@@ -36,7 +37,7 @@ describe "components", ->
     expect(component.define_template).toBeDefined()
     expect(component.define_collection).toBeDefined()
 
-    expect(component.attr).toEqual template:"profile",collection:"profile"
+    expect(component.attr).toEqual template:"profile", collection:"profile"
 
     expect(component.root).not.toEqual null
     expect(component.element.shadowRoot).not.toEqual null
@@ -44,6 +45,8 @@ describe "components", ->
     expect(component.handlebars).toBeDefined()
     expect(component.handle_template_scripts).toBeDefined()
     expect(component.trigger).toBeDefined()
+
+    expect(component.on).toBeDefined()
 
   describe "required properties",->
 
@@ -113,6 +116,7 @@ describe "components", ->
 
       c = "<component template=profile collection=profile />"
       component = new Component c
+
       component.define_collection collection
 
       content = """
@@ -125,9 +129,9 @@ describe "components", ->
         </div>
       </div>
       """
+
       new_content = component.handlebars content, component
       expected_content = "I will test some thing even if it has an array Rocky"
-
 
       new_content      = $.trim($(new_content).text()).replace /[\s]+/g, " "
       expected_content = $.trim(expected_content).replace /[\s]+/g, " "
@@ -208,7 +212,7 @@ describe "components", ->
       expect(-> component.define_collection collection)
       .toThrow new Error "jom: collection cant be added"
 
-  describe "shadowRoot",->
+  describe "shadowRoot; ",->
     it "should wrap if shadowRoot is not native", ->
       c = "<component template=profile collection=profile />"
       $c = $ c
@@ -218,3 +222,160 @@ describe "components", ->
 
       component = new Component x
       expect(x.createShadowRoot).toBeDefined()
+
+  describe "trigger; ",->
+    it "should trigger changes",->
+      t = "<template name=user><div body>${name}</div></template>"
+      template = new Template t
+
+      data = [ name: "valtid" ]
+      collection = new Collection "profile", data
+
+      jom.collection.profile = collection
+      jom.template.profile = template
+
+      c = "<component template=profile collection=profile />"
+      component = new Component c
+      component.define_collection collection
+      component.define_template template
+      template.clone()
+      component.handlebars template.cloned, component
+
+      changes =[
+        path: "[0].name"
+        value: "Valtid Caushi"
+      ]
+
+      trigger = component.trigger changes, collection
+
+      expect(trigger.length).toEqual 1
+
+  it "should trigger changes cover attributes",->
+    t = "<template name=user><div body><span value='${name}'/></div></template>"
+    template = new Template t
+
+    data = [ name: "valtid" ]
+    collection = new Collection "profile", data
+
+    jom.collection.profile = collection
+    jom.template.profile = template
+
+    c = "<component template=profile collection=profile />"
+    component = new Component c
+    component.define_collection collection
+    component.define_template template
+    template.clone()
+    component.handlebars template.cloned, component
+
+    changes =[
+      path: "[0].name"
+      value: "Valtid Caushi"
+    ]
+
+    trigger = component.trigger changes, collection
+
+    expect(trigger.length).toEqual 1
+
+
+  it "should trigger changes and throw errors",->
+    t = "<template name=user><div body><span value='${name}'/></div></template>"
+    template = new Template t
+
+    data = [ name: "valtid" ]
+    collection = new Collection "profile", data
+
+    jom.collection.profile = collection
+    jom.template.profile = template
+
+    c = "<component template=profile collection=profile />"
+    component = new Component c
+    component.define_collection collection
+    component.define_template template
+    template.clone()
+    component.handlebars template.cloned, component
+    component.handles[0].handle.type = "__fake__"
+
+    changes =[
+      path: "[0].name"
+      value: "Valtid Caushi"
+    ]
+
+    expect(-> component.trigger changes, collection)
+    .toThrow new Error "jom: unexpected handle type"
+
+
+  describe "on event; ", ->
+    it "should push events to the queue", ->
+      c = "<component template=profile collection=profile />"
+      component = new Component c
+
+      expect(component.events.length).toEqual 0
+
+      component.on "change", "name", ->
+
+      expect(component.events.length).toEqual 1
+      expect(component.events[0].path).toEqual "name"
+      expect(component.events[0].type).toEqual "change"
+
+  describe "trigger event; ", ->
+    xit "should trigger all events that match path and type", ->
+      output = false
+      c = "<component template=profile collection=profile />"
+      component = new Component c
+
+      data = [ name: "valtid" ]
+      collection = new Collection "profile", data
+
+      component.define_collection collection
+
+      expect(component.events.length).toEqual 0
+
+      component.on "change", "name", ->
+        output = true
+        console.log "test: true"
+        expect(output).toEqual true
+
+      expect(component.events.length).toEqual 1
+      expect(component.events[0].path).toEqual "name"
+      expect(component.events[0].type).toEqual "change"
+
+      expect(output).toEqual false
+
+      changes =[
+        path: "[0].name"
+        value: "Valtid Caushi"
+      ]
+
+      trigger = component.trigger changes, collection
+
+      expect(output).toEqual true
+
+  describe "repeat; ", ->
+    iit "should repeat the same thing over and over", ->
+      c = "<component template=profile collection=profile />"
+      component = new Component c
+
+      repeater = """
+        <div repeat="${names}">
+          <div name="${name}"></div>
+        </div>
+      """
+      data = [
+        {names: [
+            {name: "Valtid"},
+            {name: "John"}
+          ]
+        }
+      ]
+      out = component.repeat repeater, data
+
+      expected = """
+      <div repeat="${names}">
+        <div name="${names[0].name}"></div>
+        <div name="${names[1].name}"></div>
+      </div>
+      """
+
+      # expect(out).toEqual expected
+      expect(out.children().length).toEqual 2
+      console.debug out.children()
