@@ -1,0 +1,68 @@
+template(name="comment")
+  style.
+    @import url("/assets/-/fontello/css/fontello.css");
+    :host{position:relative;}
+    div[body]{background: #F6F7F8; padding: 2em; vertical-align: top;}
+    .timestamp{margin-right: 1em; color: #666;}
+    .comment{margin-top: 0.5em;}
+    .user{font-weight: bold; color: #141823;margin-right: 1em;}
+    .user a{color: #3b5998;}
+    img{text-align:left; float: left; margin-right: 1em;}
+    .item{margin-bottom: 1em; background: #fefefe; padding: 1em;position:relative}
+    textarea{width: 100%; min-height: 100px;}
+    .cancel{position: absolute;right: 0; top: 0;}
+  div(body)
+    div.item(repeat="${comments}")
+      i.cancel.icon-cancel-circled-outline
+      img(source="${user.image}")
+      span.user
+        i.icon-user
+        a(href="#")
+          span ${user.name.first} 
+          span ${user.name.last}
+      span.other
+        span.timestamp ${commented_on}
+        span.likes
+          i.icon-thumbs-up-alt
+          span ${likes}
+      div.comment 
+        i.icon-comment
+        span ${comment}
+    div.new_comment
+      img(source="${user.image}")
+      textarea(placeholder="Type your comment here")
+  script(src="/bower_components/moment/moment.js")
+  script.
+    $(body)
+    .on('click',".cancel", function(event){
+      var index = $(this).parent().attr("repeat-index")
+      data.comments.splice(index, 1)
+    })
+    .on('keyup',"textarea", function(event){
+      if(event.which == 13){
+        var new_comment = {}
+        new_comment.user = { "name": {"first":"Valtid", "last":"Caushi"}, "image": "http://placehold.it/32x32" };
+        new_comment.comment = $(this).val();
+        new_comment.likes = 0;
+        new_comment.commented_on = +new Date
+        data.comments.push(new_comment)
+      }
+    })
+    .on('click',"i.icon-thumbs-up-alt", function(event){
+      data.likes++
+    })
+    .on('change keyup',".location", function(event){
+      data.location = $(this).val()
+    })
+    ;
+    
+    component
+    .on('change', "likes", function(){
+      $('.likes span', body).text(data.likes*25)
+    })
+    .on('change', "commented_on", function(){
+      var date = moment(data.commented_on * 1000)
+      var time = date.fromNow()
+      $('.timestamp',body).text(time)
+    })
+    ;

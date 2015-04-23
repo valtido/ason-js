@@ -1,0 +1,13 @@
+extends ../../_layout
+block assets
+  //- load assets (order is not important)
+  link(rel="asset" source="template.html" type="text/template" name="comment")
+  link(rel="asset" source="comments.json" type="text/json" name="comments")
+  style.
+    component{margin-bottom: 1em; }
+    component::shadow i.icon-location{color: red;}
+    component::shadow i.icon-user{color: green;}
+
+block content
+  //- use the new component (when template and collection are ready)
+  component(template="comment" collection="comments" path="[0]")

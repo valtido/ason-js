@@ -1,0 +1,19 @@
+[
+  {
+    "user":{ "name": {"first":"Valtid", "last":"Caushi"}, "image": "http://placehold.it/32x32" },
+    "comments" : [
+      {
+        "user":{ "name": {"first":"Valtid", "last":"Caushi"}, "image": "http://placehold.it/32x32" },
+        "comment": "Valtid is the best thing ever!!!",
+        "likes": 2,
+        "commented_on": 1429027264
+      },
+      {
+        "user":{ "name": {"first":"John", "last":"Doe"}, "image": "http://placehold.it/32x32" },
+        "comment": "I agree",
+        "likes": 2,
+        "commented_on": 1429027292
+      }
+    ]
+  }
+]

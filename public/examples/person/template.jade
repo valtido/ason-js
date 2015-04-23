@@ -1,29 +1,36 @@
 template(name="my_template")
   style.
+    @import url("/assets/-/fontello/css/fontello.css");
     div[body]{background: white; padding: 20px;}
-    span{padding-right: 20px;display: inline-block; width: 100px;}
+    label{padding-right: 20px;display: inline-block; width: 100px;}
     div{margin-bottom: 10px;}
   div(body)
     h1 View
     div
-      span Firstname:
+      label 
+        i.icon-user
+        span Firstname:
       span ${name.first}
     div
-      span Lastname:
+      label 
+        i.icon-user
+        span Lastname:
       span ${name.last}
     div 
-      span Location
+      label 
+        i.icon-location
+        span Location
       span ${location}
     br
     hr
     br
     h1 Edit
     div
-      span Change name:
+      label Change name:
       input.first(type="text" value="${name.first}")
       input.last(type="text" value="${name.last}")
     div
-      span Location:
+      label Location:
       input.location(type="text" value="${location}")
   script.
     $(body)

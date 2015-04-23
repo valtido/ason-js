@@ -21,6 +21,7 @@
     "jsonpath": "*",
     "underscore": "~1.7.0",
     "jjv": "~1.0.2",
-    "webcomponentsjs": "~0.5.5"
+    "webcomponentsjs": "~0.5.5",
+    "moment": "~2.10.2"
   }
 }
