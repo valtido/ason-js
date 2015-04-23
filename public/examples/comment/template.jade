@@ -49,7 +49,9 @@ template(name="comment")
       }
     })
     .on('click',"i.icon-thumbs-up-alt", function(event){
-      data.likes++
+      var index = $(this).parents('[repeated]').attr("repeat-index")
+      debugger
+      data.comments[index].likes++
     })
     .on('change keyup',".location", function(event){
       data.location = $(this).val()
@@ -57,11 +59,9 @@ template(name="comment")
     ;
     
     component
-    .on('change', "likes", function(){
-      $('.likes span', body).text(data.likes*25)
-    })
     .on('change', "commented_on", function(){
-      var date = moment(data.commented_on * 1000)
+      var index = $(this).parents('[repeated]').attr("repeat-index")
+      var date = moment(data.comments[index].commented_on * 1000)
       var time = date.fromNow()
       $('.timestamp',body).text(time)
     })
