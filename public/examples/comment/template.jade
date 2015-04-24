@@ -6,11 +6,13 @@ template(name="comment")
     .timestamp{margin-right: 1em; color: #666;}
     .comment{margin-top: 0.5em;}
     .user{font-weight: bold; color: #141823;margin-right: 1em;}
-    .user a{color: #3b5998;}
+    a{color: #3b5998;}
     img{text-align:left; float: left; margin-right: 1em;}
     .item{margin-bottom: 1em; background: #fefefe; padding: 1em;position:relative}
     textarea{width: 100%; min-height: 100px;}
-    .cancel{position: absolute;right: 0; top: 0;}
+    .cancel{position: absolute;right: 0; top: 0;cursor: pointer; cursor: hand;}
+    .like {cursor: pointer; cursor: hand;}
+    .like:hover, .cancel:hover{color: #900;}
   div(body)
     div.item(repeat="${comments}")
       i.cancel.icon-cancel-circled-outline
@@ -23,13 +25,17 @@ template(name="comment")
       span.other
         span.timestamp ${commented_on}
         span.likes
-          i.icon-thumbs-up-alt
+          i.like.icon-thumbs-up-alt
           span ${likes}
       div.comment 
         i.icon-comment
         span ${comment}
+    hr
     div.new_comment
       img(source="${user.image}")
+      a(href="#")
+        span ${user.name.first} 
+        span ${user.name.last}
       textarea(placeholder="Type your comment here")
   script(src="/bower_components/moment/moment.js")
   script.

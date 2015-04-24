@@ -111,11 +111,13 @@ class JOM
 
           component.root.appendChild component.template.cloned
 
-          $('[body] img').each (i, image)->
-            $image = $ image
-            $image.attr 'src', $image.attr "source"
+          @image_source_change component
           component.show()
           component.ready = true
+  image_source_change : (component)->
+    $('[body] img', component.root).each (i, image)->
+      $image = $ image
+      $image.attr 'src', $image.attr "source"
   repeater: (component, context = null)->
     $ '[body] [repeat]', context or component.template.cloned
     .each (i, repeater)->
@@ -133,6 +135,7 @@ class JOM
             $(component.root).find('[repeat]').show()
             @repeater component, component.root
             component.handlebars component.root, component
+            @image_source_change component
             $(component.root).find('[repeat]').hide()
             component.trigger changes, collection
 

@@ -806,17 +806,21 @@ JOM = (function() {
             $(component.root.children).remove();
             component.handle_template_scripts(component.template.cloned);
             component.root.appendChild(component.template.cloned);
-            $('[body] img').each(function(i, image) {
-              var $image;
-              $image = $(image);
-              return $image.attr('src', $image.attr("source"));
-            });
+            _this.image_source_change(component);
             component.show();
             return component.ready = true;
           }
         }
       };
     })(this));
+  };
+
+  JOM.prototype.image_source_change = function(component) {
+    return $('[body] img', component.root).each(function(i, image) {
+      var $image;
+      $image = $(image);
+      return $image.attr('src', $image.attr("source"));
+    });
   };
 
   JOM.prototype.repeater = function(component, context) {
@@ -847,6 +851,7 @@ JOM = (function() {
               $(component.root).find('[repeat]').show();
               _this.repeater(component, component.root);
               component.handlebars(component.root, component);
+              _this.image_source_change(component);
               $(component.root).find('[repeat]').hide();
               return component.trigger(changes, collection);
             });
