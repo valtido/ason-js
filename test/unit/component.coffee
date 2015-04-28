@@ -351,7 +351,7 @@ describe "components:: ", ->
       expect(output).toEqual true
 
   describe "repeat; ", ->
-    iit "should repeat the same thing over and over", ->
+    it "should repeat the same thing over and over", ->
       c = "<component template=profile collection=profile />"
       component = new Component c
 
