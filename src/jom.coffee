@@ -86,7 +86,7 @@ class JOM
 
   assemble_components: ->
     $.each stack.component, (i, component)=>
-      if  component.ready isnt true
+      if  component.ready isnt true and component.scripts.status is "init"
         template   = jom.template[component.attr.template]
         collection = jom.collection[component.attr.collection]
         if template isnt undefined and
@@ -110,12 +110,30 @@ class JOM
           component.handle_template_scripts component.template.cloned
 
           component.root.appendChild component.template.cloned
-
           @image_source_change component
-          component.show()
-          component.ready = true
+
+          @wait_for_scripts component
+
+  wait_for_scripts  : (component)->
+    if component.scripts.status is "done"
+      component.show()
+      component.ready = true
+      component.trigger 'ready'
+    else
+      setTimeout =>
+        all_done = true
+        scripts = $('script[src]', component.root)
+        $(scripts).each (i, script)->
+          all_done = false if script.has_loaded? isnt true
+
+        component.scripts.status = "done" if all_done is true
+
+        @wait_for_scripts component
+      , 10
   image_source_change : (component)->
-    $('[body] img', component.root).each (i, image)->
+    $('[body] img', component.root)
+    .not('[repeat] img')
+    .each (i, image)->
       $image = $ image
       $image.attr 'src', $image.attr "source"
   repeater: (component, context = null)->
@@ -130,14 +148,15 @@ class JOM
       if collection.observing is false
         collection.observing = true
         new Observe collection.data, (changes)=>
-          $.each stack.component, (i, component)=>
-            $(component.root).find('[repeated]').remove()
-            $(component.root).find('[repeat]').show()
-            @repeater component, component.root
-            component.handlebars component.root, component
-            @image_source_change component
-            $(component.root).find('[repeat]').hide()
-            component.trigger changes, collection
+          for key, change of changes
+            $.each stack.component, (i, component)=>
+              $(component.root).find('[repeated]').remove()
+              $(component.root).find('[repeat]').show()
+              @repeater component, component.root
+              component.handlebars component.root, component
+              @image_source_change component
+              $(component.root).find('[repeat]').hide()
+              component.trigger "change", change
 
   resolve: (path)->
     # console.log "LOCO", location.href

@@ -37,7 +37,8 @@ class Component
 
     @handles = []
     @events  = []
-
+    @scripts = []
+    @scripts.status = "init"
 
     @
 
@@ -66,7 +67,9 @@ class Component
     # TODO: improve to findByPath as path could be different
     @data  = @collection.findByPath @path
     @collection
-  trigger: (changes, collection)->
+
+  watcher: (changes, collection)->
+    debugger
     if collection.name is @collection.name
       for key, change of changes
         if change.path.slice(0, @path.length) is @path
@@ -110,11 +113,11 @@ class Component
         if new_text is undefined and jom.env is "production"
           new_text = ""
         $(node).text text.replace regx, new_text
-        @handles.push node
         node.handle =
           type: "node"
           path : path
           full : collection.join collection.name, path
+        @handles.push node
 
       for attr, key in node.attributes
         if regx.test attr.value
@@ -128,19 +131,24 @@ class Component
             new_text = ""
 
           attr.value = text.replace regx, new_text
-          @handles.push node
           node.handle =
             attr: attr
             type: "attr"
             path: path
             full: collection.join collection.name, path
+          @handles.push node
       node
     $content
+
   handle_template_scripts: (content) ->
+    @scripts.status = "waiting"
     escapeRegExp = (str) ->
       str.replace /[-\/\\^$*+?.()|[\]{}]/g, '\\$&'
 
     scripts = $(content).find 'script'
+
+    $(scripts).filter('[src]').each (i, script)->
+      script.onload = -> script.has_loaded = true
 
     $(scripts).not('[src]').eq(0).each (i,script)->
       front = ""
@@ -164,15 +172,26 @@ class Component
       return script
 
   on: (type, path, callback)->
-    event =
-      type    : type
-      path    : path
-      callback: callback
-    @events.push event
+    types = type.split " "
 
+    for type in types
+      event =
+        type    : type
+        path    : path
+        callback: callback
+      @events.push event
     return @
 
+  trigger: (type, params = {})->
+    types = type.split " "
 
+    for type in types
+      for event in @events
+        if type is event.type
+          for handle in @handles
+            if handle.handle.path.indexOf(event.path) isnt -1
+              event.callback.call handle, event, params
+    return @
   repeat: (element, data = null)->
     data     = @data if data is null
     $element = $ element

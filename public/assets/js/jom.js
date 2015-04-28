@@ -430,6 +430,8 @@ Component = (function() {
     this.collection_ready = false;
     this.handles = [];
     this.events = [];
+    this.scripts = [];
+    this.scripts.status = "init";
     this;
   }
 
@@ -471,22 +473,23 @@ Component = (function() {
     return this.collection;
   };
 
-  Component.prototype.trigger = function(changes, collection) {
-    var change, key, _results;
+  Component.prototype.watcher = function(changes, collection) {
+    debugger;
+    var change, key, results;
     if (collection.name === this.collection.name) {
-      _results = [];
+      results = [];
       for (key in changes) {
         change = changes[key];
         if (change.path.slice(0, this.path.length) === this.path) {
-          _results.push($(this.handles).each((function(_this) {
+          results.push($(this.handles).each((function(_this) {
             return function(i, handle) {
-              var event, partial, _i, _j, _len, _len1, _ref, _ref1, _results1;
+              var event, j, k, len, len1, partial, ref, ref1, results1;
               if (handle.handle.path === change.path) {
                 $(handle).trigger('change', change);
                 partial = change.path.replace(_this.path, "").replace(/^\./, "");
-                _ref = _this.events;
-                for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-                  event = _ref[_i];
+                ref = _this.events;
+                for (j = 0, len = ref.length; j < len; j++) {
+                  event = ref[j];
                   if (event.type === "change:before" && event.path === partial) {
                     event.callback.call(_this);
                   }
@@ -501,25 +504,25 @@ Component = (function() {
                   default:
                     throw new Error("jom: unexpected handle type");
                 }
-                _ref1 = _this.events;
-                _results1 = [];
-                for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-                  event = _ref1[_j];
+                ref1 = _this.events;
+                results1 = [];
+                for (k = 0, len1 = ref1.length; k < len1; k++) {
+                  event = ref1[k];
                   if (event.type === "change" && event.path === partial) {
-                    _results1.push(event.callback.call(_this));
+                    results1.push(event.callback.call(_this));
                   } else {
-                    _results1.push(void 0);
+                    results1.push(void 0);
                   }
                 }
-                return _results1;
+                return results1;
               }
             };
           })(this)));
         } else {
-          _results.push(void 0);
+          results.push(void 0);
         }
       }
-      return _results;
+      return results;
     }
   };
 
@@ -531,7 +534,7 @@ Component = (function() {
       return $(this).parents('[repeat]').length === 0;
     }).each((function(_this) {
       return function(i, node) {
-        var attr, key, new_text, path, text, _i, _len, _ref;
+        var attr, j, key, len, new_text, path, ref, text;
         text = $(node).text();
         if ($(node).children().length === 0 && regx.test(text) === true) {
           key = text.match(regx)[1];
@@ -541,16 +544,16 @@ Component = (function() {
             new_text = "";
           }
           $(node).text(text.replace(regx, new_text));
-          _this.handles.push(node);
           node.handle = {
             type: "node",
             path: path,
             full: collection.join(collection.name, path)
           };
+          _this.handles.push(node);
         }
-        _ref = node.attributes;
-        for (key = _i = 0, _len = _ref.length; _i < _len; key = ++_i) {
-          attr = _ref[key];
+        ref = node.attributes;
+        for (key = j = 0, len = ref.length; j < len; key = ++j) {
+          attr = ref[key];
           if (regx.test(attr.value)) {
             text = attr.value;
             key = text.match(regx)[1];
@@ -560,13 +563,13 @@ Component = (function() {
               new_text = "";
             }
             attr.value = text.replace(regx, new_text);
-            _this.handles.push(node);
             node.handle = {
               attr: attr,
               type: "attr",
               path: path,
               full: collection.join(collection.name, path)
             };
+            _this.handles.push(node);
           }
         }
         return node;
@@ -577,10 +580,16 @@ Component = (function() {
 
   Component.prototype.handle_template_scripts = function(content) {
     var escapeRegExp, scripts;
+    this.scripts.status = "waiting";
     escapeRegExp = function(str) {
       return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
     };
     scripts = $(content).find('script');
+    $(scripts).filter('[src]').each(function(i, script) {
+      return script.onload = function() {
+        return script.has_loaded = true;
+      };
+    });
     return $(scripts).not('[src]').eq(0).each(function(i, script) {
       var front, is_script_prepared, reg;
       front = "";
@@ -592,18 +601,47 @@ Component = (function() {
   };
 
   Component.prototype.on = function(type, path, callback) {
-    var event;
-    event = {
-      type: type,
-      path: path,
-      callback: callback
-    };
-    this.events.push(event);
+    var event, j, len, types;
+    types = type.split(" ");
+    for (j = 0, len = types.length; j < len; j++) {
+      type = types[j];
+      event = {
+        type: type,
+        path: path,
+        callback: callback
+      };
+      this.events.push(event);
+    }
+    return this;
+  };
+
+  Component.prototype.trigger = function(type, params) {
+    var event, handle, j, k, l, len, len1, len2, ref, ref1, types;
+    if (params == null) {
+      params = {};
+    }
+    types = type.split(" ");
+    for (j = 0, len = types.length; j < len; j++) {
+      type = types[j];
+      ref = this.events;
+      for (k = 0, len1 = ref.length; k < len1; k++) {
+        event = ref[k];
+        if (type === event.type) {
+          ref1 = this.handles;
+          for (l = 0, len2 = ref1.length; l < len2; l++) {
+            handle = ref1[l];
+            if (handle.handle.path.indexOf(event.path) !== -1) {
+              event.callback.call(handle, event, params);
+            }
+          }
+        }
+      }
+    }
     return this;
   };
 
   Component.prototype.repeat = function(element, data) {
-    var $element, clone, index, item, key, path, prefix, repeat, x, _i, _len;
+    var $element, clone, index, item, j, key, len, path, prefix, repeat, x;
     if (data == null) {
       data = null;
     }
@@ -619,7 +657,7 @@ Component = (function() {
     repeat = $('<div repeated="true" />');
     path = this.collection.join(this.path, key);
     data = this.collection.findByPath(path);
-    for (index = _i = 0, _len = data.length; _i < _len; index = ++_i) {
+    for (index = j = 0, len = data.length; j < len; index = ++j) {
       item = data[index];
       clone = $element.clone();
       clone.attr("repeated", true);
@@ -791,11 +829,11 @@ JOM = (function() {
   JOM.prototype.assemble_components = function() {
     return $.each(stack.component, (function(_this) {
       return function(i, component) {
-        var collection, template, _ref;
-        if (component.ready !== true) {
+        var collection, ref, template;
+        if (component.ready !== true && component.scripts.status === "init") {
           template = jom.template[component.attr.template];
           collection = jom.collection[component.attr.collection];
-          if (template !== void 0 && collection !== void 0 && ((_ref = collection.data) != null ? _ref.length : void 0)) {
+          if (template !== void 0 && collection !== void 0 && ((ref = collection.data) != null ? ref.length : void 0)) {
             component.define_template(template);
             component.define_collection(collection);
             component.template.clone();
@@ -807,16 +845,40 @@ JOM = (function() {
             component.handle_template_scripts(component.template.cloned);
             component.root.appendChild(component.template.cloned);
             _this.image_source_change(component);
-            component.show();
-            return component.ready = true;
+            return _this.wait_for_scripts(component);
           }
         }
       };
     })(this));
   };
 
+  JOM.prototype.wait_for_scripts = function(component) {
+    if (component.scripts.status === "done") {
+      component.show();
+      component.ready = true;
+      return component.trigger('ready');
+    } else {
+      return setTimeout((function(_this) {
+        return function() {
+          var all_done, scripts;
+          all_done = true;
+          scripts = $('script[src]', component.root);
+          $(scripts).each(function(i, script) {
+            if ((script.has_loaded != null) !== true) {
+              return all_done = false;
+            }
+          });
+          if (all_done === true) {
+            component.scripts.status = "done";
+          }
+          return _this.wait_for_scripts(component);
+        };
+      })(this), 10);
+    }
+  };
+
   JOM.prototype.image_source_change = function(component) {
-    return $('[body] img', component.root).each(function(i, image) {
+    return $('[body] img', component.root).not('[repeat] img').each(function(i, image) {
       var $image;
       $image = $(image);
       return $image.attr('src', $image.attr("source"));
@@ -837,31 +899,37 @@ JOM = (function() {
   };
 
   JOM.prototype.watch_collections = function() {
-    var collection, key, _ref, _results;
-    _ref = stack.collection;
-    _results = [];
-    for (key in _ref) {
-      collection = _ref[key];
+    var collection, key, ref, results;
+    ref = stack.collection;
+    results = [];
+    for (key in ref) {
+      collection = ref[key];
       if (collection.observing === false) {
         collection.observing = true;
-        _results.push(new Observe(collection.data, (function(_this) {
+        results.push(new Observe(collection.data, (function(_this) {
           return function(changes) {
-            return $.each(stack.component, function(i, component) {
-              $(component.root).find('[repeated]').remove();
-              $(component.root).find('[repeat]').show();
-              _this.repeater(component, component.root);
-              component.handlebars(component.root, component);
-              _this.image_source_change(component);
-              $(component.root).find('[repeat]').hide();
-              return component.trigger(changes, collection);
-            });
+            var change, results1;
+            results1 = [];
+            for (key in changes) {
+              change = changes[key];
+              results1.push($.each(stack.component, function(i, component) {
+                $(component.root).find('[repeated]').remove();
+                $(component.root).find('[repeat]').show();
+                _this.repeater(component, component.root);
+                component.handlebars(component.root, component);
+                _this.image_source_change(component);
+                $(component.root).find('[repeat]').hide();
+                return component.trigger("change", change);
+              }));
+            }
+            return results1;
           };
         })(this)));
       } else {
-        _results.push(void 0);
+        results.push(void 0);
       }
     }
-    return _results;
+    return results;
   };
 
   JOM.prototype.resolve = function(path) {

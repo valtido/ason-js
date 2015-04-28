@@ -9,10 +9,11 @@ template(name="comment")
     a{color: #3b5998;}
     img{text-align:left; float: left; margin-right: 1em;}
     .item{margin-bottom: 1em; background: #fefefe; padding: 1em;position:relative}
-    textarea{width: 100%; min-height: 100px;}
+    textarea{min-height: 100px; box-sizing: border-box; width: 100%;}
     .cancel{position: absolute;right: 0; top: 0;cursor: pointer; cursor: hand;}
     .like {cursor: pointer; cursor: hand;}
     .like:hover, .cancel:hover{color: #900;}
+    .test2{margin-left: 50px;}
   div(body)
     div.item(repeat="${comments}")
       i.cancel.icon-cancel-circled-outline
@@ -32,11 +33,11 @@ template(name="comment")
         span ${comment}
     hr
     div.new_comment
-      img(source="${user.image}")
-      a(href="#")
-        span ${user.name.first} 
-        span ${user.name.last}
-      textarea(placeholder="Type your comment here")
+      div.test1
+        img(source="${user.image}")
+      div.test2
+        div
+          textarea(placeholder="Type your comment here")
   script(src="/bower_components/moment/moment.js")
   script.
     $(body)
@@ -46,17 +47,19 @@ template(name="comment")
     })
     .on('keyup',"textarea", function(event){
       if(event.which == 13){
-        var new_comment = {}
-        new_comment.user = { "name": {"first":"Valtid", "last":"Caushi"}, "image": "http://placehold.it/32x32" };
-        new_comment.comment = $(this).val();
-        new_comment.likes = 0;
-        new_comment.commented_on = +new Date
-        data.comments.push(new_comment)
+        var val = $.trim($(this).val());
+        var new_comment          = {}
+        new_comment.user         = { "name": {"first":"Valtid", "last":"Caushi"}, "image": "http://placehold.it/32x32" };
+        new_comment.comment      = val;
+        new_comment.likes        = 0;
+        new_comment.commented_on = +new Date/1000
+        data.comments.push(new_comment);
+        
+        $(this).val("");
       }
     })
     .on('click',"i.icon-thumbs-up-alt", function(event){
       var index = $(this).parents('[repeated]').attr("repeat-index")
-      debugger
       data.comments[index].likes++
     })
     .on('change keyup',".location", function(event){
@@ -65,10 +68,10 @@ template(name="comment")
     ;
     
     component
-    .on('change', "commented_on", function(){
+    .on('change ready', "commented_on", function(event, change){
       var index = $(this).parents('[repeated]').attr("repeat-index")
       var date = moment(data.comments[index].commented_on * 1000)
       var time = date.fromNow()
-      $('.timestamp',body).text(time)
+      $('[repeated] .timestamp',body).eq(index).text(time)
     })
     ;
