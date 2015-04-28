@@ -918,6 +918,7 @@ JOM = (function() {
                 _this.repeater(component, component.root);
                 component.handlebars(component.root, component);
                 _this.image_source_change(component);
+                $(component.root.host).trigger("change", [change, component.data, component.collection]);
                 $(component.root).find('[repeat]').hide();
                 return component.trigger("change", change);
               }));

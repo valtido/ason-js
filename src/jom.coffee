@@ -155,6 +155,9 @@ class JOM
               @repeater component, component.root
               component.handlebars component.root, component
               @image_source_change component
+              $(component.root.host).trigger "change", [
+                change, component.data, component.collection
+              ]
               $(component.root).find('[repeat]').hide()
               component.trigger "change", change
 
