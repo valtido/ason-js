@@ -25,10 +25,22 @@
       "src": "fontawesome"
     },
     {
+      "uid": "f48ae54adfb27d8ada53d0fd9e34ee10",
+      "css": "trash-empty",
+      "code": 59400,
+      "src": "fontawesome"
+    },
+    {
       "uid": "ead4c82d04d7758db0f076584893a8c1",
       "css": "calendar-empty",
       "code": 59396,
       "src": "fontawesome"
+    },
+    {
+      "uid": "c77fd2fd065b5fe16d6f2b41e190b266",
+      "css": "pencil",
+      "code": 59401,
+      "src": "entypo"
     },
     {
       "uid": "517522647a556192fbc78aa391b7b0c2",

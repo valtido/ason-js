@@ -474,7 +474,6 @@ Component = (function() {
   };
 
   Component.prototype.watcher = function(changes, collection) {
-    debugger;
     var change, key, results;
     if (collection.name === this.collection.name) {
       results = [];
@@ -495,7 +494,11 @@ Component = (function() {
                   }
                 }
                 switch (handle.handle.type) {
-                  case "attr":
+                  case "attr_name":
+                    debugger;
+                    $(handle).attr(handle.handle.attr.name, "");
+                    break;
+                  case "attr_value":
                     $(handle).attr(handle.handle.attr.name, change.value);
                     break;
                   case "node":
@@ -527,14 +530,16 @@ Component = (function() {
   };
 
   Component.prototype.handlebars = function(content, component) {
-    var $content, collection;
+    var $content, c, collection;
     collection = component.collection;
     $content = $(content);
-    $content.findAll('*').not('script, style, link, [repeat]').filter(function() {
+    c = $content.findAll('*').not('script, style, link, [repeat]').filter(function() {
       return $(this).parents('[repeat]').length === 0;
-    }).each((function(_this) {
+    });
+    debugger;
+    c.each((function(_this) {
       return function(i, node) {
-        var attr, j, key, len, new_text, path, ref, text;
+        var attr, e, j, key, len, name, new_text, path, ref, text;
         text = $(node).text();
         if ($(node).children().length === 0 && regx.test(text) === true) {
           key = text.match(regx)[1];
@@ -554,9 +559,37 @@ Component = (function() {
         ref = node.attributes;
         for (key = j = 0, len = ref.length; j < len; key = ++j) {
           attr = ref[key];
+          if (regx.test(attr.name)) {
+            text = attr.name;
+            try {
+              key = text.match(regx)[1];
+            } catch (_error) {
+              e = _error;
+              throw new Error("Component: wrong key on attr name " + text);
+            }
+            path = collection.join(_this.path, key);
+            new_text = collection.findByPath($.trim(path));
+            if (new_text === void 0 && jom.env === "production") {
+              new_text = "";
+            }
+            name = text.replace(regx, new_text);
+            $(node).removeAttr(attr.name).attr(name, attr.value);
+            node.handle = {
+              attr: attr,
+              type: "attr_name",
+              path: path,
+              full: collection.join(collection.name, path)
+            };
+            _this.handles.push(node);
+          }
           if (regx.test(attr.value)) {
             text = attr.value;
-            key = text.match(regx)[1];
+            try {
+              key = text.match(regx)[1];
+            } catch (_error) {
+              e = _error;
+              throw new Error("Component: wrong key on attr value " + text);
+            }
             path = collection.join(_this.path, key);
             new_text = collection.findByPath($.trim(path));
             if (new_text === void 0 && jom.env === "production") {
@@ -565,7 +598,7 @@ Component = (function() {
             attr.value = text.replace(regx, new_text);
             node.handle = {
               attr: attr,
-              type: "attr",
+              type: "attr_value",
               path: path,
               full: collection.join(collection.name, path)
             };
@@ -641,7 +674,7 @@ Component = (function() {
   };
 
   Component.prototype.repeat = function(element, data) {
-    var $element, clone, index, item, j, key, len, path, prefix, repeat, x;
+    var $element, clone, e, index, item, j, key, len, path, prefix, repeat, x;
     if (data == null) {
       data = null;
     }
@@ -653,8 +686,13 @@ Component = (function() {
     if (key === void 0) {
       throw new Error("component: items attr missing");
     }
-    key = key.match(regx)[1];
-    repeat = $('<div repeated="true" />');
+    try {
+      key = key.match(regx)[1];
+    } catch (_error) {
+      e = _error;
+      throw new Error("Component: Wrong key `" + key + "`");
+    }
+    repeat = $([]);
     path = this.collection.join(this.path, key);
     data = this.collection.findByPath(path);
     for (index = j = 0, len = data.length; j < len; index = ++j) {
@@ -665,7 +703,9 @@ Component = (function() {
       clone.attr('repeat-index', index);
       prefix = this.collection.join(key, "[" + index + "]");
       x = clone[0].outerHTML.replace(/(\${)([^\s{}]+)(})/g, "$1" + prefix + ".$2$3");
-      repeat.append(x);
+      x = x.replace(/(\{repeat\.index})/g, index);
+      x = x.replace(/(\{repeat\.length})/g, data.length);
+      repeat = repeat.add(x);
     }
     return repeat;
   };

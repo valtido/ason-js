@@ -1,0 +1,42 @@
+template(name="overview")
+  style.
+    @import url("/assets/-/fontello/css/fontello.css");
+    @import url("/assets/css/main.css");
+    @import url("/assets/css/toggle.css");
+    :host{position:relative; margin: 1em;}
+    div[body]{background: #F6F7F8; padding: 2em; vertical-align: top;}
+    .item>div,
+    .header>div{float: left; width:  50%; min-height: 30px;}
+    .header{background: #ccc;}
+    .item:nth-child(even) {background: #fff; }
+    .item>div>a{margin-right: 1em;}
+    .list>div{padding: 1em;}
+    .item>div>a{color: #326ca6;}
+    .item>div>a i{color: #333; font-size: 120%;}
+    
+    
+  div(body)
+    h1 Overview
+    
+    div.list
+      div.header.clearfix
+        div Name
+        div Actions
+      div.item.clearfix(repeat="${items}")
+        div ${name}
+        div
+          a(href="edit.page?id=${id}") 
+            i.icon-pencil
+            span Edit
+          .wrapper
+            input.toggle(id="toggle{repeat.index}", type='checkbox', name='toggle', ${active}="")
+            label(for='toggle{repeat.index}')
+          a(href="edit.page?id=${id}")
+            i.icon-trash-empty 
+            span Delete
+      
+      
+  script.
+    $(body)
+    .on('click',".cancel", function(event){
+    })

@@ -1,0 +1,9 @@
+[
+  {
+    "items": [
+      {"id": 1, "name":"Mid Week Postcard", "active": true},
+      {"id": 2, "name":"UK Stylenotes", "active": false},
+      {"id": 3, "name":"US Stylenotes", "active": true}
+    ]
+  }
+]

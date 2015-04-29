@@ -1,0 +1,21 @@
+extends ../../_layout
+block assets
+  //- load assets (order is not important)
+  link(rel="asset" source="template.html" type="text/template" name="overview")
+  link(rel="asset" source="overview.json" type="text/json" name="overview")
+  style.
+    component{margin-bottom: 1em; }
+
+block content
+  //- use the new component (when template and collection are ready)
+  component(template="overview" collection="overview" path="[0]")
+  
+  
+  script.
+    
+    $(function(){
+      $('body')
+      .on('change','component', function(event, change, data, collection){
+        debugger
+      })
+    })

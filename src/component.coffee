@@ -69,7 +69,6 @@ class Component
     @collection
 
   watcher: (changes, collection)->
-    debugger
     if collection.name is @collection.name
       for key, change of changes
         if change.path.slice(0, @path.length) is @path
@@ -82,7 +81,10 @@ class Component
                   event.callback.call @
 
               switch handle.handle.type
-                when "attr"
+                when "attr_name"
+                  debugger
+                  $(handle).attr handle.handle.attr.name, ""
+                when "attr_value"
                   $(handle).attr handle.handle.attr.name, change.value
                 when "node"
                   $(handle).text change.value
@@ -97,12 +99,13 @@ class Component
     $content = $ content
     # console.log content
 
-    $content
+    c = $content
     .findAll('*')
     .not('script, style, link, [repeat]')
     .filter ->
       $(this).parents('[repeat]').length is 0
-    .each (i, node)=>
+    debugger
+    c.each (i, node)=>
       text = $(node).text()
 
       if $(node).children().length is 0 and regx.test(text) is true
@@ -120,10 +123,41 @@ class Component
         @handles.push node
 
       for attr, key in node.attributes
-        if regx.test attr.value
+        if regx.test attr.name
+          text = attr.name
           # TODO: fix the attributes, and allow multiple access
-          text     = attr.value
-          key      =text.match(regx)[1]
+          try
+            key      = text.match(regx)[1]
+          catch e
+            throw new Error "Component: wrong key on attr name #{text}"
+
+          path     = collection.join @path, key
+          new_text = collection.findByPath $.trim path
+
+          if new_text is undefined and jom.env is "production"
+            new_text = ""
+
+          name = text.replace regx, new_text
+          $(node)
+          .removeAttr attr.name
+          .attr name, attr.value
+
+          node.handle =
+            attr: attr
+            type: "attr_name"
+            path: path
+            full: collection.join collection.name, path
+          @handles.push node
+
+        if regx.test attr.value
+          text = attr.value
+
+          # TODO: fix the attributes, and allow multiple access
+          try
+            key      = text.match(regx)[1]
+          catch e
+            throw new Error "Component: wrong key on attr value #{text}"
+
           path     = collection.join @path, key
           new_text = collection.findByPath $.trim path
 
@@ -131,9 +165,10 @@ class Component
             new_text = ""
 
           attr.value = text.replace regx, new_text
+
           node.handle =
             attr: attr
-            type: "attr"
+            type: "attr_value"
             path: path
             full: collection.join collection.name, path
           @handles.push node
@@ -197,8 +232,11 @@ class Component
     $element = $ element
     key      = $element.attr 'repeat'
     throw new Error "component: items attr missing" if key is undefined
-    key    = key.match(regx)[1]
-    repeat = $('<div repeated="true" />')
+    try
+      key    = key.match(regx)[1]
+    catch e
+      throw new Error "Component: Wrong key `#{key}`"
+    repeat = $([])
     path   = @collection.join @path, key
     data   = @collection.findByPath path
 
@@ -209,5 +247,7 @@ class Component
       clone.attr 'repeat-index', index
       prefix = @collection.join key, "[#{index}]"
       x = clone[0].outerHTML.replace /(\${)([^\s{}]+)(})/g, "$1#{prefix}.$2$3"
-      repeat.append x
+      x = x.replace /(\{repeat\.index})/g, index
+      x = x.replace /(\{repeat\.length})/g, data.length
+      repeat = repeat.add(x)
     repeat
