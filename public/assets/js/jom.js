@@ -495,7 +495,6 @@ Component = (function() {
                 }
                 switch (handle.handle.type) {
                   case "attr_name":
-                    debugger;
                     $(handle).attr(handle.handle.attr.name, "");
                     break;
                   case "attr_value":
@@ -536,7 +535,6 @@ Component = (function() {
     c = $content.findAll('*').not('script, style, link, [repeat]').filter(function() {
       return $(this).parents('[repeat]').length === 0;
     });
-    debugger;
     c.each((function(_this) {
       return function(i, node) {
         var attr, e, j, key, len, name, new_text, path, ref, text;
@@ -695,6 +693,9 @@ Component = (function() {
     repeat = $([]);
     path = this.collection.join(this.path, key);
     data = this.collection.findByPath(path);
+    if (data === void 0) {
+      throw new Error("component: data not found `" + path + "`");
+    }
     for (index = j = 0, len = data.length; j < len; index = ++j) {
       item = data[index];
       clone = $element.clone();

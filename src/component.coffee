@@ -82,7 +82,6 @@ class Component
 
               switch handle.handle.type
                 when "attr_name"
-                  debugger
                   $(handle).attr handle.handle.attr.name, ""
                 when "attr_value"
                   $(handle).attr handle.handle.attr.name, change.value
@@ -104,7 +103,6 @@ class Component
     .not('script, style, link, [repeat]')
     .filter ->
       $(this).parents('[repeat]').length is 0
-    debugger
     c.each (i, node)=>
       text = $(node).text()
 
@@ -239,7 +237,7 @@ class Component
     repeat = $([])
     path   = @collection.join @path, key
     data   = @collection.findByPath path
-
+    throw new Error "component: data not found `#{path}`" if data is undefined
     for item, index in data
       clone = $element.clone()
       clone.attr "repeated", true

@@ -1,0 +1,43 @@
+template(name="template")
+  style.
+    img{width: 100px;}
+  style.
+    @import url("/assets/-/fontello/css/fontello.css");
+    @import url("/assets/css/main.css");
+    @import url("/assets/css/windows.css");
+  div.clearfix(body)
+    div.item(repeat="${items}", data-url="${url}")  
+      img(source="${image}")
+      div ${title}
+    .windows
+  script.
+    $(window)
+    .on('keydown', function(event){
+      if(event.which == 27){
+        $('.window',body).removeClass('active')
+      }
+    })
+    $(body)
+    .on('click',".item", function(event){
+      var index = $(this).attr('repeat-index')
+      var url   = data.items[index].url;
+      var id    = data.items[index].id;
+      var win   = $('.windows .window[id="'+id+'"]', body);
+      
+      debugger
+      if(win.length){
+        win.addClass('active');
+        return false;
+      }
+      
+      $.get(url)
+      .done(function(response){
+        win = $('<div />').addClass('window').html(response);
+        $('.windows', body).append(win);
+        win.attr('id', id);
+        
+        setTimeout(function(){
+          win.addClass('active')
+        }, 0)
+      })
+    })

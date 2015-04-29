@@ -1,0 +1,20 @@
+extends ../../_layout
+block assets
+  //- load assets (order is not important)
+  link(rel="asset" source="template.html" type="text/template" name="template")
+  link(rel="asset" source="collection.json" type="text/json" name="collection")
+  style.
+    component{margin-bottom: 1em; }
+
+block content
+  //- use the new component (when template and collection are ready)
+  component(template="template" collection="collection" path="[0]")
+  
+  
+  script.
+    
+    $(function(){
+      $('body')
+      .on('change','component', function(event, change, data, collection){
+      })
+    })

@@ -1,0 +1,9 @@
+[
+  {
+    "items": [
+      {"id": 1, "image":"http://upload.wikimedia.org/wikipedia/commons/0/04/Google_Plus_logo.png", "url": "/examples/windows/google","title":"Google"},
+      {"id": 2, "image":"https://cdn3.iconfinder.com/data/icons/leaf/256/youtube.png", "url": "/examples/windows/youtube","title":"Youtube"},
+      {"id": 3, "image":"http://ssdp.org.uk/wp-content/uploads/2014/08/Facebook-Logo.png", "url": "/examples/windows/facebook","title":"Facebook"}
+    ]
+  }
+]
