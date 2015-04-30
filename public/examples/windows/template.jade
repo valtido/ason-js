@@ -17,6 +17,7 @@ template(name="template")
         $('.window',body).removeClass('active')
       }
     })
+
     $(body)
     .on('click',".item", function(event){
       var index = $(this).attr('repeat-index')
@@ -24,7 +25,6 @@ template(name="template")
       var id    = data.items[index].id;
       var win   = $('.windows .window[id="'+id+'"]', body);
       
-      debugger
       if(win.length){
         win.addClass('active');
         return false;
@@ -32,12 +32,14 @@ template(name="template")
       
       $.get(url)
       .done(function(response){
+        $(host).trigger('app.open', [response])
+        //- return false;
         win = $('<div />').addClass('window').html(response);
         $('.windows', body).append(win);
         win.attr('id', id);
         
         setTimeout(function(){
           win.addClass('active')
-        }, 0)
+        }, 5)
       })
     })

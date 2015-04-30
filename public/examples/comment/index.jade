@@ -14,10 +14,9 @@ block content
   
   
   script.
-    
+    $('body')
+    .on('app.open','component', function(event, response){
+      debugger
+    })
     $(function(){
-      $('body')
-      .on('change','component', function(event, change, data, collection){
-        debugger
-      })
     })
