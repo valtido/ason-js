@@ -1,14 +1,13 @@
 link = ""
 describe "jom: ", ->
   beforeEach ->
+    jom.components = []
     $('foot').html("")
     $('body').html("")
     $('head link[rel=asset]').remove()
 
-    jom.clear_cache()
-    jom.clear_stack()
-
     $('component').remove()
+    jom.assets = []
 
   it "should be defined", ->
     expect(jom).toBeDefined()
@@ -18,20 +17,17 @@ describe "jom: ", ->
     expect(sh).toBeDefined()
     expect(window.Root).toBeDefined()
 
-    expect(jom.get_stack).toBeDefined()
-    expect(jom.get_cache).toBeDefined()
-    expect(jom.clear_cache).toBeDefined()
-    expect(jom.clear_stack).toBeDefined()
+    expect(jom.components).toBeDefined()
+    expect(jom.templates).toBeDefined()
+    expect(jom.collections).toBeDefined()
+    expect(jom.assets).toBeDefined()
+    expect(jom.schemas).toBeDefined()
 
-    expect(jom.component).toBeDefined()
-    expect(jom.template).toBeDefined()
-    expect(jom.collection).toBeDefined()
-    expect(jom.asset).toBeDefined()
-
-    expect(jom.load_assets).toBeDefined()
-    expect(jom.load_templates).toBeDefined()
     expect(jom.load_components).toBeDefined()
+    expect(jom.load_templates).toBeDefined()
     expect(jom.load_collections).toBeDefined()
+    expect(jom.load_assets).toBeDefined()
+    expect(jom.load_schemas).toBeDefined()
 
     expect(jom.inject_assets).toBeDefined()
     expect(jom.assemble_components).toBeDefined()
@@ -47,67 +43,66 @@ describe "jom: ", ->
   it "path resolve default", ->
     expect(jom.resolve "location").toBe "/location"
 
-  it "clear cache", ->
-    jom.clear_cache()
-    expect(jom.get_cache()).toEqual
-      asset      : []
-      template   : {}
-      collection : {}
-      component  : []
+  describe "schemas, ", ->
+    it "should push new schemas", ->
+      expect(jom.schemas.length).toEqual 0
+      link = "<link rel=asset source=data.json type='text/json' asset=schema />"
+      $('head').append link
 
-  it "clear stack", ->
-    jom.clear_stack()
-    expect(jom.get_stack()).toEqual
-      asset      : []
-      template   : {}
-      collection : {}
-      component  : []
+      jom.load_assets()
 
+      expect(jom.assets[0].queued).not.toBeDefined()
+      jom.inject_assets()
+      expect(jom.assets[0].queued).toBe true
+
+      jom.load_schemas();
+
+      expect(jom.schemas.length).toEqual 1
+      expect($('html>foot').length).toBe 1
+      expect($('html>foot').children().length).toBe 1
   describe "assets, ", ->
     it "should push new assets", ->
-      expect(jom.asset.length).toEqual 0
+      expect(jom.assets.length).toEqual 0
 
-      link = "<link rel=asset source=data.json type='text/json' />"
+      link = "<link rel=asset source=data.json type='text/json' asset=collection />"
       $('head').append link
 
       jom.load_assets()
 
-      expect(jom.asset.length).toEqual 1
+      expect(jom.assets.length).toEqual 1
 
     it "should inject assets to the page", ->
-      jom.clear_cache()
-      jom.clear_stack()
-      expect(jom.asset.length).toEqual 0
+      expect(jom.assets.length).toEqual 0
 
-      link = "<link rel=asset source=data.json type='text/json' />"
+      link = "<link rel=asset source=data.json type='text/json' asset=collection />"
       $('head').append link
 
       jom.load_assets()
-      expect(jom.asset[0].queued).not.toBeDefined()
+      expect(jom.assets[0].queued).not.toBeDefined()
       jom.inject_assets()
-      expect(jom.asset[0].queued).toBe true
+      expect(jom.assets[0].queued).toBe true
 
-      expect(jom.asset.length).toEqual 1
+      expect(jom.assets.length).toEqual 1
       expect($('html>foot').length).toBe 1
       expect($('html>foot').children().length).toBe 1
 
   describe "component, ", ->
     it "should gather components", ->
-      expect(jom.component.length).toEqual 0
+      expect(jom.components.length).toEqual 0
 
-      component = "<component template=profile collection=profile />"
+      component = "<component template=profile collections=profile />"
       $('body').append component
 
       jom.load_components()
 
-      expect(jom.component.length).toEqual 1
+      expect(jom.components.length).toEqual 1
 
   describe "template, ", ->
     it "should gather templates", ->
-      expect(jom.template).toEqual {}
-      expect(Object.keys(jom.template).length).toEqual 0
+      expect(jom.templates).toEqual []
+      expect(jom.templates.length).toEqual 0
 
-      link = "<link rel=asset source=template.html type='text/template' />"
+      link = "<link rel=asset source=template.html type='text/html' asset=template />"
       foot = $('foot>link[rel=import]')
 
       expect($('head>link[rel=asset]').length).toEqual 0
@@ -136,36 +131,28 @@ describe "jom: ", ->
 
   describe "collection, ", ->
     it "should gather collections", ->
-      expect(jom.collection).toEqual {}
+      expect(jom.collections).toEqual []
 
-      script = "<script source=data.json type='text/json' name=profile />"
+      script = "<script source=data.json type='text/json' name=profile asset=collection />"
       $('foot').append script
       $('foot>script[source="data.json"]').get(0).data = []
       jom.load_collections()
 
-      expect(jom.collection["profile"]).toBeDefined()
+      expect(jom.collections["profile"]).toBeDefined()
 
   describe "tasks, ", ->
-    beforeEach (done)->
-      setTimeout ->
-        done()
-      , 200
     it "should cover tasks", ->
-      asset = "<link rel='asset' source='test' type='text/json' />"
+      asset = "<link rel='asset' source='test' type='text/json' asset=collection />"
       a = new Asset asset
-      jom.asset.push a
+      jom.assets.push a
 
-      expect(jom.asset.length).toEqual 1
+      expect(jom.assets.length).toEqual 1
 
       jom.tasks()
 
   describe "assemble, ", ->
-    beforeEach (done)->
-      setTimeout ->
-        done()
-      , 100
-    it "should assemble a component", ->
-      c = "<component template=profile collection=profile />"
+    xit "should assemble a component", ->
+      c = "<component template=profile collections=profile />"
 
       expect($('body>component').length).toEqual 0
       $('body').append(c)
@@ -178,15 +165,15 @@ describe "jom: ", ->
 
       data = [ name: "valtid" ]
       collection = new Collection "profile", data
-      jom.collection.profile = collection
-      jom.template.profile = template
+      jom.collections.profile = collection
+      jom.templates.profile = template
       jom.load_components()
       jom.load_collections()
       jom.load_templates()
 
-      expect(jom.component.length).toEqual 1
+      expect(jom.components.length).toEqual 1
 
-      component = jom.component[0]
+      component = jom.components[0]
 
       component.define_template template
       expect(component.template).toBeDefined()
@@ -202,28 +189,28 @@ describe "jom: ", ->
 
       jom.assemble_components()
       expect( all ).toBe true
-      expect(component.collection).toBeDefined()
-      expect(component.collection).toBe collection
+      expect(component.collections).toBeDefined()
+      expect(component.collections[collection.name]).toBe collection
 
-      expect(component.collection.data).toBeDefined()
-      expect(component.collection.data).toEqual data
+      expect(component.collections[collection.name].data).toBeDefined()
+      expect(component.collections[collection.name].data).toEqual data
       expect(collection).toBeDefined()
       expect(collection.data).toEqual data
 
       component.template.clone()
       expect(component.template.cloned).not.toEqual null
-      expect(component.collection.findByPath "[0].name").toEqual "valtid"
+      expect(component.collections[collection.name].findByPath "[0].name").toEqual "valtid"
       expect(component.ready).toBe true
 
   describe "disabled, ", ->
     it "should be enabled", ->
-      c = "<component template=profile collection=profile />"
+      c = "<component template=profile collections=profile />"
       component = new Component c
 
       expect(component.enable()).toBe false
 
     it "should be enabled", ->
-      c = "<component template=profile collection=profile />"
+      c = "<component template=profile collections=profile />"
       component = new Component c
 
       expect(component.disable()).toBe true
@@ -236,23 +223,24 @@ describe "jom: ", ->
     it "should not watch if it's already watched", ->
       data = [ name: "valtid" ]
       collection = new Collection "profile", data
-      jom.collection.profile = collection
+      jom.collections.profile = collection
       # this is the flag to testing for duplicate observers
 
-      c = "<component template=profile collection=profile />"
+      c = "<component template=profile collections=profile />"
 
       expect($('body>component').length).toEqual 0
       $('body').append(c)
       jom.load_components()
       expect($('body>component').length).toEqual 1
-      expect(jom.component.length).toEqual 1
+      expect(jom.components.length).toEqual 1
 
       jom.watch_collections()
 
-      component = jom.component[0]
-      component.trigger = (changes, collection)->
-        expect(jom.get_stack().component.length).toEqual 1
-        expect(changes[0].path).toBe "[0].name"
-        expect(changes[0].value).toBe "Tom"
+      component = jom.components[0]
+      component.trigger = (changes, collections)->
+        console.log changes, collections
+        expect(jom.components.length).toEqual 1
+        expect(collections.path).toBe "[0].name"
+        expect(collections.value).toBe "Tom"
 
       collection.data[0].name = "Tom"

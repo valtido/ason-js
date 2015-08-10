@@ -52,62 +52,59 @@ Getting started:
 ==
 
 ```jade
-  //- index.jade
+//- index.jade
+head
+  //- Load JOM itself
+  script(type="text/javascript" src="jom.min.js")
 
-  head
-    //- Load JOM itself
-    script(type="text/javascript" src="jom.min.js")
-
-    //- load assets (order is not relevent)
-    link(rel="asset" source="data.json" type="text/template" name="my_template")
-    link(rel="asset" source="data.json" type="text/json" name="my_collection")
-  body
-    //- use the new component
-    component(template="my_template" collection="my_collection" path="[0]")
-
-
-
-
-  //- /template.jade
-  template(name="my_template")
-    style.
-      div[body]{background: white; padding: 20px;}
-      span{padding-right: 20px;display: inline-block; width: 100px;}
-      div{margin-bottom: 10px;}
-    div(body)
-      h1 View
-      div
-        span Firstname:
-        span ${name.first}
-      div
-        span Lastname:
-        span ${name.last}
-      div
-        span Location
-        span ${location}
-      br
-      hr
-      br
-      h1 Edit
-      div
-        span Change name:
-        input.first(type="text" value="${name.first}")
-        input.last(type="text" value="${name.last}")
-      div
-        span Location:
-        input.location(type="text" value="${location}")
-    script.
-      $(body)
-      .on('change keyup',".location", function(event){
-        data.location = $(this).val()
-      })
-      .on('change keyup',".first", function(event){
-        data.name.first = $(this).val()
-      })
-      .on('change keyup',".last", function(event){
-        data.name.last = $(this).val()
-      })
-      ;
+  //- load assets (order is not relevent)
+  link(rel="asset" source="data.json" type="text/html" name="my_template" asset="template")
+  link(rel="asset" source="data.json" type="text/json" name="my_collection")
+body
+  //- use the new component
+  component(template="my_template" collection="my_collection" path="[0]")
+```
+```jade
+//- template.jade
+template(name="my_template")
+  style.
+    div[body]{background: white; padding: 20px;}
+    span{padding-right: 20px;display: inline-block; width: 100px;}
+    div{margin-bottom: 10px;}
+  div(body)
+    h1 View
+    div
+      span Firstname:
+      span ${name.first}
+    div
+      span Lastname:
+      span ${name.last}
+    div
+      span Location
+      span ${location}
+    br
+    hr
+    br
+    h1 Edit
+    div
+      span Change name:
+      input.first(type="text" value="${name.first}")
+      input.last(type="text" value="${name.last}")
+    div
+      span Location:
+      input.location(type="text" value="${location}")
+  script.
+    $(body)
+    .on('change keyup',".location", function(event){
+      data.location = $(this).val()
+    })
+    .on('change keyup',".first", function(event){
+      data.name.first = $(this).val()
+    })
+    .on('change keyup',".last", function(event){
+      data.name.last = $(this).val()
+    })
+    ;
 
 ```
 
@@ -130,3 +127,6 @@ Getting started:
   }
 ]
 ```
+
+#Assets
+Assets are HTML LINK tags, which will not 

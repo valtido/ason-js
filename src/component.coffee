@@ -9,13 +9,15 @@ class Component
     $component = $ component
     $component.get(0).component = true
 
-    template   = $component.attr "template"
-    collection = $component.attr "collection"
-    path       = $component.attr "path"
+    template    = $component.attr "template"
+    collections = $component.attr "collections"
+    path        = $component.attr "path"
     throw new Error "jom: component template is required" if not template
-    throw new Error "jom: component collection is required" if not collection
+    throw new Error "jom: component collections is required" if not collections
 
-    @attr    = template: template, collection: collection
+    @attr       = template: template, collections: collections
+    collections = collections.split /\s*,\s*/g
+    @collections_list = collections
 
     @element = $component.get 0
 
@@ -24,16 +26,17 @@ class Component
     @hide()
     @ready = false
 
-    @template   = null
-    @collection = null
-    @path       = path || "[0]"
+    @template     = null
+    @collections  = {}
+    # FIXME remove path from component
+    @path         = path || "[0]"
     @data = []
 
     @create_shadow()
 
     @root = @element.shadowRoot
-    @template_ready   = false
-    @collection_ready = false
+    @template_ready    = false
+    @collections_ready = false
 
     @handles = []
     @events  = []
@@ -62,11 +65,12 @@ class Component
   define_collection : (collection)->
     if not collection or collection instanceof Collection is false
       throw new Error "jom: collection cant be added"
+    if @collections[collection.name] is undefined
+      @collections[collection.name] = collection
 
-    @collection = collection
     # TODO: improve to findByPath as path could be different
-    @data  = @collection.findByPath @path
-    @collection
+    # @data  = @collection.findByPath @path
+    @collections
 
   watcher: (changes, collection)->
     if collection.name is @collection.name
@@ -94,9 +98,9 @@ class Component
                 if event.type is "change" and event.path is partial
                   event.callback.call @
   handlebars: (content, component)->
-    collection = component.collection
+
+    collections = component.collections
     $content = $ content
-    # console.log content
 
     c = $content
     .findAll('*')
@@ -107,12 +111,24 @@ class Component
       text = $(node).text()
 
       if $(node).children().length is 0 and regx.test(text) is true
-        key      = text.match(regx)[1]
-        path     = collection.join @path, key
-        new_text = collection.findByPath $.trim path
+        raw  = text
+        key  = text.match(regx)[1]
 
-        if new_text is undefined and jom.env is "production"
-          new_text = ""
+        [collection, path] = key.split ':'
+
+        if collection is undefined
+          throw new Error "component: `#{raw}` is wrong, start with collection."
+
+        collection = collections[collection]
+
+        new_text   = collection.findByPath $.trim path
+
+        if new_text is undefined
+          if jom.env is "production"
+            new_text = ""
+          else
+            throw new Error "Data: not found for `#{raw}` key."
+
         $(node).text text.replace regx, new_text
         node.handle =
           type: "node"
@@ -123,13 +139,21 @@ class Component
       for attr, key in node.attributes
         if regx.test attr.name
           text = attr.name
+          raw = text
+
           # TODO: fix the attributes, and allow multiple access
           try
             key      = text.match(regx)[1]
           catch e
             throw new Error "Component: wrong key on attr name #{text}"
 
-          path     = collection.join @path, key
+          [collection, path] = key.split ':'
+
+          if collection is undefined
+            throw new Error "component: `#{raw}` is wrong, start with collection."
+
+          collection = collections[collection]
+
           new_text = collection.findByPath $.trim path
 
           if new_text is undefined and jom.env is "production"
@@ -149,14 +173,20 @@ class Component
 
         if regx.test attr.value
           text = attr.value
-
+          raw = text
           # TODO: fix the attributes, and allow multiple access
           try
             key      = text.match(regx)[1]
           catch e
             throw new Error "Component: wrong key on attr value #{text}"
 
-          path     = collection.join @path, key
+          [collection, path] = key.split ':'
+
+          if collection is undefined
+            throw new Error "component: `#{raw}` is wrong, start with collection."
+
+          collection = collections[collection]
+
           new_text = collection.findByPath $.trim path
 
           if new_text is undefined and jom.env is "production"
@@ -191,13 +221,12 @@ class Component
       # unless is_script_prepared
       script.text = """(function(){
                 var
-                shadow     = jom.shadow,
-                body       = shadow.body,
-                host       = shadow.host,
-                root       = shadow.root,
-                component  = host.component,
-                collection = component.collection,
-                data       = component.collection.findByPath(component.path)
+                shadow      = jom.shadow,
+                body        = shadow.body,
+                host        = shadow.host,
+                root        = shadow.root,
+                component   = host.component,
+                collections = component.collections
                 ;
 
                 #{script.text}
@@ -226,26 +255,47 @@ class Component
               event.callback.call handle, event, params
     return @
   repeat: (element, data = null)->
-    data     = @data if data is null
+    data     = [] if data is null
     $element = $ element
     key      = $element.attr 'repeat'
-    throw new Error "component: items attr missing" if key is undefined
+    raw      = key
+
+    throw new Error "component: `repeat` attr missing" if key is undefined
+
     try
       key    = key.match(regx)[1]
     catch e
       throw new Error "Component: Wrong key `#{key}`"
+
     repeat = $([])
-    path   = @collection.join @path, key
-    data   = @collection.findByPath path
+
+    [collection,path] = key.split ":"
+
+    if collection is undefined
+      throw new Error "component: `#{raw}` is wrong, start with collection."
+
+    if path isnt undefined and path.length
+      data = @collections[collection].findByPath path
+    else
+      data = @collections[collection].data
+
     throw new Error "component: data not found `#{path}`" if data is undefined
+
+    if path is undefined
+      path = ""
+
     for item, index in data
       clone = $element.clone()
       clone.attr "repeated", true
       clone.attr "repeat", null
       clone.attr 'repeat-index', index
-      prefix = @collection.join key, "[#{index}]"
+
+      prefix = @collections[collection].join path, "[#{index}]"
+      prefix = "#{collection}:#{prefix}"
+
       x = clone[0].outerHTML.replace /(\${)([^\s{}]+)(})/g, "$1#{prefix}.$2$3"
       x = x.replace /(\{repeat\.index})/g, index
       x = x.replace /(\{repeat\.length})/g, data.length
+
       repeat = repeat.add(x)
     repeat

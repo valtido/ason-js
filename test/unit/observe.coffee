@@ -74,7 +74,6 @@ describe "Observer", ->
     person.children.push "Joe"
 
     setTimeout ->
-      # debugger
       expect(result).not.toBe null
       expect(result.path).toBe "children[2]"
       expect(result.value).toBe "Joe"

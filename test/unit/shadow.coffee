@@ -7,9 +7,6 @@ describe "Shadow", ->
     $('head link[rel=asset]').remove()
     $('component').remove()
 
-    jom.clear_cache()
-    jom.clear_stack()
-
   it "Should exist", ->
     expect( Shadow ).toBeDefined()
 

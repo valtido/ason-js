@@ -3,8 +3,6 @@ describe "collections: ", ->
   beforeEach ->
     collection = {}
     data = null
-    jom.clear_stack()
-    jom.clear_cache()
 
   it "should exists", ->
     expect(Collection).toBeDefined()

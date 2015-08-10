@@ -1,12 +1,14 @@
 class JOM
   observer= {}
-  cache = {}
-  stack = {}
   constructor: ->
     window["jom"] = @
     $('html').append('<foot/>')
-    @clear_cache()
-    @clear_stack()
+    @templates   = []
+    @collections = []
+    @components  = []
+    @assets      = []
+    @schemas     = []
+
     # @template
     @tasks()
     @env = "production"
@@ -19,6 +21,7 @@ class JOM
       @load_components()
       @load_templates()
       @load_collections()
+      @load_schemas
       @inject_assets()
       @assemble_components()
       @watch_collections()
@@ -26,7 +29,7 @@ class JOM
     , 100
 
   inject_assets: ()->
-    $.each stack.asset, (i, asset)->
+    $.each @assets, (i, asset)->
       if asset.queued? isnt true
         asset.queued = true
         foot = $ 'html>foot'
@@ -47,54 +50,70 @@ class JOM
 
     $('head link[rel="asset"]')
     # .add imported
-    .each (i, asset)->
-      exists = $ stack.asset
-      .filter ->
-        this.source is $(asset).attr "source"
+    .each (i, asset)=>
+      exists = $ @assets
+              .filter =>
+                this.source is $(asset).attr "source"
+
       if "asset" of asset is false and exists.length is 0
         asset.asset = true
-        stack.asset.push new Asset asset
+        @assets.push new Asset asset
 
+  load_schemas: ()->
+    $('foot script[asset=schema]')
+    .each (i, schema) =>
+      if "schema" of schema is false
+        schema.schema = true
+        @schemas.push schema.json || {}
   load_components: ()->
     $('component')
-    .each (i, component)->
+    .each (i, component) =>
       if "component" of component is false
         component.component = true
         c = new Component component
-        stack.component.push c
+        @components.push c
         component.component = c
 
   load_templates: ()->
-    $("foot link[rel=import]")
+    $("foot link[rel=import][asset=template]")
     .filter (i,link)->
       link.import isnt null
-    .each (i, link)->
+    .each (i, link) =>
       template = link.import.querySelector "template"
       if "template" of template is false and link.import isnt undefined
         template.template = true
         name = $(template).attr 'name'
-        stack.template[name] = new Template template
+        @templates[name] = new Template template
 
   load_collections: ()->
-    $("foot script[type='text/json']")
-    .each (i, collection)->
+    $("foot script[type='text/json'][asset=collection]")
+    .each (i, collection) =>
       if "collection" of collection is false and collection.data isnt undefined
         collection.collection = true
         name = $(collection).attr "name"
         data = collection.data
-        stack.collection[name] = new Collection name, data
+        @collections[name] = new Collection name, data
 
   assemble_components: ->
-    $.each stack.component, (i, component)=>
+    $.each @components, (i, component)=>
       if  component.ready isnt true and component.scripts.status is "init"
-        template   = jom.template[component.attr.template]
-        collection = jom.collection[component.attr.collection]
-        if template isnt undefined and
-           collection isnt undefined and
-           collection.data?.length
+        template    = jom.templates[component.attr.template]
+
+        collections_available = true
+        if component.collections_list.length is 0
+          collections_available false
+        for c in component.collections_list
+          if jom.collections[c] is undefined then collections_available = false
+
+        # if template and collections are available do this once
+        if  template isnt undefined and
+            collections_available is true
 
           component.define_template template
-          component.define_collection collection
+
+          for c in component.collections_list
+            component.define_collection jom.collections[c]
+
           component.template.clone()
 
           @repeater component
@@ -144,12 +163,12 @@ class JOM
       items.insertAfter repeater
       repeater.hide()
   watch_collections: ->
-    for key, collection of stack.collection
+    for key, collection of @collections
       if collection.observing is false
         collection.observing = true
         new Observe collection.data, (changes)=>
           for key, change of changes
-            $.each stack.component, (i, component)=>
+            $.each @components, (i, component)=>
               $(component.root).find('[repeated]').remove()
               $(component.root).find('[repeat]').show()
               @repeater component, component.root
@@ -162,7 +181,6 @@ class JOM
               component.trigger "change", change
 
   resolve: (path)->
-    # console.log "LOCO", location.href
     # return location.pathname+
     href   = location.href
     pr     = href.replace(location.protocol+"//", "").replace(location.host, "")
@@ -177,24 +195,7 @@ class JOM
       else
         result = url.replace /([\/]?[^\/]+[\/]?)$/g, "/"+path
     return result
-  get_stack: -> stack
-  get_cache: -> cache
-  clear_stack: ->
-    stack.template   = {}
-    stack.collection = {}
-    stack.component  = []
-    stack.asset      = []
 
-  clear_cache: ->
-    cache.template   = {}
-    cache.collection = {}
-    cache.component  = []
-    cache.asset      = []
-
-  @getter 'asset',      -> stack.asset
-  @getter 'shadow',     -> new Shadow()
-  @getter 'template',   -> stack.template
-  @getter 'component',  -> stack.component
-  @getter 'collection', -> stack.collection
+  @getter 'shadow', -> new Shadow()
 
 jom = JOM = new JOM()

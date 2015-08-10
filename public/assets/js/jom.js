@@ -2,7 +2,7 @@ var Observe;
 
 Observe = (function() {
   function Observe(root, callback, curr, path) {
-    var base, item, key, new_path, type_of_curr, _i, _len;
+    var base, item, j, key, len, new_path, type_of_curr;
     if (curr == null) {
       curr = null;
     }
@@ -19,7 +19,7 @@ Observe = (function() {
     type_of_curr = curr.constructor.name;
     if (type_of_curr === "Array") {
       base = path;
-      for (key = _i = 0, _len = curr.length; _i < _len; key = ++_i) {
+      for (key = j = 0, len = curr.length; j < len; key = ++j) {
         item = curr[key];
         if (typeof item === "object") {
           new_path = (base || '') + "[" + key + "]";
@@ -135,7 +135,7 @@ if ($.fn.value == null) {
     if (text == null) {
       text = false;
     }
-    console.log("go back to value change how it works");
+    console.info("go back to value change how it works");
     if (val) {
       $(this).data('value', arguments[0]);
       if (text === true) {
@@ -149,7 +149,8 @@ if ($.fn.value == null) {
   };
 }
 
-var Asset;
+var Asset,
+  indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 Asset = (function() {
   Asset.name = null;
@@ -163,7 +164,7 @@ Asset = (function() {
   Asset.element = {};
 
   function Asset(asset) {
-    var $asset, params, part, split, type;
+    var $asset, arr, params, part, ref, split, type;
     $asset = $(asset);
     this.rel = $asset.attr("rel");
     if (this.rel === void 0) {
@@ -171,7 +172,9 @@ Asset = (function() {
     }
     this.name = ($asset.attr("name")) || null;
     this.source = $asset.attr("source");
-    this.origin = $asset.clone();
+    this.asset = $asset.attr("asset");
+    this.original = asset;
+    this.clone = $asset.clone();
     type = $asset.attr("type");
     if (type === void 0) {
       throw new Error("jom: asset type is required");
@@ -188,33 +191,58 @@ Asset = (function() {
     };
     $asset.get(0).asset = true;
     this.element = this.create_element();
+    switch (this.content_type.part) {
+      case 'text/html':
+        this.error('name');
+        this.error('source');
+        this.error('asset');
+        break;
+      case 'text/json':
+        this.error('name');
+        this.error('source');
+        this.error('asset');
+        break;
+      default:
+        this.error('source');
+    }
+    arr = ['schema', 'collection', 'template', 'javascript', 'css', 'img', 'plain'];
+    if (this.asset && (ref = this.asset, indexOf.call(arr, ref) >= 0) === false) {
+      throw new Error("jom: asset attr '" + this.asset + "' is not valid");
+    }
     this;
   }
 
+  Asset.prototype.error = function(type) {
+    var arr;
+    arr = ['name', 'source', 'asset'];
+    if (indexOf.call(arr, type) >= 0 && this[type] === void 0) {
+      throw new Error("jom: " + type + " attr is required");
+    }
+  };
+
   Asset.prototype.create_element = function() {
-    var element, part;
-    part = this.content_type.part;
-    switch (part) {
-      case 'text/template':
-        element = "<link    rel=import href='" + this.source + "' type='text/template' />";
+    var element;
+    switch (this.content_type.part) {
+      case 'text/html':
+        element = "<link    rel=import href='" + this.source + "' type='text/html' name='" + this.name + "' asset='" + this.asset + "' />";
         break;
       case 'text/css':
-        element = "<link    href='" + this.source + "' rel='stylesheet' type='text/css' />";
+        element = "<link    href='" + this.source + "' rel='stylesheet' type='text/css' name='" + this.name + "' asset='" + this.asset + "' />";
         break;
       case 'text/javascript':
-        element = "<script  src='" + this.source + "' type='text/javascript' async=true />";
+        element = "<script  src='" + this.source + "' type='text/javascript' async=true name='" + this.name + "' asset='" + this.asset + "' />";
         break;
       case 'text/json':
-        element = "<script  source='" + this.source + "' type='" + part + "' async='true' name='" + this.name + "' />";
+        element = "<script  source='" + this.source + "' type='" + this.content_type.part + "' async='true' name='" + this.name + "' asset='" + this.asset + "' />";
         break;
       case "text/plain":
-        element = "<script  type='" + part + "' async='true' />";
+        element = "<script  type='" + this.content_type.part + "' async='true' name='" + this.name + "' asset='" + this.asset + "' />";
         break;
       default:
         element = null;
         if (typeof console !== "undefined" && console !== null) {
           if (typeof console.warn === "function") {
-            console.warn("media: ", part);
+            console.warn("media: ", this.content_type.part);
           }
         }
         throw new Error("jom: asset media `" + this.content_type.full + "` type is not valid");
@@ -299,19 +327,37 @@ Collection = (function() {
     this.observing = false;
   }
 
+  Collection.prototype.generate_id = function() {
+    return new Date().getTime();
+  };
+
+  Collection.prototype.meta = function() {
+    return {
+      id: this.generate_id()
+    };
+  };
+
   Collection.prototype.attach_data = function(data) {
-    var item, length, _i, _len;
+    var i, item, len, length;
     if (data == null) {
       data = [];
     }
     length = data.length || Object.keys(data).length;
     if (length) {
       if (Array.isArray(data)) {
-        for (_i = 0, _len = data.length; _i < _len; _i++) {
-          item = data[_i];
+        for (i = 0, len = data.length; i < len; i++) {
+          item = data[i];
+          item.meta = this.meta();
+          Object.defineProperty(item, "meta", {
+            enumerable: false
+          });
           this.data.push(item);
         }
       } else {
+        data.meta = this.meta();
+        Object.defineProperty(data, "meta", {
+          enumerable: false
+        });
         this.data.push(data);
       }
     }
@@ -321,6 +367,9 @@ Collection = (function() {
   Collection.prototype.attach_schema = function(schema) {
     if (schema == null) {
       schema = {};
+    }
+    if (schema === void 0) {
+      throw new Error("collection: schema is missing");
     }
     return this.schema = schema;
   };
@@ -364,13 +413,13 @@ Collection = (function() {
   };
 
   Collection.prototype.findByPath = function(path) {
-    var item, regx, result, split, text, _i, _len;
+    var i, item, len, regx, result, split, text;
     regx = /(\[)(\d+)(\])/g;
     text = path.replace(regx, ".$2").replace(/^\.*/, "");
     split = text.split(".");
     result = this.data;
-    for (_i = 0, _len = split.length; _i < _len; _i++) {
-      item = split[_i];
+    for (i = 0, len = split.length; i < len; i++) {
+      item = split[i];
       if (result === void 0) {
         return result;
       }
@@ -395,25 +444,27 @@ Component = (function() {
   regxG = /\${([^\s{}]+)}/g;
 
   function Component(component) {
-    var $component, collection, path, template;
+    var $component, collections, path, template;
     if (component === void 0) {
       throw new Error("jom: component is required");
     }
     $component = $(component);
     $component.get(0).component = true;
     template = $component.attr("template");
-    collection = $component.attr("collection");
+    collections = $component.attr("collections");
     path = $component.attr("path");
     if (!template) {
       throw new Error("jom: component template is required");
     }
-    if (!collection) {
-      throw new Error("jom: component collection is required");
+    if (!collections) {
+      throw new Error("jom: component collections is required");
     }
     this.attr = {
       template: template,
-      collection: collection
+      collections: collections
     };
+    collections = collections.split(/\s*,\s*/g);
+    this.collections_list = collections;
     this.element = $component.get(0);
     if (!this.element.createShadowRoot) {
       this.element = wrap(this.element);
@@ -421,13 +472,13 @@ Component = (function() {
     this.hide();
     this.ready = false;
     this.template = null;
-    this.collection = null;
+    this.collections = {};
     this.path = path || "[0]";
     this.data = [];
     this.create_shadow();
     this.root = this.element.shadowRoot;
     this.template_ready = false;
-    this.collection_ready = false;
+    this.collections_ready = false;
     this.handles = [];
     this.events = [];
     this.scripts = [];
@@ -468,9 +519,10 @@ Component = (function() {
     if (!collection || collection instanceof Collection === false) {
       throw new Error("jom: collection cant be added");
     }
-    this.collection = collection;
-    this.data = this.collection.findByPath(this.path);
-    return this.collection;
+    if (this.collections[collection.name] === void 0) {
+      this.collections[collection.name] = collection;
+    }
+    return this.collections;
   };
 
   Component.prototype.watcher = function(changes, collection) {
@@ -529,22 +581,31 @@ Component = (function() {
   };
 
   Component.prototype.handlebars = function(content, component) {
-    var $content, c, collection;
-    collection = component.collection;
+    var $content, c, collections;
+    collections = component.collections;
     $content = $(content);
     c = $content.findAll('*').not('script, style, link, [repeat]').filter(function() {
       return $(this).parents('[repeat]').length === 0;
     });
     c.each((function(_this) {
       return function(i, node) {
-        var attr, e, j, key, len, name, new_text, path, ref, text;
+        var attr, collection, e, j, key, len, name, new_text, path, raw, ref, ref1, ref2, ref3, text;
         text = $(node).text();
         if ($(node).children().length === 0 && regx.test(text) === true) {
+          raw = text;
           key = text.match(regx)[1];
-          path = collection.join(_this.path, key);
+          ref = key.split(':'), collection = ref[0], path = ref[1];
+          if (collection === void 0) {
+            throw new Error("component: `" + raw + "` is wrong, start with collection.");
+          }
+          collection = collections[collection];
           new_text = collection.findByPath($.trim(path));
-          if (new_text === void 0 && jom.env === "production") {
-            new_text = "";
+          if (new_text === void 0) {
+            if (jom.env === "production") {
+              new_text = "";
+            } else {
+              throw new Error("Data: not found for `" + raw + "` key.");
+            }
           }
           $(node).text(text.replace(regx, new_text));
           node.handle = {
@@ -554,18 +615,23 @@ Component = (function() {
           };
           _this.handles.push(node);
         }
-        ref = node.attributes;
-        for (key = j = 0, len = ref.length; j < len; key = ++j) {
-          attr = ref[key];
+        ref1 = node.attributes;
+        for (key = j = 0, len = ref1.length; j < len; key = ++j) {
+          attr = ref1[key];
           if (regx.test(attr.name)) {
             text = attr.name;
+            raw = text;
             try {
               key = text.match(regx)[1];
             } catch (_error) {
               e = _error;
               throw new Error("Component: wrong key on attr name " + text);
             }
-            path = collection.join(_this.path, key);
+            ref2 = key.split(':'), collection = ref2[0], path = ref2[1];
+            if (collection === void 0) {
+              throw new Error("component: `" + raw + "` is wrong, start with collection.");
+            }
+            collection = collections[collection];
             new_text = collection.findByPath($.trim(path));
             if (new_text === void 0 && jom.env === "production") {
               new_text = "";
@@ -582,13 +648,18 @@ Component = (function() {
           }
           if (regx.test(attr.value)) {
             text = attr.value;
+            raw = text;
             try {
               key = text.match(regx)[1];
             } catch (_error) {
               e = _error;
               throw new Error("Component: wrong key on attr value " + text);
             }
-            path = collection.join(_this.path, key);
+            ref3 = key.split(':'), collection = ref3[0], path = ref3[1];
+            if (collection === void 0) {
+              throw new Error("component: `" + raw + "` is wrong, start with collection.");
+            }
+            collection = collections[collection];
             new_text = collection.findByPath($.trim(path));
             if (new_text === void 0 && jom.env === "production") {
               new_text = "";
@@ -626,7 +697,7 @@ Component = (function() {
       front = "";
       reg = new RegExp("^" + (escapeRegExp(front)));
       is_script_prepared = reg.test(script.text);
-      script.text = "(function(){\nvar\nshadow     = jom.shadow,\nbody       = shadow.body,\nhost       = shadow.host,\nroot       = shadow.root,\ncomponent  = host.component,\ncollection = component.collection,\ndata       = component.collection.findByPath(component.path)\n;\n\n" + script.text + "\n})()";
+      script.text = "(function(){\nvar\nshadow      = jom.shadow,\nbody        = shadow.body,\nhost        = shadow.host,\nroot        = shadow.root,\ncomponent   = host.component,\ncollections = component.collections\n;\n\n" + script.text + "\n})()";
       return script;
     });
   };
@@ -672,17 +743,18 @@ Component = (function() {
   };
 
   Component.prototype.repeat = function(element, data) {
-    var $element, clone, e, index, item, j, key, len, path, prefix, repeat, x;
+    var $element, clone, collection, e, index, item, j, key, len, path, prefix, raw, ref, repeat, x;
     if (data == null) {
       data = null;
     }
     if (data === null) {
-      data = this.data;
+      data = [];
     }
     $element = $(element);
     key = $element.attr('repeat');
+    raw = key;
     if (key === void 0) {
-      throw new Error("component: items attr missing");
+      throw new Error("component: `repeat` attr missing");
     }
     try {
       key = key.match(regx)[1];
@@ -691,10 +763,20 @@ Component = (function() {
       throw new Error("Component: Wrong key `" + key + "`");
     }
     repeat = $([]);
-    path = this.collection.join(this.path, key);
-    data = this.collection.findByPath(path);
+    ref = key.split(":"), collection = ref[0], path = ref[1];
+    if (collection === void 0) {
+      throw new Error("component: `" + raw + "` is wrong, start with collection.");
+    }
+    if (path !== void 0 && path.length) {
+      data = this.collections[collection].findByPath(path);
+    } else {
+      data = this.collections[collection].data;
+    }
     if (data === void 0) {
       throw new Error("component: data not found `" + path + "`");
+    }
+    if (path === void 0) {
+      path = "";
     }
     for (index = j = 0, len = data.length; j < len; index = ++j) {
       item = data[index];
@@ -702,7 +784,8 @@ Component = (function() {
       clone.attr("repeated", true);
       clone.attr("repeat", null);
       clone.attr('repeat-index', index);
-      prefix = this.collection.join(key, "[" + index + "]");
+      prefix = this.collections[collection].join(path, "[" + index + "]");
+      prefix = collection + ":" + prefix;
       x = clone[0].outerHTML.replace(/(\${)([^\s{}]+)(})/g, "$1" + prefix + ".$2$3");
       x = x.replace(/(\{repeat\.index})/g, index);
       x = x.replace(/(\{repeat\.length})/g, data.length);
@@ -749,6 +832,10 @@ Template = (function() {
     if (this.body === void 0 || this.body.length === 0) {
       throw new Error("jom: template body attr is required");
     }
+    this.schema = $(this.element).children('link[rel=asset][asset=schema]');
+    if (this.schema.length === 0) {
+      throw new Error("jom: template schema(s) are required");
+    }
     this.cloned = null;
     this;
   }
@@ -764,19 +851,18 @@ Template = (function() {
 var JOM, jom;
 
 JOM = (function() {
-  var cache, observer, stack;
+  var observer;
 
   observer = {};
-
-  cache = {};
-
-  stack = {};
 
   function JOM() {
     window["jom"] = this;
     $('html').append('<foot/>');
-    this.clear_cache();
-    this.clear_stack();
+    this.templates = [];
+    this.collections = [];
+    this.components = [];
+    this.assets = [];
+    this.schemas = [];
     this.tasks();
     this.env = "production";
     this.app = {
@@ -792,6 +878,7 @@ JOM = (function() {
         _this.load_components();
         _this.load_templates();
         _this.load_collections();
+        _this.load_schemas;
         _this.inject_assets();
         _this.assemble_components();
         _this.watch_collections();
@@ -801,7 +888,7 @@ JOM = (function() {
   };
 
   JOM.prototype.inject_assets = function() {
-    return $.each(stack.asset, function(i, asset) {
+    return $.each(this.assets, function(i, asset) {
       var foot;
       if ((asset.queued != null) !== true) {
         asset.queued = true;
@@ -817,66 +904,99 @@ JOM = (function() {
   };
 
   JOM.prototype.load_assets = function() {
-    return $('head link[rel="asset"]').each(function(i, asset) {
-      var exists;
-      exists = $(stack.asset).filter(function() {
-        return this.source === $(asset).attr("source");
-      });
-      if ("asset" in asset === false && exists.length === 0) {
-        asset.asset = true;
-        return stack.asset.push(new Asset(asset));
-      }
-    });
+    return $('head link[rel="asset"]').each((function(_this) {
+      return function(i, asset) {
+        var exists;
+        exists = $(_this.assets).filter(function() {
+          return _this.source === $(asset).attr("source");
+        });
+        if ("asset" in asset === false && exists.length === 0) {
+          asset.asset = true;
+          return _this.assets.push(new Asset(asset));
+        }
+      };
+    })(this));
+  };
+
+  JOM.prototype.load_schemas = function() {
+    return $('foot script[asset=schema]').each((function(_this) {
+      return function(i, schema) {
+        if ("schema" in schema === false) {
+          schema.schema = true;
+          return _this.schemas.push(schema.json || {});
+        }
+      };
+    })(this));
   };
 
   JOM.prototype.load_components = function() {
-    return $('component').each(function(i, component) {
-      var c;
-      if ("component" in component === false) {
-        component.component = true;
-        c = new Component(component);
-        stack.component.push(c);
-        return component.component = c;
-      }
-    });
+    return $('component').each((function(_this) {
+      return function(i, component) {
+        var c;
+        if ("component" in component === false) {
+          component.component = true;
+          c = new Component(component);
+          _this.components.push(c);
+          return component.component = c;
+        }
+      };
+    })(this));
   };
 
   JOM.prototype.load_templates = function() {
-    return $("foot link[rel=import]").filter(function(i, link) {
+    return $("foot link[rel=import][asset=template]").filter(function(i, link) {
       return link["import"] !== null;
-    }).each(function(i, link) {
-      var name, template;
-      template = link["import"].querySelector("template");
-      if ("template" in template === false && link["import"] !== void 0) {
-        template.template = true;
-        name = $(template).attr('name');
-        return stack.template[name] = new Template(template);
-      }
-    });
+    }).each((function(_this) {
+      return function(i, link) {
+        var name, template;
+        template = link["import"].querySelector("template");
+        if ("template" in template === false && link["import"] !== void 0) {
+          template.template = true;
+          name = $(template).attr('name');
+          return _this.templates[name] = new Template(template);
+        }
+      };
+    })(this));
   };
 
   JOM.prototype.load_collections = function() {
-    return $("foot script[type='text/json']").each(function(i, collection) {
-      var data, name;
-      if ("collection" in collection === false && collection.data !== void 0) {
-        collection.collection = true;
-        name = $(collection).attr("name");
-        data = collection.data;
-        return stack.collection[name] = new Collection(name, data);
-      }
-    });
+    return $("foot script[type='text/json'][asset=collection]").each((function(_this) {
+      return function(i, collection) {
+        var data, name;
+        if ("collection" in collection === false && collection.data !== void 0) {
+          collection.collection = true;
+          name = $(collection).attr("name");
+          data = collection.data;
+          return _this.collections[name] = new Collection(name, data);
+        }
+      };
+    })(this));
   };
 
   JOM.prototype.assemble_components = function() {
-    return $.each(stack.component, (function(_this) {
+    return $.each(this.components, (function(_this) {
       return function(i, component) {
-        var collection, ref, template;
+        var c, collections_available, j, k, len, len1, ref, ref1, template;
         if (component.ready !== true && component.scripts.status === "init") {
-          template = jom.template[component.attr.template];
-          collection = jom.collection[component.attr.collection];
-          if (template !== void 0 && collection !== void 0 && ((ref = collection.data) != null ? ref.length : void 0)) {
+          template = jom.templates[component.attr.template];
+          collections_available = true;
+          if (component.collections_list.length === 0) {
+            collections_available(false);
+          }
+          ref = component.collections_list;
+          for (j = 0, len = ref.length; j < len; j++) {
+            c = ref[j];
+            if (jom.collections[c] === void 0) {
+              collections_available = false;
+            }
+          }
+          if (template !== void 0 && collections_available === true) {
             component.define_template(template);
-            component.define_collection(collection);
+            ref1 = component.collections_list;
+            for (k = 0, len1 = ref1.length; k < len1; k++) {
+              c = ref1[k];
+              component.define_collection(jom.collections[c]);
+            }
             component.template.clone();
             _this.repeater(component);
             component.hide();
@@ -941,7 +1061,7 @@ JOM = (function() {
 
   JOM.prototype.watch_collections = function() {
     var collection, key, ref, results;
-    ref = stack.collection;
+    ref = this.collections;
     results = [];
     for (key in ref) {
       collection = ref[key];
@@ -953,7 +1073,7 @@ JOM = (function() {
             results1 = [];
             for (key in changes) {
               change = changes[key];
-              results1.push($.each(stack.component, function(i, component) {
+              results1.push($.each(_this.components, function(i, component) {
                 $(component.root).find('[repeated]').remove();
                 $(component.root).find('[repeat]').show();
                 _this.repeater(component, component.root);
@@ -994,46 +1114,8 @@ JOM = (function() {
     return result;
   };
 
-  JOM.prototype.get_stack = function() {
-    return stack;
-  };
-
-  JOM.prototype.get_cache = function() {
-    return cache;
-  };
-
-  JOM.prototype.clear_stack = function() {
-    stack.template = {};
-    stack.collection = {};
-    stack.component = [];
-    return stack.asset = [];
-  };
-
-  JOM.prototype.clear_cache = function() {
-    cache.template = {};
-    cache.collection = {};
-    cache.component = [];
-    return cache.asset = [];
-  };
-
-  JOM.getter('asset', function() {
-    return stack.asset;
-  });
-
   JOM.getter('shadow', function() {
     return new Shadow();
-  });
-
-  JOM.getter('template', function() {
-    return stack.template;
-  });
-
-  JOM.getter('component', function() {
-    return stack.component;
-  });
-
-  JOM.getter('collection', function() {
-    return stack.collection;
   });
 
   return JOM;

@@ -6,19 +6,17 @@ describe "components:: ", ->
     $('body').html("")
     $('head link[rel=asset]').remove()
     $('component').remove()
-    jom.clear_stack()
-    jom.clear_cache()
 
   it "should exists", ->
     expect(Component).toBeDefined()
 
   it "should have properties defined", ->
-    c = "<component template=profile collection=profile />"
+    c = "<component template=profile collections=profile />"
     component = new Component c
 
     expect(component.attr).toBeDefined()
     expect(component.template).toBeDefined()
-    expect(component.collection).toBeDefined()
+    expect(component.collections).toBeDefined()
     expect(component.path).toBeDefined()
     expect(component.element).toBeDefined()
     expect(component.events).toBeDefined()
@@ -37,7 +35,7 @@ describe "components:: ", ->
     expect(component.define_template).toBeDefined()
     expect(component.define_collection).toBeDefined()
 
-    expect(component.attr).toEqual template:"profile", collection:"profile"
+    expect(component.attr).toEqual template:"profile", collections:"profile"
 
     expect(component.root).not.toEqual null
     expect(component.element.shadowRoot).not.toEqual null
@@ -60,21 +58,21 @@ describe "components:: ", ->
       expect(-> new Component c)
       .toThrow new Error "jom: component template is required"
 
-    it "should fail no collection", ->
+    it "should fail no collections", ->
       c = "<component template=profile />"
 
       expect(-> component = new Component c)
-      .toThrow new Error "jom: component collection is required"
+      .toThrow new Error "jom: component collections is required"
 
     it "should pass and set component to element", ->
-      c = "<component template=profile collection=profile />"
+      c = "<component template=profile collections=profile />"
       component = new Component c
 
       expect(component.element.component).toBe true
 
   describe "handle_template_scripts; ",->
     it "should wrap script tags, for encapsulatation",->
-      c = "<component template=profile collection=profile />"
+      c = "<component template=profile collections=profile />"
       component = new Component c
 
       content = """
@@ -89,15 +87,14 @@ describe "components:: ", ->
       expected_content = """
       (function(){
                 var
-                shadow     = jom.shadow,
-                body       = shadow.body,
-                host       = shadow.host,
-                root       = shadow.root,
-                component  = host.component,
-                collection = component.collection,
-                data       = component.collection.findByPath(component.path)
+                shadow      = jom.shadow,
+                body        = shadow.body,
+                host        = shadow.host,
+                root        = shadow.root,
+                component   = host.component,
+                collections = component.collections
                 ;
-       var a = 1;
+                var a = 1;
       })()
       """
       new_content      = $.trim($(new_content).text()).replace /[\s]+/g, " "
@@ -114,7 +111,7 @@ describe "components:: ", ->
         dog: ["Rocky"]
       collection = new Collection "profile", data
 
-      c = "<component template=profile collection=profile />"
+      c = "<component template=profile collections=profile />"
       component = new Component c
 
       component.define_collection collection
@@ -123,15 +120,19 @@ describe "components:: ", ->
       <div>
         <div>I will test</div>
         <div>some
-          <span>${handlebar.and.path}</span>
+          '
+          <span>${profile:[0].handlebar.and.path}</span>
+          '
           even if it has an array
-          <span>${dog[0]}</span>
+          '
+          <span>${profile:[0].dog[0]}</span>
+          '
         </div>
       </div>
       """
 
       new_content = component.handlebars content, component
-      expected_content = "I will test some thing even if it has an array Rocky"
+      expected_content = "I will test some ' thing ' even if it has an array ' Rocky '"
 
       new_content      = $.trim($(new_content).text()).replace /[\s]+/g, " "
       expected_content = $.trim(expected_content).replace /[\s]+/g, " "
@@ -140,6 +141,7 @@ describe "components:: ", ->
       expect(new_content).toEqual expected_content
 
     it "should replace handles attributes with data", ->
+      jom.env = "dev"
       data =
         handlebar:
           and:
@@ -147,7 +149,7 @@ describe "components:: ", ->
         dog: ["Rocky"]
       collection = new Collection "profile", data
 
-      c = "<component template=profile collection=profile />"
+      c = "<component template=profile collections=profile />"
       component = new Component c
       component.define_collection collection
 
@@ -155,9 +157,9 @@ describe "components:: ", ->
       <div>
         <div>I will test</div>
         <div>some
-          <span>${handlebar.and.path}</span>
+          <span>${profile:[0].handlebar.and.path}</span>
           even if it has an array
-          <span value="${dog[0]}"></span>
+          <span value="${profile:[0].dog[0]}"></span>
         </div>
       </div>
       """
@@ -173,10 +175,10 @@ describe "components:: ", ->
 
   describe "defines; ",->
     it "should define a template", ->
-      c = "<component template=profile collection=profile />"
+      c = "<component template=profile collections=profile />"
       component = new Component c
 
-      t = "<template name=user><div body></div></template>"
+      t = "<template name=user><link rel=asset source=user.json type='text/json' name=user asset=schema /> <div body></div></template>"
       template = new Template t
 
       component.define_template template
@@ -184,16 +186,16 @@ describe "components:: ", ->
       expect(component.template).toBe template
 
     it "should throw an error when defining a template", ->
-      c = "<component template=profile collection=profile />"
+      c = "<component template=profile collections=profile />"
       component = new Component c
 
-      t = "<template name=user><div body></div></template>"
+      t = "<template name=user><link rel=asset source=user.json type='text/json' name=user asset=schema /> <div body></div></template>"
 
       expect(-> component.define_template t)
       .toThrow new Error "jom: template cant be added"
 
-    it "should define a collection", ->
-      c = "<component template=profile collection=profile />"
+    it "should define a collections", ->
+      c = "<component template=profile collections=profile />"
       component = new Component c
 
       data = [ name: "valtid" ]
@@ -201,20 +203,20 @@ describe "components:: ", ->
 
       component.define_collection collection
 
-      expect(component.collection).toBe collection
+      expect(component.collections[collection.name]).toBe collection
 
-    it "should throw an error when defining a collection", ->
-      c = "<component template=profile collection=profile />"
+    it "should throw an error when defining a collections", ->
+      c = "<component template=profile collections=profile />"
       component = new Component c
 
-      collection = [ name: "valtid" ]
+      collections = [ name: "valtid" ]
 
-      expect(-> component.define_collection collection)
+      expect(-> component.define_collection collections)
       .toThrow new Error "jom: collection cant be added"
 
   describe "shadowRoot; ",->
     it "should wrap if shadowRoot is not native", ->
-      c = "<component template=profile collection=profile />"
+      c = "<component template=profile collections=profile />"
       $c = $ c
       x = $c.get(0)
 
@@ -223,90 +225,16 @@ describe "components:: ", ->
       component = new Component x
       expect(x.createShadowRoot).toBeDefined()
 
-  describe "trigger; ",->
+  xdescribe "trigger; ",->
     it "should trigger changes",->
-      t = "<template name=user><div body>${name}</div></template>"
-      template = new Template t
 
-      data = [ name: "valtid" ]
-      collection = new Collection "profile", data
+    it "should trigger changes cover attributes",->
 
-      jom.collection.profile = collection
-      jom.template.profile = template
-
-      c = "<component template=profile collection=profile />"
-      component = new Component c
-      component.define_collection collection
-      component.define_template template
-      template.clone()
-      component.handlebars template.cloned, component
-
-      changes =[
-        path: "[0].name"
-        value: "Valtid Caushi"
-      ]
-
-      trigger = component.trigger changes, collection
-
-      expect(trigger.length).toEqual 1
-
-  it "should trigger changes cover attributes",->
-    t = "<template name=user><div body><span value='${name}'/></div></template>"
-    template = new Template t
-
-    data = [ name: "valtid" ]
-    collection = new Collection "profile", data
-
-    jom.collection.profile = collection
-    jom.template.profile = template
-
-    c = "<component template=profile collection=profile />"
-    component = new Component c
-    component.define_collection collection
-    component.define_template template
-    template.clone()
-    component.handlebars template.cloned, component
-
-    changes =[
-      path: "[0].name"
-      value: "Valtid Caushi"
-    ]
-
-    trigger = component.trigger changes, collection
-
-    expect(trigger.length).toEqual 1
-
-
-  it "should trigger changes and throw errors",->
-    t = "<template name=user><div body><span value='${name}'/></div></template>"
-    template = new Template t
-
-    data = [ name: "valtid" ]
-    collection = new Collection "profile", data
-
-    jom.collection.profile = collection
-    jom.template.profile = template
-
-    c = "<component template=profile collection=profile />"
-    component = new Component c
-    component.define_collection collection
-    component.define_template template
-    template.clone()
-    component.handlebars template.cloned, component
-    component.handles[0].handle.type = "__fake__"
-
-    changes =[
-      path: "[0].name"
-      value: "Valtid Caushi"
-    ]
-
-    expect(-> component.trigger changes, collection)
-    .toThrow new Error "jom: unexpected handle type"
-
+    it "should trigger changes and throw errors",->
 
   describe "on event; ", ->
     it "should push events to the queue", ->
-      c = "<component template=profile collection=profile />"
+      c = "<component template=profile collections=profile />"
       component = new Component c
 
       expect(component.events.length).toEqual 0
@@ -320,19 +248,18 @@ describe "components:: ", ->
   describe "trigger event; ", ->
     xit "should trigger all events that match path and type", ->
       output = false
-      c = "<component template=profile collection=profile />"
+      c = "<component template=profile collections=profile />"
       component = new Component c
 
       data = [ name: "valtid" ]
-      collection = new Collection "profile", data
+      collections = new Collection "profile", data
 
-      component.define_collection collection
+      component.define_collection collections
 
       expect(component.events.length).toEqual 0
 
       component.on "change", "name", ->
         output = true
-        console.log "test: true"
         expect(output).toEqual true
 
       expect(component.events.length).toEqual 1
@@ -346,18 +273,18 @@ describe "components:: ", ->
         value: "Valtid Caushi"
       ]
 
-      trigger = component.trigger changes, collection
+      trigger = component.trigger changes, collections
 
       expect(output).toEqual true
 
   describe "repeat; ", ->
     it "should repeat the same thing over and over", ->
-      c = "<component template=profile collection=profile />"
+      c = "<component template=profile collections=profile />"
       component = new Component c
 
       repeater = """
-        <div repeat="${names}">
-          <div name="${name}"></div>
+        <div repeat="${profile:[0].names}">
+          <div name="${profile:[0].name}"></div>
         </div>
       """
       data = [
@@ -367,15 +294,16 @@ describe "components:: ", ->
           ]
         }
       ]
-      out = component.repeat repeater, data
+      collection = new Collection "profile", data
+      component.define_collection collection
+      out = component.repeat repeater
 
       expected = """
-      <div repeat="${names}">
-        <div name="${names[0].name}"></div>
-        <div name="${names[1].name}"></div>
+      <div repeat="${profile:[0].names}">
+        <div name="${name}"></div>
+        <div name="${name}"></div>
       </div>
       """
 
       # expect(out).toEqual expected
       expect(out.children().length).toEqual 2
-      console.debug out.children()

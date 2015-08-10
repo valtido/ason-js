@@ -22,13 +22,18 @@ class Template
     # @element = template
 
     @body = $(@element).children "[body]"
-    # console.log @body
     $template.get(0).template = true
     if @body is undefined or @body.length is 0
       throw new Error "jom: template body attr is required"
 
+    @schema = $(@element).children 'link[rel=asset][asset=schema]'
+
+    if @schema.length is 0
+      throw new Error "jom: template schema(s) are required"
+
     @cloned = null
 
     @
+
   clone: ->
     @cloned = @element.cloneNode true

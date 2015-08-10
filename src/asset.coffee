@@ -27,9 +27,13 @@ class Asset
     $asset   = $ asset
     @rel     = $asset.attr "rel"
     throw new Error "jom: rel=asset is required" if @rel is undefined
-    @name    = ($asset.attr "name") or null
-    @source  = $asset.attr "source"
-    @origin  = $asset.clone()
+    @name   = ($asset.attr "name") or null
+    @source = $asset.attr "source"
+    @asset  = $asset.attr "asset"
+    # original element
+    @original = asset
+    # clone of original element, if element is not on the dom tree no more
+    @clone = $asset.clone()
 
     type    = $asset.attr "type"
     throw new Error "jom: asset type is required" if type is undefined
@@ -47,43 +51,70 @@ class Asset
     $asset.get(0).asset = true
     @element = @create_element()
 
+    switch @content_type.part
+      when 'text/html'
+        @error 'name'
+        @error 'source'
+        @error 'asset'
+      when 'text/json'
+        @error 'name'
+        @error 'source'
+        @error 'asset'
+      else
+        @error 'source'
+    arr = ['schema','collection','template','javascript','css','img','plain']
+    if @asset and @asset in arr is false
+      throw new Error "jom: asset attr '#{@asset}' is not valid"
+
     @
+  error: (type) ->
+    arr = ['name', 'source', 'asset']
+
+    if type in arr and @[type] is undefined
+      throw new Error "jom: #{type} attr is required"
 
   # creates an element to load the data,
   # @example <script src="..." type="text/javascript" />
   # @return [String] element returns an html element as a string
   create_element: ->
-    part = @content_type.part
-
-    switch part
-      when 'text/template'
+    switch @content_type.part
+      when 'text/html'
         element = "<link    rel=import
                             href='#{@source}'
-                            type='text/template'
+                            type='text/html'
+                            name='#{@name}'
+                            asset='#{@asset}'
                             />"
       when 'text/css'
         element = "<link    href='#{@source}'
                             rel='stylesheet'
                             type='text/css'
+                            name='#{@name}'
+                            asset='#{@asset}'
                             />"
       when 'text/javascript'
         element = "<script  src='#{@source}'
                             type='text/javascript'
                             async=true
+                            name='#{@name}'
+                            asset='#{@asset}'
                             />"
       when 'text/json'
         element = "<script  source='#{@source}'
-                            type='#{part}'
+                            type='#{@content_type.part}'
                             async='true'
                             name='#{@name}'
+                            asset='#{@asset}'
                             />"
       when "text/plain"
-        element = "<script  type='#{part}'
+        element = "<script  type='#{@content_type.part}'
                             async='true'
+                            name='#{@name}'
+                            asset='#{@asset}'
                             />"
       else
         element = null
-        console?.warn? "media: ", part
+        console?.warn? "media: ", @content_type.part
         throw new Error "jom: asset media `#{@content_type.full}` type
                               is not valid"
 

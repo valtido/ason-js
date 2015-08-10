@@ -4,14 +4,12 @@ describe "Template", ->
   beforeEach ->
     t = ""
     template = ""
-    jom.clear_cache()
-    jom.clear_stack()
 
   it "should exist", ->
     expect(Template).toBeDefined()
 
   it "should have properties", ->
-    t = "<template name=user><div body></div></template>"
+    t = "<template name=user><link rel=asset source=user.json type='text/json' name=user asset=schema /><div body></div></template>"
     template = new Template t
 
     expect(template.name).toBeDefined()
@@ -29,6 +27,12 @@ describe "Template", ->
     expect(-> template = new Template t)
     .toThrow new Error "jom: template name attr is required"
 
+  it "should throw error if no schema found", ->
+    t = "<template name=profile><div body> My text </div> </template>"
+
+    expect(-> template = new Template t)
+    .toThrow new Error "jom: template schema(s) are required"
+
   it "should throw error if no body found", ->
     t = "<template name=profile> <div> My text </div> </template>"
 
@@ -36,7 +40,7 @@ describe "Template", ->
     .toThrow new Error "jom: template body attr is required"
 
   it "should produce a clone of the template", ->
-    t = "<template name=user><div body></div></template>"
+    t = "<template name=user><link rel=asset source=user.json type='text/json' name=user asset=schema /><div body></div></template>"
     template = new Template t
 
     template.clone()

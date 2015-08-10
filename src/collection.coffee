@@ -1,3 +1,4 @@
+
 # Base class for collections, Collection's behaviour is
 # controlled by JOM and only keeps record of itself
 
@@ -31,6 +32,10 @@ class Collection
     @errors = null
     @observing = false
 
+  generate_id: -> new Date().getTime()
+
+  meta : ->
+    return {id: @generate_id()}
   # Attaches data to the collection instance
   # @param [Array, Object] data data to attach
   # @option data [Array] data if array, push each element
@@ -40,8 +45,12 @@ class Collection
     if length
       if Array.isArray data
         for item in data
+          item.meta = @meta()
+          Object.defineProperty item, "meta", enumerable: false
           @data.push item
       else
+        data.meta = @meta()
+        Object.defineProperty data, "meta", enumerable: false
         @data.push data
     @data
 
@@ -49,6 +58,9 @@ class Collection
   # @note see json-schema.org for JSON Schema
   # @param [Object] schema JSON Schema Object to attach to collection
   attach_schema: (schema = {})->
+    if schema is undefined
+      throw new Error "collection: schema is missing"
+
     @schema = schema
 
   # returns errors to a string format if any

@@ -37,7 +37,6 @@ class Observe
         changes.forEach (change,i) ->
           index_or_name = if change.index>-1 then change.index else change.name
           new_path = "#{base or ''}[#{index_or_name}]"
-          # console.log change
           part =
             path: new_path
             value : change.object[change.index] or

@@ -10,12 +10,14 @@ describe "Asset", ->
     expect(a).toBeDefined()
 
   it "should have properties", ->
-    asset = "<link rel='asset' source='test' type='text/plain' />"
+    asset = "<link rel='asset' source='test' type='text/plain' asset=plain />"
     a = new Asset asset
     expect(a.rel).toBeDefined()
     expect(a.name).toBeDefined()
     expect(a.source).toBeDefined()
-    expect(a.origin).toBeDefined()
+    expect(a.original).toBeDefined()
+    expect(a.clone).toBeDefined()
+    expect(a.asset).toBeDefined()
 
     expect(a.content_type).toBeDefined()
     expect(a.content_type.full).toBeDefined()
@@ -46,12 +48,12 @@ describe "Asset", ->
     .toThrow new Error "jom: asset media `not/good` type is not valid"
 
   it "should accept content type params", ->
-    asset = "<link rel='asset' source='test' type='text/css; charset=utf-8' />"
+    asset = "<link rel='asset' source='test' type='text/css; charset=utf-8' asset=css />"
     a = new Asset asset
     expect(a.name).toBe null
     expect(a.rel).toBe "asset"
     expect(a.source).toBe "test"
-    expect(a.origin.length).toBe 1
+    expect(a.clone.length).toBe 1
 
     expect(a.content_type.full).toBe "text/css; charset=utf-8"
     expect(a.content_type.part).toBe "text/css"
@@ -60,12 +62,12 @@ describe "Asset", ->
     expect(a.content_type.params).toBe "charset=utf-8"
 
   it "should accept css", ->
-    asset = "<link rel='asset' source='test' type='text/css' />"
+    asset = "<link rel='asset' source='test' type='text/css' asset=css />"
     a = new Asset asset
     expect(a.name).toBe null
     expect(a.rel).toBe "asset"
     expect(a.source).toBe "test"
-    expect(a.origin.length).toBe 1
+    expect(a.clone.length).toBe 1
 
     expect(a.content_type.full).toBe "text/css"
     expect(a.content_type.part).toBe "text/css"
@@ -74,26 +76,26 @@ describe "Asset", ->
     expect(a.content_type.params).toBe null
 
   it "should accept template", ->
-    asset = "<link rel='asset' source='test' type='text/template' />"
+    asset = "<link rel='asset' source='test' type='text/html' asset=template />"
     a = new Asset asset
     expect(a.name).toBe null
     expect(a.rel).toBe "asset"
     expect(a.source).toBe "test"
-    expect(a.origin.length).toBe 1
+    expect(a.clone.length).toBe 1
 
-    expect(a.content_type.full).toBe "text/template"
-    expect(a.content_type.part).toBe "text/template"
+    expect(a.content_type.full).toBe "text/html"
+    expect(a.content_type.part).toBe "text/html"
     expect(a.content_type.type).toBe "text"
-    expect(a.content_type.media).toBe "template"
+    expect(a.content_type.media).toBe "html"
     expect(a.content_type.params).toBe null
 
   it "should accept javascript", ->
-    asset = "<link rel='asset' source='test' type='text/javascript' />"
+    asset = "<link rel='asset' source='test' type='text/javascript' asset=javascript />"
     a = new Asset asset
     expect(a.name).toBe null
     expect(a.rel).toBe "asset"
     expect(a.source).toBe "test"
-    expect(a.origin.length).toBe 1
+    expect(a.clone.length).toBe 1
 
     expect(a.content_type.full).toBe "text/javascript"
     expect(a.content_type.part).toBe "text/javascript"
@@ -102,12 +104,12 @@ describe "Asset", ->
     expect(a.content_type.params).toBe null
 
   it "should accept json", ->
-    asset = "<link rel='asset' source='test' type='text/json' />"
+    asset = "<link rel='asset' source='test' type='text/json'  asset=collection />"
     a = new Asset asset
     expect(a.name).toBe null
     expect(a.rel).toBe "asset"
     expect(a.source).toBe "test"
-    expect(a.origin.length).toBe 1
+    expect(a.clone.length).toBe 1
 
     expect(a.content_type.full).toBe "text/json"
     expect(a.content_type.part).toBe "text/json"
@@ -121,7 +123,7 @@ describe "Asset", ->
     expect(a.name).toBe null
     expect(a.rel).toBe "asset"
     expect(a.source).toBe "test"
-    expect(a.origin.length).toBe 1
+    expect(a.clone.length).toBe 1
 
     expect(a.content_type.full).toBe "text/collection"
     expect(a.content_type.part).toBe "text/collection"

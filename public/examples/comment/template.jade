@@ -1,4 +1,5 @@
 template(name="comment")
+  link(rel="asset" source="user.json" type="text/json" name="user" asset="schema")
   style.
     @import url("/assets/-/fontello/css/fontello.css");
     :host{position:relative; margin: 1em;}
@@ -34,7 +35,7 @@ template(name="comment")
     hr
     div.new_comment
       div.test1
-        img(source="${user.image}")
+        img(source="${user:[0].image}")
       div.test2
         div
           textarea(placeholder="Type your comment here")
@@ -43,7 +44,7 @@ template(name="comment")
     $(body)
     .on('click',".cancel", function(event){
       var index = $(this).parent().attr("repeat-index")
-      data.comments.splice(index, 1)
+      collections.comments.data.splice(index, 1)
     })
     .on('keyup',"textarea", function(event){
       if(event.which == 13){
@@ -53,24 +54,25 @@ template(name="comment")
         new_comment.comment      = val;
         new_comment.likes        = 0;
         new_comment.commented_on = +new Date/1000
-        data.comments.push(new_comment);
+        collections.comments.data.push(new_comment);
         
         $(this).val("");
       }
     })
     .on('click',"i.icon-thumbs-up-alt", function(event){
       var index = $(this).parents('[repeated]').attr("repeat-index")
-      data.comments[index].likes++
+      collections.comments.data[index].likes++
     })
     .on('change keyup',".location", function(event){
-      data.location = $(this).val()
+      debugger
+      collections.comments.data.location = $(this).val()
     })
     ;
     
     component
     .on('change ready', "commented_on", function(event, change){
       var index = $(this).parents('[repeated]').attr("repeat-index")
-      var date = moment(data.comments[index].commented_on * 1000)
+      var date = moment(collections.comments.data[index].commented_on * 1000)
       var time = date.fromNow()
       $('[repeated] .timestamp',body).eq(index).text(time)
     })
