@@ -472,17 +472,19 @@ Component = (function() {
     this.hide();
     this.ready = false;
     this.template = null;
-    this.collections = {};
+    this.collections = [];
     this.path = path || "[0]";
     this.data = [];
     this.create_shadow();
     this.root = this.element.shadowRoot;
-    this.template_ready = false;
-    this.collections_ready = false;
     this.handles = [];
     this.events = [];
     this.scripts = [];
     this.scripts.status = "init";
+    this.init = {
+      template: false,
+      collections: false
+    };
     this;
   }
 
@@ -519,14 +521,13 @@ Component = (function() {
     if (!collection || collection instanceof Collection === false) {
       throw new Error("jom: collection cant be added");
     }
-    if (this.collections[collection.name] === void 0) {
-      this.collections[collection.name] = collection;
-    }
+    this.collections.push(collection);
     return this.collections;
   };
 
   Component.prototype.watcher = function(changes, collection) {
     var change, key, results;
+    throw new Error("what watcher!!!");
     if (collection.name === this.collection.name) {
       results = [];
       for (key in changes) {
@@ -595,13 +596,14 @@ Component = (function() {
           raw = text;
           key = text.match(regx)[1];
           ref = key.split(':'), collection = ref[0], path = ref[1];
+          collection = collections[collection];
           if (collection === void 0) {
             throw new Error("component: `" + raw + "` is wrong, start with collection.");
           }
-          collection = collections[collection];
           new_text = collection.findByPath($.trim(path));
           if (new_text === void 0) {
             if (jom.env === "production") {
+              console.info(new_text);
               new_text = "";
             } else {
               throw new Error("Data: not found for `" + raw + "` key.");
@@ -628,10 +630,10 @@ Component = (function() {
               throw new Error("Component: wrong key on attr name " + text);
             }
             ref2 = key.split(':'), collection = ref2[0], path = ref2[1];
+            collection = collections[collection];
             if (collection === void 0) {
               throw new Error("component: `" + raw + "` is wrong, start with collection.");
             }
-            collection = collections[collection];
             new_text = collection.findByPath($.trim(path));
             if (new_text === void 0 && jom.env === "production") {
               new_text = "";
@@ -813,14 +815,16 @@ Template = (function() {
   @return Template
    */
   function Template(template) {
-    var $template, t;
+    var $template, i, key, len, schema, schemas, t;
     if (template == null) {
       template = null;
     }
+    this.original = template;
     $template = $(template);
     if ($template.length === 0) {
       throw new Error("jom: template is required");
     }
+    this.ready = false;
     this.name = $template.attr("name");
     if (this.name === void 0) {
       throw new Error("jom: template name attr is required");
@@ -832,23 +836,115 @@ Template = (function() {
     if (this.body === void 0 || this.body.length === 0) {
       throw new Error("jom: template body attr is required");
     }
-    this.schema = $(this.element).children('link[rel=asset][asset=schema]');
-    if (this.schema.length === 0) {
-      throw new Error("jom: template schema(s) are required");
+    this.schemas = [];
+    schemas = $.trim($template.attr('schemas'));
+    schemas = schemas.split(',');
+    for (key = i = 0, len = schemas.length; i < len; key = ++i) {
+      schema = schemas[key];
+      schemas[key] = $.trim(schema);
     }
+    this.schemas_list = schemas;
+    schemas = schemas.join(',');
+    this.schemas_attr = schemas;
+    this.schemas_ready = false;
     this.cloned = null;
+    this.show_loader();
+    this.load_schemas();
     this;
   }
 
-  Template.prototype.clone = function() {
-    return this.cloned = this.element.cloneNode(true);
+  Template.prototype.load_schemas = function() {
+    if (this.schemas_ready === true) {
+      this.ready = true;
+      return this.hide_loader();
+    } else {
+      return setTimeout((function(_this) {
+        return function() {
+          var i, j, len, len1, ref, ref1, schema;
+          _this.schemas_ready = true;
+          if (_this.schemas_list.length === 0) {
+            _this.schemas_ready = false;
+          }
+          ref = _this.schemas_list;
+          for (i = 0, len = ref.length; i < len; i++) {
+            schema = ref[i];
+            if (jom.schemas.get(schema) === null) {
+              _this.schemas_ready = false;
+            }
+          }
+          if (_this.schemas_ready === true) {
+            ref1 = _this.schemas_list;
+            for (j = 0, len1 = ref1.length; j < len1; j++) {
+              schema = ref1[j];
+              _this.schemas.push(jom.schemas.get(schema));
+            }
+          }
+          return _this.load_schemas();
+        };
+      })(this), 10);
+    }
+  };
+
+  Template.prototype.show_loader = function() {
+    var css, loader;
+    loader = $('<div class="temporary_loader"><i class="icon-loader animate-spin"></i></div>');
+    css = {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      bottom: 0,
+      right: 0,
+      "text-align": "center",
+      display: "block",
+      "background-color": "#fff"
+    };
+    loader.css(css);
+    loader.children('i').css({
+      position: 'absolute',
+      top: "50%"
+    });
+    $('.temporary_loader', this.element).remove();
+    return $(this.element).append(loader);
+  };
+
+  Template.prototype.hide_loader = function() {
+    if (this.component !== void 0) {
+      return $('.temporary_loader', this.component.root).remove();
+    }
+  };
+
+  Template.prototype.define_schema = function(schema) {
+    if (!schema || schema instanceof Schema === false) {
+      throw new Error("jom: template schemas attr is required");
+    }
+    return this.schemas.push(schema);
   };
 
   return Template;
 
 })();
 
-var JOM, jom;
+var Schema;
+
+Schema = (function() {
+  function Schema(name, obj, description) {
+    if (description == null) {
+      description = null;
+    }
+    this.name = name;
+    if (!this.name) {
+      throw new Error("Schema: name is not defined");
+    }
+    this.description = description;
+    this.tree = obj;
+  }
+
+  return Schema;
+
+})();
+
+var JOM, jom,
+  indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 JOM = (function() {
   var observer;
@@ -856,13 +952,29 @@ JOM = (function() {
   observer = {};
 
   function JOM() {
-    window["jom"] = this;
+    var self;
+    self = window["jom"] = this;
     $('html').append('<foot/>');
     this.templates = [];
     this.collections = [];
     this.components = [];
     this.assets = [];
     this.schemas = [];
+    this.collections.get = function(name) {
+      return self.get('collection', name);
+    };
+    this.templates.get = function(name) {
+      return self.get('template', name);
+    };
+    this.schemas.get = function(name) {
+      return self.get('schema', name);
+    };
+    this.components.get = function(name) {
+      return self.get('component', name);
+    };
+    this.assets.get = function(name) {
+      return self.get('asset', name);
+    };
     this.tasks();
     this.env = "production";
     this.app = {
@@ -878,13 +990,35 @@ JOM = (function() {
         _this.load_components();
         _this.load_templates();
         _this.load_collections();
-        _this.load_schemas;
+        _this.load_schemas();
         _this.inject_assets();
         _this.assemble_components();
         _this.watch_collections();
         return _this.tasks();
       };
     })(this), 100);
+  };
+
+  JOM.prototype.get = function(what, name) {
+    var arr, item, j, key, len, ref, ref1;
+    if (name == null) {
+      name = false;
+    }
+    arr = ['collection', 'template', 'asset', 'schema'];
+    if (ref = !what, indexOf.call(arr, ref) >= 0) {
+      throw new Error("jom: cannot get anything naughty.");
+    }
+    if (name === false) {
+      return this[what + "s"];
+    }
+    ref1 = this[what + "s"];
+    for (key = j = 0, len = ref1.length; j < len; key = ++j) {
+      item = ref1[key];
+      if (name === item.name) {
+        return this[what + "s"][key];
+      }
+    }
+    return null;
   };
 
   JOM.prototype.inject_assets = function() {
@@ -896,6 +1030,8 @@ JOM = (function() {
         if (asset.content_type.part === "text/json") {
           $.getJSON(asset.source).done(function(response) {
             return foot.find("script[source='" + asset.source + "']").get(0).data = response;
+          }).error(function(err) {
+            throw new Error('Faild: to load a json asset');
           });
         }
         return foot.append(asset.element);
@@ -910,8 +1046,8 @@ JOM = (function() {
         exists = $(_this.assets).filter(function() {
           return _this.source === $(asset).attr("source");
         });
-        if ("asset" in asset === false && exists.length === 0) {
-          asset.asset = true;
+        if ("jinit" in asset === false && exists.length === 0) {
+          asset.jinit = true;
           return _this.assets.push(new Asset(asset));
         }
       };
@@ -921,9 +1057,13 @@ JOM = (function() {
   JOM.prototype.load_schemas = function() {
     return $('foot script[asset=schema]').each((function(_this) {
       return function(i, schema) {
-        if ("schema" in schema === false) {
-          schema.schema = true;
-          return _this.schemas.push(schema.json || {});
+        var name, obj, s;
+        if ("jinit" in schema === false && schema.data !== void 0) {
+          schema.jinit = true;
+          s = schema.data || {};
+          name = $(schema).attr('name');
+          obj = new Schema(name, s);
+          return _this.schemas.push(obj);
         }
       };
     })(this));
@@ -933,8 +1073,8 @@ JOM = (function() {
     return $('component').each((function(_this) {
       return function(i, component) {
         var c;
-        if ("component" in component === false) {
-          component.component = true;
+        if ("jinit" in component === false) {
+          component.jinit = true;
           c = new Component(component);
           _this.components.push(c);
           return component.component = c;
@@ -950,10 +1090,10 @@ JOM = (function() {
       return function(i, link) {
         var name, template;
         template = link["import"].querySelector("template");
-        if ("template" in template === false && link["import"] !== void 0) {
-          template.template = true;
+        if (template && "jinit" in template === false && link["import"] !== void 0) {
+          template.jinit = true;
           name = $(template).attr('name');
-          return _this.templates[name] = new Template(template);
+          return _this.templates.push(new Template(template));
         }
       };
     })(this));
@@ -963,51 +1103,71 @@ JOM = (function() {
     return $("foot script[type='text/json'][asset=collection]").each((function(_this) {
       return function(i, collection) {
         var data, name;
-        if ("collection" in collection === false && collection.data !== void 0) {
-          collection.collection = true;
+        if ("jinit" in collection === false && collection.data !== void 0) {
+          collection.jinit = true;
           name = $(collection).attr("name");
           data = collection.data;
-          return _this.collections[name] = new Collection(name, data);
+          return _this.collections.push(new Collection(name, data));
         }
       };
     })(this));
   };
 
   JOM.prototype.assemble_components = function() {
+    var timeout;
+    timeout = 60 * 1000;
+    if (jom.env !== "production") {
+      timeout = 10 * 1000;
+    }
     return $.each(this.components, (function(_this) {
       return function(i, component) {
         var c, collections_available, j, k, len, len1, ref, ref1, template;
-        if (component.ready !== true && component.scripts.status === "init") {
-          template = jom.templates[component.attr.template];
+        if (component.ready === true) {
+          return false;
+        }
+        if ("timer" in component === false) {
+          component.timer = new Date();
+        }
+        if (new Date() - component.timer > timeout) {
+          throw new Error("jom: Component `" + component.name + "` timedout");
+        }
+        template = jom.templates.get(component.attr.template);
+        if (component.init.template === false && template) {
+          component.init.template = true;
+          template = new Template(template.original);
+          template.show_loader();
+          component.define_template(template);
+          component.handle_template_scripts(template.element);
+          component.template.component = component;
+          component.root.appendChild(template.element);
+          template.element = component.root;
+        }
+        if (component.init.collections === false) {
           collections_available = true;
           if (component.collections_list.length === 0) {
-            collections_available(false);
+            collections_available = false;
           }
           ref = component.collections_list;
           for (j = 0, len = ref.length; j < len; j++) {
             c = ref[j];
-            if (jom.collections[c] === void 0) {
+            if (jom.collections.get(c) === null) {
               collections_available = false;
             }
           }
-          if (template !== void 0 && collections_available === true) {
-            component.define_template(template);
-            ref1 = component.collections_list;
-            for (k = 0, len1 = ref1.length; k < len1; k++) {
-              c = ref1[k];
-              component.define_collection(jom.collections[c]);
-            }
-            component.template.clone();
-            _this.repeater(component);
-            component.hide();
-            component.root.appendChild($('<div>Loading...</div>').get(0));
-            component.handlebars(component.template.cloned, component);
-            $(component.root.children).remove();
-            component.handle_template_scripts(component.template.cloned);
-            component.root.appendChild(component.template.cloned);
-            _this.image_source_change(component);
-            return _this.wait_for_scripts(component);
+        }
+        if (component.init.collections === false && collections_available === true) {
+          component.init.collections = true;
+          ref1 = component.collections_list;
+          for (k = 0, len1 = ref1.length; k < len1; k++) {
+            c = ref1[k];
+            component.define_collection(jom.collections.get(c));
           }
+        }
+        if (component.init.template === true && component.init.collections === true && component.template.ready === true && component.scripts.status !== "done") {
+          _this.repeater(component);
+          component.handlebars(component.root.children, component);
+          _this.image_source_change(component);
+          return _this.wait_for_scripts(component);
         }
       };
     })(this));
@@ -1050,7 +1210,7 @@ JOM = (function() {
     if (context == null) {
       context = null;
     }
-    return $('[body] [repeat]', context || component.template.cloned).each(function(i, repeater) {
+    return $('[body] [repeat]', context || component.template.element).each(function(i, repeater) {
       var items;
       repeater = $(repeater);
       items = component.repeat(repeater);

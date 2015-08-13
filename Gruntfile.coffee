@@ -39,6 +39,7 @@ module.exports = (grunt) ->
           'src/collection.js'
           'src/component.js'
           'src/template.js'
+          'src/schema.js'
           'src/jom.js'
         ]
         dest: 'dist/<%= pkg.name %>.js'

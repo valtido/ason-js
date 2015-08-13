@@ -8,13 +8,13 @@
   },
   {
     "_meta":{
-      "delted": true,
+      "deleted": true,
       "last_modified": true
     },
     "_id": 124,
     "user": { "name": {"first":"John", "last":"Doe"}, "image": "http://placehold.it/32x32" },
     "comment": "I agree",
-    "likes": 2,
+    "likes": 4,
     "commented_on": 1429027292
   }
 ]

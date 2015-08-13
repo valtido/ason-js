@@ -1,0 +1,11 @@
+{
+  "name":{
+    "first": "String",
+    "last": "String",
+    "middle": "String"
+  },
+  "location": "String",
+  "dob": "String",
+  "likes": "Number",
+  "image": "String"
+}

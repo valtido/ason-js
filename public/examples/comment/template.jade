@@ -1,6 +1,6 @@
-template(name="comment")
-  link(rel="asset" source="user.json" type="text/json" name="user" asset="schema")
+template(name="comment" schemas="comments, users")
   style.
+    @import url("/assets/-/fontello/css/animation.css");
     @import url("/assets/-/fontello/css/fontello.css");
     :host{position:relative; margin: 1em;}
     div[body]{background: #F6F7F8; padding: 2em; vertical-align: top;}
@@ -16,7 +16,7 @@ template(name="comment")
     .like:hover, .cancel:hover{color: #900;}
     .test2{margin-left: 50px;}
   div(body)
-    div.item(repeat="${comments}")
+    div.item(repeat="${0}")
       i.cancel.icon-cancel-circled-outline
       img(source="${user.image}")
       span.user
@@ -35,7 +35,7 @@ template(name="comment")
     hr
     div.new_comment
       div.test1
-        img(source="${user:[0].image}")
+        img(source="${1:[0].image}")
       div.test2
         div
           textarea(placeholder="Type your comment here")
@@ -44,36 +44,39 @@ template(name="comment")
     $(body)
     .on('click',".cancel", function(event){
       var index = $(this).parent().attr("repeat-index")
-      collections.comments.data.splice(index, 1)
+      collections[0].data.splice(index, 1)
     })
     .on('keyup',"textarea", function(event){
+      var val = $.trim($(this).val());
+      if (val.length == 0) return false;
       if(event.which == 13){
-        var val = $.trim($(this).val());
         var new_comment          = {}
         new_comment.user         = { "name": {"first":"Valtid", "last":"Caushi"}, "image": "http://placehold.it/32x32" };
         new_comment.comment      = val;
         new_comment.likes        = 0;
         new_comment.commented_on = +new Date/1000
-        collections.comments.data.push(new_comment);
+        collections[0].data.push(new_comment);
         
         $(this).val("");
       }
     })
     .on('click',"i.icon-thumbs-up-alt", function(event){
       var index = $(this).parents('[repeated]').attr("repeat-index")
-      collections.comments.data[index].likes++
+      collections[0].data[index].likes++
     })
     .on('change keyup',".location", function(event){
-      debugger
-      collections.comments.data.location = $(this).val()
+      collections[0].data.location = $(this).val()
     })
     ;
     
     component
     .on('change ready', "commented_on", function(event, change){
       var index = $(this).parents('[repeated]').attr("repeat-index")
-      var date = moment(collections.comments.data[index].commented_on * 1000)
-      var time = date.fromNow()
-      $('[repeated] .timestamp',body).eq(index).text(time)
+      var data = collections[0].data[index]
+      if( data ){
+        var date = moment(data.commented_on * 1000)
+        var time = date.fromNow()
+        $('[repeated] .timestamp',body).eq(index).text(time)
+      }
     })
     ;

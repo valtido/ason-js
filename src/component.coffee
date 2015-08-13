@@ -27,7 +27,7 @@ class Component
     @ready = false
 
     @template     = null
-    @collections  = {}
+    @collections  = []
     # FIXME remove path from component
     @path         = path || "[0]"
     @data = []
@@ -35,15 +35,18 @@ class Component
     @create_shadow()
 
     @root = @element.shadowRoot
-    @template_ready    = false
-    @collections_ready = false
 
     @handles = []
     @events  = []
     @scripts = []
     @scripts.status = "init"
 
+    @init =
+      template  : false
+      collections: false
+
     @
+
 
   hide : ->
     $root = $ @root
@@ -65,14 +68,15 @@ class Component
   define_collection : (collection)->
     if not collection or collection instanceof Collection is false
       throw new Error "jom: collection cant be added"
-    if @collections[collection.name] is undefined
-      @collections[collection.name] = collection
+
+    @collections.push collection
 
     # TODO: improve to findByPath as path could be different
     # @data  = @collection.findByPath @path
     @collections
 
   watcher: (changes, collection)->
+    throw new Error "what watcher!!!"
     if collection.name is @collection.name
       for key, change of changes
         if change.path.slice(0, @path.length) is @path
@@ -115,16 +119,15 @@ class Component
         key  = text.match(regx)[1]
 
         [collection, path] = key.split ':'
-
+        collection = collections[collection]
         if collection is undefined
           throw new Error "component: `#{raw}` is wrong, start with collection."
-
-        collection = collections[collection]
 
         new_text   = collection.findByPath $.trim path
 
         if new_text is undefined
           if jom.env is "production"
+            console.info new_text
             new_text = ""
           else
             throw new Error "Data: not found for `#{raw}` key."
@@ -149,10 +152,10 @@ class Component
 
           [collection, path] = key.split ':'
 
+          collection = collections[collection]
+
           if collection is undefined
             throw new Error "component: `#{raw}` is wrong, start with collection."
-
-          collection = collections[collection]
 
           new_text = collection.findByPath $.trim path
 

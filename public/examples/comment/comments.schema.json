@@ -1,0 +1,12 @@
+{
+  "user": {
+    "name":{
+      "first": "String",
+      "last": "String",
+      "middle": "String"
+    }
+  },
+  "comment": "String",
+  "likes": "Number",
+  "commented_on" : "String"
+}

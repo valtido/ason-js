@@ -121,11 +121,11 @@ describe "components:: ", ->
         <div>I will test</div>
         <div>some
           '
-          <span>${profile:[0].handlebar.and.path}</span>
+          <span>${0:[0].handlebar.and.path}</span>
           '
           even if it has an array
           '
-          <span>${profile:[0].dog[0]}</span>
+          <span>${0:[0].dog[0]}</span>
           '
         </div>
       </div>
@@ -157,9 +157,9 @@ describe "components:: ", ->
       <div>
         <div>I will test</div>
         <div>some
-          <span>${profile:[0].handlebar.and.path}</span>
+          <span>${0:[0].handlebar.and.path}</span>
           even if it has an array
-          <span value="${profile:[0].dog[0]}"></span>
+          <span value="${0:[0].dog[0]}"></span>
         </div>
       </div>
       """
@@ -178,7 +178,7 @@ describe "components:: ", ->
       c = "<component template=profile collections=profile />"
       component = new Component c
 
-      t = "<template name=user><link rel=asset source=user.json type='text/json' name=user asset=schema /> <div body></div></template>"
+      t = "<template name=user schemas=users><div body></div></template>"
       template = new Template t
 
       component.define_template template
@@ -189,7 +189,7 @@ describe "components:: ", ->
       c = "<component template=profile collections=profile />"
       component = new Component c
 
-      t = "<template name=user><link rel=asset source=user.json type='text/json' name=user asset=schema /> <div body></div></template>"
+      t = "<template name=user schemas=users><div body></div></template>"
 
       expect(-> component.define_template t)
       .toThrow new Error "jom: template cant be added"
@@ -203,7 +203,7 @@ describe "components:: ", ->
 
       component.define_collection collection
 
-      expect(component.collections[collection.name]).toBe collection
+      expect(component.collections[0]).toBe collection
 
     it "should throw an error when defining a collections", ->
       c = "<component template=profile collections=profile />"
@@ -283,8 +283,8 @@ describe "components:: ", ->
       component = new Component c
 
       repeater = """
-        <div repeat="${profile:[0].names}">
-          <div name="${profile:[0].name}"></div>
+        <div repeat="${0:[0].names}">
+          <div name="${name}"></div>
         </div>
       """
       data = [

@@ -55,6 +55,8 @@ describe "jom: ", ->
       jom.inject_assets()
       expect(jom.assets[0].queued).toBe true
 
+      $('foot script[asset=schema]').get(0).data = {}
+
       jom.load_schemas();
 
       expect(jom.schemas.length).toEqual 1
@@ -138,7 +140,7 @@ describe "jom: ", ->
       $('foot>script[source="data.json"]').get(0).data = []
       jom.load_collections()
 
-      expect(jom.collections["profile"]).toBeDefined()
+      expect(jom.get('collection',"profile")).toBeDefined()
 
   describe "tasks, ", ->
     it "should cover tasks", ->
@@ -238,7 +240,6 @@ describe "jom: ", ->
 
       component = jom.components[0]
       component.trigger = (changes, collections)->
-        console.log changes, collections
         expect(jom.components.length).toEqual 1
         expect(collections.path).toBe "[0].name"
         expect(collections.value).toBe "Tom"

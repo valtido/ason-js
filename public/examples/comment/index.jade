@@ -2,8 +2,10 @@ extends ../../_layout
 block assets
   //- load assets (order is not important)
   link(rel="asset" source="template.html" type="text/html" name="comment" asset="template")
-  link(rel="asset" source="comments.json" type="text/json" name="comments" asset="collection")
-  link(rel="asset" source="user.json" type="text/json" name="user" asset="collection")
+  link(rel="asset" source="comments.data.json" type="text/json" name="comments" asset="collection")
+  link(rel="asset" source="user.data.json" type="text/json" name="users" asset="collection")
+  link(rel="asset" source="user.schema.json" type="text/json" name="users" asset="schema")
+  link(rel="asset" source="comments.schema.json" type="text/json" name="comments" asset="schema")
   style.
     component{margin-bottom: 1em; }
     component::shadow i.icon-location{color: red;}
@@ -11,7 +13,7 @@ block assets
 
 block content
   //- use the new component (when template and collection are ready)
-  component(template="comment" collections="comments,user")
+  component(template="comment" collections="comments,users")
   
   
   script.

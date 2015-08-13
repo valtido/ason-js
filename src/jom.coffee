@@ -1,7 +1,7 @@
 class JOM
   observer= {}
   constructor: ->
-    window["jom"] = @
+    self = window["jom"] = @
     $('html').append('<foot/>')
     @templates   = []
     @collections = []
@@ -9,6 +9,11 @@ class JOM
     @assets      = []
     @schemas     = []
 
+    @collections.get = (name) -> self.get 'collection', name
+    @templates.get   = (name) -> self.get 'template', name
+    @schemas.get     = (name) -> self.get 'schema', name
+    @components.get  = (name) -> self.get 'component', name
+    @assets.get      = (name) -> self.get 'asset', name
     # @template
     @tasks()
     @env = "production"
@@ -21,12 +26,24 @@ class JOM
       @load_components()
       @load_templates()
       @load_collections()
-      @load_schemas
+      @load_schemas()
       @inject_assets()
       @assemble_components()
       @watch_collections()
       @tasks()
     , 100
+  get: (what, name = false) ->
+    # collection, by name: e.g: what = 'collection' , name = 'user'
+    # what is the arr list below only
+    # the name is the name to look for, e.g: collection.name, template.name
+    arr = ['collection','template', 'asset', 'schema']
+    if !what in arr then throw new Error "jom: cannot get anything naughty."
+    if name is false then return @[what+"s"]
+    for item, key in @[what + "s"]
+      if name is item.name
+        return @[what+ "s"][key]
+
+    return null
 
   inject_assets: ()->
     $.each @assets, (i, asset)->
@@ -37,6 +54,8 @@ class JOM
           $.getJSON(asset.source)
           .done (response)->
             foot.find("script[source='#{asset.source}']").get(0).data = response
+          .error (err)->
+            throw new Error 'Faild: to load a json asset'
         foot.append asset.element
   load_assets: ()->
     # imported =  $.map $("foot link[rel=import]"), (link, i)->
@@ -55,21 +74,24 @@ class JOM
               .filter =>
                 this.source is $(asset).attr "source"
 
-      if "asset" of asset is false and exists.length is 0
-        asset.asset = true
+      if "jinit" of asset is false and exists.length is 0
+        asset.jinit = true
         @assets.push new Asset asset
 
   load_schemas: ()->
     $('foot script[asset=schema]')
     .each (i, schema) =>
-      if "schema" of schema is false
-        schema.schema = true
-        @schemas.push schema.json || {}
+      if "jinit" of schema is false and schema.data isnt undefined
+        schema.jinit = true
+        s = schema.data || {}
+        name = $(schema).attr 'name'
+        obj = new Schema name, s
+        @schemas.push obj
   load_components: ()->
     $('component')
     .each (i, component) =>
-      if "component" of component is false
-        component.component = true
+      if "jinit" of component is false
+        component.jinit = true
         c = new Component component
         @components.push c
         component.component = c
@@ -80,58 +102,77 @@ class JOM
       link.import isnt null
     .each (i, link) =>
       template = link.import.querySelector "template"
-      if "template" of template is false and link.import isnt undefined
-        template.template = true
+      if template and "jinit" of template is false and link.import isnt undefined
+        template.jinit = true
         name = $(template).attr 'name'
-        @templates[name] = new Template template
+        @templates.push new Template template
 
   load_collections: ()->
     $("foot script[type='text/json'][asset=collection]")
     .each (i, collection) =>
-      if "collection" of collection is false and collection.data isnt undefined
-        collection.collection = true
+      if "jinit" of collection is false and collection.data isnt undefined
+        collection.jinit = true
         name = $(collection).attr "name"
         data = collection.data
-        @collections[name] = new Collection name, data
+        @collections.push new Collection name, data
 
   assemble_components: ->
-    $.each @components, (i, component)=>
-      if  component.ready isnt true and component.scripts.status is "init"
-        template    = jom.templates[component.attr.template]
+    timeout = 60 * 1000
 
+    if jom.env isnt "production" then timeout = 10 * 1000
+
+    $.each @components, (i, component)=>
+      if component.ready is true then return false
+
+      if "timer" of component is false
+        component.timer = new Date()
+
+      if  new Date() - component.timer > timeout
+        throw new Error "jom: Component `#{component.name}` timedout"
+
+      template = jom.templates.get component.attr.template
+      # build template
+      if component.init.template is false and template
+        component.init.template = true
+        # clean up loading
+        # $(component.root.children).remove()
+        # create a new instance of template so original remains un touched
+        template = new Template template.original
+        template.show_loader()
+        component.define_template template
+        component.handle_template_scripts template.element
+        component.template.component = component
+        component.root.appendChild template.element
+        template.element = component.root
+
+
+      # build collection
+      if component.init.collections is false
         collections_available = true
+
         if component.collections_list.length is 0
-          collections_available false
+          collections_available = false
+
         for c in component.collections_list
-          if jom.collections[c] is undefined then collections_available = false
+          if jom.collections.get(c) is null then collections_available = false
+
+      if component.init.collections is false and collections_available is true
+        component.init.collections = true
 
         # if template and collections are available do this once
-        if  template isnt undefined and
-            collections_available is true
+        for c in component.collections_list
+          component.define_collection(jom.collections.get(c))
 
-          component.define_template template
+      # when both template and collections are ready
+      if  component.init.template is true and
+          component.init.collections is true and
+          component.template.ready is true and
+          component.scripts.status isnt "done"
+        @repeater component
+        component.handlebars component.root.children, component
 
-          for c in component.collections_list
-            component.define_collection jom.collections[c]
-
-          component.template.clone()
-
-          @repeater component
-
-          component.hide()
-          component.root.appendChild $('<div>Loading...</div>').get 0
-
-          component.handlebars component.template.cloned, component
-
-          # clean up loading
-          $(component.root.children).remove()
-
-          component.handle_template_scripts component.template.cloned
-
-          component.root.appendChild component.template.cloned
-          @image_source_change component
-
-          @wait_for_scripts component
+        @image_source_change component
+        @wait_for_scripts component
 
   wait_for_scripts  : (component)->
     if component.scripts.status is "done"
@@ -156,7 +197,7 @@ class JOM
       $image = $ image
       $image.attr 'src', $image.attr "source"
   repeater: (component, context = null)->
-    $ '[body] [repeat]', context or component.template.cloned
+    $ '[body] [repeat]', context or component.template.element
     .each (i, repeater)->
       repeater = $ repeater
       items = component.repeat repeater

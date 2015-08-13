@@ -9,13 +9,14 @@ describe "Template", ->
     expect(Template).toBeDefined()
 
   it "should have properties", ->
-    t = "<template name=user><link rel=asset source=user.json type='text/json' name=user asset=schema /><div body></div></template>"
+    t = "<template name=user schemas='users'><div body></div></template>"
     template = new Template t
 
     expect(template.name).toBeDefined()
     expect(template.element).toBeDefined()
     # expect(template.content).toBeDefined()
     expect(template.body).toBeDefined()
+    expect(template.schemas).toBeDefined()
 
   it "should throw error if no arguments", ->
     expect(-> template = new Template())
@@ -31,7 +32,7 @@ describe "Template", ->
     t = "<template name=profile><div body> My text </div> </template>"
 
     expect(-> template = new Template t)
-    .toThrow new Error "jom: template schema(s) are required"
+    .toThrow new Error "jom: template schemas attr is required"
 
   it "should throw error if no body found", ->
     t = "<template name=profile> <div> My text </div> </template>"
@@ -40,9 +41,17 @@ describe "Template", ->
     .toThrow new Error "jom: template body attr is required"
 
   it "should produce a clone of the template", ->
-    t = "<template name=user><link rel=asset source=user.json type='text/json' name=user asset=schema /><div body></div></template>"
+    t = "<template name=user schemas=users><div body></div></template>"
     template = new Template t
 
     template.clone()
     expect(template.cloned).toBeDefined()
     expect(template.cloned).not.toEqual null
+
+  describe "template schemas,", ->
+    it "should require the same amount of schemas", ->
+      template = new Template '<template name=user schema=user></template>'
+      expect(template.schemas_list.length).toBe 1
+
+      template = new Template '<template name=user schema="user,comment"></template>'
+      expect(template.schemas_list.length).toBe 2
