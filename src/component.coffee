@@ -15,6 +15,8 @@ class Component
     throw new Error "jom: component template is required" if not template
     throw new Error "jom: component collections is required" if not collections
 
+    # once it's done and ready it can skip doing anything on the engine
+    @skip = false
     @attr       = template: template, collections: collections
     collections = collections.split /\s*,\s*/g
     @collections_list = collections
@@ -207,11 +209,10 @@ class Component
     $content
 
   handle_template_scripts: (content) ->
-    @scripts.status = "waiting"
     escapeRegExp = (str) ->
       str.replace /[-\/\\^$*+?.()|[\]{}]/g, '\\$&'
 
-    scripts = $(content).find 'script'
+    scripts = $(content).add(content.children).find 'script'
 
     $(scripts).filter('[src]').each (i, script)->
       script.onload = -> script.has_loaded = true

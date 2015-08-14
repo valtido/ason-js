@@ -50,26 +50,21 @@ class Template
   load_schemas: ->
     if @schemas_ready is true
       @ready = true
-      @hide_loader()
     else
-      setTimeout =>
-        @schemas_ready = true
+      @schemas_ready = true
 
-        if @schemas_list.length is 0 then @schemas_ready = false
+      if @schemas_list.length is 0 then @schemas_ready = false
 
+      for schema in @schemas_list
+        if jom.schemas.get(schema) is null
+          @schemas_ready = false
+
+      if @schemas_ready is true
         for schema in @schemas_list
-          if jom.schemas.get(schema) is null
-            @schemas_ready = false
-
-        if @schemas_ready is true
-          for schema in @schemas_list
-            @schemas.push jom.schemas.get schema
-
-        @load_schemas()
-      , 10
+          @schemas.push jom.schemas.get schema
 
   show_loader: ->
-    loader = $('<div class="temporary_loader"><i class="icon-loader animate-spin"></i></div>')
+    loader = $('<div class="temporary_loader"><i class="icon-loader animate-spin">Loading...</i></div>')
 
     css =
       position          : "absolute"
@@ -88,9 +83,8 @@ class Template
     $('.temporary_loader', @element).remove()
 
     $(@element).append(loader)
-  hide_loader: ->
-    if @component isnt undefined
-      $('.temporary_loader', @component.root).remove()
+  hide_loader: (content)->
+    $(content).add(content.children).findAll('.temporary_loader').remove()
 
   define_schema: (schema)->
     if not schema or schema instanceof Schema is false

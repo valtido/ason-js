@@ -67,7 +67,7 @@ class JOM
     #
     #     return links
 
-    $('head link[rel="asset"]')
+    $('link[rel="asset"]')
     # .add imported
     .each (i, asset)=>
       exists = $ @assets
@@ -122,7 +122,12 @@ class JOM
     if jom.env isnt "production" then timeout = 10 * 1000
 
     $.each @components, (i, component)=>
-      if component.ready is true then return false
+      if component.skip is true
+        return false
+      if component.ready is true
+        component.skip = true
+        component.template.hide_loader(component.root)
+        return false
 
       if "timer" of component is false
         component.timer = new Date()
@@ -132,6 +137,7 @@ class JOM
 
       template = jom.templates.get component.attr.template
       # build template
+
       if component.init.template is false and template
         component.init.template = true
         # clean up loading
@@ -145,6 +151,8 @@ class JOM
         component.root.appendChild template.element
         template.element = component.root
 
+      if template and template.ready is false
+        component.template.load_schemas()
 
       # build collection
       if component.init.collections is false
@@ -167,29 +175,23 @@ class JOM
       if  component.init.template is true and
           component.init.collections is true and
           component.template.ready is true and
-          component.scripts.status isnt "done"
+          @scripts_loaded(component) is true
         @repeater component
         component.handlebars component.root.children, component
 
         @image_source_change component
-        @wait_for_scripts component
+        component.show()
+        component.ready = true
+        component.trigger 'ready'
 
-  wait_for_scripts  : (component)->
-    if component.scripts.status is "done"
-      component.show()
-      component.ready = true
-      component.trigger 'ready'
-    else
-      setTimeout =>
-        all_done = true
-        scripts = $('script[src]', component.root)
-        $(scripts).each (i, script)->
-          all_done = false if script.has_loaded? isnt true
+  scripts_loaded  : (component)->
+    all_done = true
+    scripts = $('script[src]', component.root)
+    $(scripts).each (i, script)->
+      all_done = false if script.has_loaded? isnt true
 
-        component.scripts.status = "done" if all_done is true
+    all_done
 
-        @wait_for_scripts component
-      , 10
   image_source_change : (component)->
     $('[body] img', component.root)
     .not('[repeat] img')
@@ -197,7 +199,8 @@ class JOM
       $image = $ image
       $image.attr 'src', $image.attr "source"
   repeater: (component, context = null)->
-    $ '[body] [repeat]', context or component.template.element
+    context = context or $(component.template.element.children).filter '[body]'
+    $ '[repeat]', context
     .each (i, repeater)->
       repeater = $ repeater
       items = component.repeat repeater
