@@ -16,6 +16,7 @@ class Template
     @ready = false
 
     @name = $template.attr "name"
+    @fontello = ($template.attr "fontello") || null
     throw new Error "jom: template name attr is required" if @name is undefined
 
     t = $template.get 0
@@ -64,7 +65,7 @@ class Template
           @schemas.push jom.schemas.get schema
 
   show_loader: ->
-    loader = $('<div class="temporary_loader"><i class="icon-loader animate-spin">Loading...</i></div>')
+    loader = $('<div class="temporary_loader"><i class="icon-loader animate-spin"></i>Loading...</div>')
 
     css =
       position          : "absolute"
@@ -80,7 +81,9 @@ class Template
     loader.children 'i'
     .css position: 'absolute', top: "50%"
 
-    $('.temporary_loader', @element).remove()
+    $(@element).add(@element.children).findAll('.temporary_loader').remove()
+
+    if @fontello then loader.children('i').addClass @fontello
 
     $(@element).append(loader)
   hide_loader: (content)->

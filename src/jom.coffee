@@ -123,11 +123,11 @@ class JOM
 
     $.each @components, (i, component)=>
       if component.skip is true
-        return false
+        return true
       if component.ready is true
         component.skip = true
         component.template.hide_loader(component.root)
-        return false
+        return true
 
       if "timer" of component is false
         component.timer = new Date()
@@ -186,20 +186,27 @@ class JOM
 
   scripts_loaded  : (component)->
     all_done = true
-    scripts = $('script[src]', component.root)
-    $(scripts).each (i, script)->
+    scripts = $ component.root
+              .add component.root.children
+              .findAll 'script[src]'
+    $ scripts
+    .each (i, script)->
       all_done = false if script.has_loaded? isnt true
 
     all_done
 
   image_source_change : (component)->
-    $('[body] img', component.root)
-    .not('[repeat] img')
+    $ component.root
+    .add component.root.children
+    .findAll '[body] img'
+    .not '[repeat] img'
     .each (i, image)->
       $image = $ image
       $image.attr 'src', $image.attr "source"
   repeater: (component, context = null)->
-    context = context or $(component.template.element.children).filter '[body]'
+    if context instanceof ShadowRoot
+      context = context.children
+    context = context or $(component.template.element.children).findAll '[body]'
     $ '[repeat]', context
     .each (i, repeater)->
       repeater = $ repeater
@@ -210,19 +217,22 @@ class JOM
     for key, collection of @collections
       if collection.observing is false
         collection.observing = true
-        new Observe collection.data, (changes)=>
+        new Observe collection, collection.data, (changes)=>
           for key, change of changes
             $.each @components, (i, component)=>
-              $(component.root).find('[repeated]').remove()
-              $(component.root).find('[repeat]').show()
-              @repeater component, component.root
-              component.handlebars component.root, component
-              @image_source_change component
-              $(component.root.host).trigger "change", [
-                change, component.data, component.collection
-              ]
-              $(component.root).find('[repeat]').hide()
-              component.trigger "change", change
+              if change.collection.name in component.collections_list
+                $(component.root).add(component.root.children)
+                .findAll('[repeated]').remove()
+                $(component.root).add(component.root.children)
+                .findAll('[repeat]').show()
+                @repeater component, component.root
+                component.handlebars component.root, component
+                @image_source_change component
+                $(component.root.host).trigger "change", [
+                  change, component.data, component.collection
+                ]
+                $(component.root).find('[repeat]').hide()
+                component.trigger "change", change
 
   resolve: (path)->
     # return location.pathname+

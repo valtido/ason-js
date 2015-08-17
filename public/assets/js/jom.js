@@ -739,8 +739,9 @@
 var Observe;
 
 Observe = (function() {
-  function Observe(root, callback, curr, path) {
+  function Observe(collection, root, callback, curr, path) {
     var base, item, j, key, len, new_path, type_of_curr;
+    this.collection = collection;
     if (curr == null) {
       curr = null;
     }
@@ -761,7 +762,7 @@ Observe = (function() {
         item = curr[key];
         if (typeof item === "object") {
           new_path = (base || '') + "[" + key + "]";
-          new Observe(root, callback, item, new_path);
+          new Observe(this.collection, root, callback, item, new_path);
           new_path = "";
         }
       }
@@ -777,63 +778,69 @@ Observe = (function() {
           if (!base) {
             new_path = "" + key;
           }
-          new Observe(root, callback, item, new_path);
+          new Observe(this.collection, root, callback, item, new_path);
           new_path = "";
         }
       }
     }
     if (curr.constructor.name === "Array") {
       base = path;
-      Array.observe(curr, function(changes) {
-        var original, result;
-        result = {};
-        original = {};
-        changes.forEach(function(change, i) {
-          var index_or_name, is_add, part;
-          index_or_name = change.index > -1 ? change.index : change.name;
-          new_path = (base || '') + "[" + index_or_name + "]";
-          part = {
-            path: new_path,
-            value: change.object[change.index] || change.object[change.name] || change.object
-          };
-          is_add = change.addedCount > 0 || change.type === "add";
-          if (typeof part.value === "object" && is_add) {
-            new Observe(root, callback, part.value, part.path);
-            new_path = "";
-          }
-          result[i] = part;
-          return original[i] = change;
-        });
-        return callback(result, original);
-      });
+      Array.observe(curr, (function(_this) {
+        return function(changes) {
+          var original, result;
+          result = {};
+          original = {};
+          changes.forEach(function(change, i) {
+            var index_or_name, is_add, part;
+            index_or_name = change.index > -1 ? change.index : change.name;
+            new_path = (base || '') + "[" + index_or_name + "]";
+            part = {
+              collection: _this.collection,
+              path: new_path,
+              value: change.object[change.index] || change.object[change.name] || change.object
+            };
+            is_add = change.addedCount > 0 || change.type === "add";
+            if (typeof part.value === "object" && is_add) {
+              new Observe(_this.collection, root, callback, part.value, part.path);
+              new_path = "";
+            }
+            result[i] = part;
+            return original[i] = change;
+          });
+          return callback(result, original);
+        };
+      })(this));
     } else if (curr.constructor.name === "Object") {
       base = path;
-      Object.observe(curr, function(changes) {
-        var original, result;
-        result = {};
-        original = {};
-        changes.forEach(function(change, i) {
-          var is_add, part;
-          if (base) {
-            new_path = base + "." + change.name;
-          }
-          if (!base) {
-            new_path = "" + change.name;
-          }
-          part = {
-            path: new_path,
-            value: change.object[change.name]
-          };
-          is_add = change.type === "add" || change.addedCount > 0;
-          if (typeof part.value === "object" && is_add) {
-            new Observe(root, callback, part.value, part.path);
-            new_path = "";
-          }
-          result[i] = part;
-          return original[i] = change;
-        });
-        return callback(result, original);
-      });
+      Object.observe(curr, (function(_this) {
+        return function(changes) {
+          var original, result;
+          result = {};
+          original = {};
+          changes.forEach(function(change, i) {
+            var is_add, part;
+            if (base) {
+              new_path = base + "." + change.name;
+            }
+            if (!base) {
+              new_path = "" + change.name;
+            }
+            part = {
+              collection: _this.collection,
+              path: new_path,
+              value: change.object[change.name]
+            };
+            is_add = change.type === "add" || change.addedCount > 0;
+            if (typeof part.value === "object" && is_add) {
+              new Observe(_this.collection, root, callback, part.value, part.path);
+              new_path = "";
+            }
+            result[i] = part;
+            return original[i] = change;
+          });
+          return callback(result, original);
+        };
+      })(this));
     }
   }
 
@@ -1322,6 +1329,9 @@ Component = (function() {
 
   Component.prototype.handlebars = function(content, component) {
     var $content, c, collections;
+    if (content instanceof ShadowRoot) {
+      content = content.children;
+    }
     collections = component.collections;
     $content = $(content);
     c = $content.findAll('*').not('script, style, link, [repeat]').filter(function() {
@@ -1426,7 +1436,7 @@ Component = (function() {
     escapeRegExp = function(str) {
       return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
     };
-    scripts = $(content).add(content.children).find('script');
+    scripts = $(content).add(content.children).findAll('script');
     $(scripts).filter('[src]').each(function(i, script) {
       return script.onload = function() {
         return script.has_loaded = true;
@@ -1524,6 +1534,7 @@ Component = (function() {
       clone.attr("repeated", true);
       clone.attr("repeat", null);
       clone.attr('repeat-index', index);
+      clone.get(0).style.display = '';
       prefix = this.collections[collection].join(path, "[" + index + "]");
       prefix = collection + ":" + prefix;
       x = clone[0].outerHTML.replace(/(\${)([^\s{}]+)(})/g, "$1" + prefix + ".$2$3");
@@ -1564,6 +1575,7 @@ Template = (function() {
     }
     this.ready = false;
     this.name = $template.attr("name");
+    this.fontello = ($template.attr("fontello")) || null;
     if (this.name === void 0) {
       throw new Error("jom: template name attr is required");
     }
@@ -1621,7 +1633,7 @@ Template = (function() {
 
   Template.prototype.show_loader = function() {
     var css, loader;
-    loader = $('<div class="temporary_loader"><i class="icon-loader animate-spin">Loading...</i></div>');
+    loader = $('<div class="temporary_loader"><i class="icon-loader animate-spin"></i>Loading...</div>');
     css = {
       position: "absolute",
       top: 0,
@@ -1637,7 +1649,10 @@ Template = (function() {
       position: 'absolute',
       top: "50%"
     });
-    $('.temporary_loader', this.element).remove();
+    $(this.element).add(this.element.children).findAll('.temporary_loader').remove();
+    if (this.fontello) {
+      loader.children('i').addClass(this.fontello);
+    }
     return $(this.element).append(loader);
   };
 
@@ -1855,12 +1870,12 @@ JOM = (function() {
       return function(i, component) {
         var c, collections_available, j, k, len, len1, ref, ref1, template;
         if (component.skip === true) {
-          return false;
+          return true;
         }
         if (component.ready === true) {
           component.skip = true;
           component.template.hide_loader(component.root);
-          return false;
+          return true;
         }
         if ("timer" in component === false) {
           component.timer = new Date();
@@ -1918,7 +1933,7 @@ JOM = (function() {
   JOM.prototype.scripts_loaded = function(component) {
     var all_done, scripts;
     all_done = true;
-    scripts = $('script[src]', component.root);
+    scripts = $(component.root).add(component.root.children).findAll('script[src]');
     $(scripts).each(function(i, script) {
       if ((script.has_loaded != null) !== true) {
         return all_done = false;
@@ -1928,7 +1943,7 @@ JOM = (function() {
   };
 
   JOM.prototype.image_source_change = function(component) {
-    return $('[body] img', component.root).not('[repeat] img').each(function(i, image) {
+    return $(component.root).add(component.root.children).findAll('[body] img').not('[repeat] img').each(function(i, image) {
       var $image;
       $image = $(image);
       return $image.attr('src', $image.attr("source"));
@@ -1939,7 +1954,10 @@ JOM = (function() {
     if (context == null) {
       context = null;
     }
-    context = context || $(component.template.element.children).filter('[body]');
+    if (context instanceof ShadowRoot) {
+      context = context.children;
+    }
+    context = context || $(component.template.element.children).findAll('[body]');
     return $('[repeat]', context).each(function(i, repeater) {
       var items;
       repeater = $(repeater);
@@ -1957,21 +1975,24 @@ JOM = (function() {
       collection = ref[key];
       if (collection.observing === false) {
         collection.observing = true;
-        results.push(new Observe(collection.data, (function(_this) {
+        results.push(new Observe(collection, collection.data, (function(_this) {
           return function(changes) {
             var change, results1;
             results1 = [];
             for (key in changes) {
               change = changes[key];
               results1.push($.each(_this.components, function(i, component) {
-                $(component.root).find('[repeated]').remove();
-                $(component.root).find('[repeat]').show();
-                _this.repeater(component, component.root);
-                component.handlebars(component.root, component);
-                _this.image_source_change(component);
-                $(component.root.host).trigger("change", [change, component.data, component.collection]);
-                $(component.root).find('[repeat]').hide();
-                return component.trigger("change", change);
+                var ref1;
+                if (ref1 = change.collection.name, indexOf.call(component.collections_list, ref1) >= 0) {
+                  $(component.root).add(component.root.children).findAll('[repeated]').remove();
+                  $(component.root).add(component.root.children).findAll('[repeat]').show();
+                  _this.repeater(component, component.root);
+                  component.handlebars(component.root, component);
+                  _this.image_source_change(component);
+                  $(component.root.host).trigger("change", [change, component.data, component.collection]);
+                  $(component.root).find('[repeat]').hide();
+                  return component.trigger("change", change);
+                }
               }));
             }
             return results1;

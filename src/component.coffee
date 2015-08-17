@@ -104,7 +104,8 @@ class Component
                 if event.type is "change" and event.path is partial
                   event.callback.call @
   handlebars: (content, component)->
-
+    if content instanceof ShadowRoot
+      content = content.children
     collections = component.collections
     $content = $ content
 
@@ -212,7 +213,7 @@ class Component
     escapeRegExp = (str) ->
       str.replace /[-\/\\^$*+?.()|[\]{}]/g, '\\$&'
 
-    scripts = $(content).add(content.children).find 'script'
+    scripts = $(content).add(content.children).findAll 'script'
 
     $(scripts).filter('[src]').each (i, script)->
       script.onload = -> script.has_loaded = true
@@ -293,7 +294,7 @@ class Component
       clone.attr "repeated", true
       clone.attr "repeat", null
       clone.attr 'repeat-index', index
-
+      clone.get(0).style.display = ''
       prefix = @collections[collection].join path, "[#{index}]"
       prefix = "#{collection}:#{prefix}"
 
