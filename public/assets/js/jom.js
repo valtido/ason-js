@@ -185,6 +185,7 @@ Asset = (function() {
     this.name = ($asset.attr("name")) || null;
     this.source = $asset.attr("source");
     this.asset = $asset.attr("asset");
+    this.schema = $asset.attr("schema");
     this.original = asset;
     this.clone = $asset.clone();
     type = $asset.attr("type");
@@ -213,6 +214,9 @@ Asset = (function() {
         this.error('name');
         this.error('source');
         this.error('asset');
+        if (this.asset === "collection") {
+          this.error('schema');
+        }
         break;
       default:
         this.error('source');
@@ -226,7 +230,7 @@ Asset = (function() {
 
   Asset.prototype.error = function(type) {
     var arr;
-    arr = ['name', 'source', 'asset'];
+    arr = ['name', 'source', 'asset', 'schema'];
     if (indexOf.call(arr, type) >= 0 && this[type] === void 0) {
       throw new Error("jom: " + type + " attr is required");
     }
@@ -245,7 +249,7 @@ Asset = (function() {
         element = "<script  src='" + this.source + "' type='text/javascript' async=true name='" + this.name + "' asset='" + this.asset + "' />";
         break;
       case 'text/json':
-        element = "<script  source='" + this.source + "' type='" + this.content_type.part + "' async='true' name='" + this.name + "' asset='" + this.asset + "' />";
+        element = "<script  source='" + this.source + "' type='" + this.content_type.part + "' async='true' name='" + this.name + "' asset='" + this.asset + "' schema='" + this.schema + "' />";
         break;
       case "text/plain":
         element = "<script  type='" + this.content_type.part + "' async='true' name='" + this.name + "' asset='" + this.asset + "' />";
@@ -324,11 +328,11 @@ Collection = (function() {
       throw new Error("jom: collection name is required");
     }
     this.name = name;
+    this.errors = [];
     this.data = [];
     this.schema = {};
     this.attach_schema(schema);
     this.attach_data(data);
-    this.errors = [];
     this.observing = false;
   }
 
@@ -398,14 +402,16 @@ Collection = (function() {
   };
 
   Collection.prototype.is_valid = function(doc) {
-    var core, data, documentValidator, errors, i, len, ref, validator;
+    var data, documentValidator, errors, i, len, ref, validator;
     if (doc == null) {
       doc = null;
     }
     validator = isMyJsonValid;
-    core = jom.schemas_core;
     errors = [];
-    documentValidator = validator(core, {
+    if (this.schema === void 0) {
+      return false;
+    }
+    documentValidator = validator(this.schema.tree, {
       verbose: true
     });
     if (doc !== null) {
@@ -533,7 +539,6 @@ Component = (function() {
     this.template = null;
     this.collections = [];
     this.path = path || "[0]";
-    this.data = [];
     this.create_shadow();
     this.root = this.element.shadowRoot;
     this.handles = [];
@@ -863,6 +868,28 @@ Component = (function() {
       repeat = repeat.add(x);
     }
     return repeat;
+  };
+
+  Component.prototype.reset_collection = function(collections) {
+    var collection, comma, j, len, list;
+    list = [];
+    comma = "";
+    if (collections instanceof Array === false) {
+      throw new Error("component: reset expects an array");
+    }
+    for (j = 0, len = collections.length; j < len; j++) {
+      collection = collections[j];
+      if (collection instanceof Collection === false) {
+        throw new Error("component: reset expects a collection");
+      }
+      list.push(collection.name);
+    }
+    this.collections = collections;
+    this.collections_list = list;
+    comma = list.join(',');
+    $(this.element).attr('collections', comma);
+    delete this.element.jinit;
+    debugger;
   };
 
   return Component;
@@ -1427,12 +1454,17 @@ JOM = (function() {
   JOM.prototype.load_collections = function() {
     return $("foot script[type='text/json'][asset=collection]").each((function(_this) {
       return function(i, collection) {
-        var data, name;
-        if ("jinit" in collection === false && collection.data !== void 0) {
+        var data, name, schema, schema_attr;
+        schema_attr = $(collection).attr('schema');
+        schema = false;
+        if (schema_attr !== void 0) {
+          schema = jom.schemas.get(schema_attr);
+        }
+        if ("jinit" in collection === false && collection.data !== void 0 && schema) {
           collection.jinit = true;
           name = $(collection).attr("name");
           data = collection.data;
-          return _this.collections.push(new Collection(name, data));
+          return _this.collections.push(new Collection(name, data, schema));
         }
       };
     })(this));

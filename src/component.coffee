@@ -32,7 +32,6 @@ class Component
     @collections  = []
     # FIXME remove path from component
     @path         = path || "[0]"
-    @data = []
 
     @create_shadow()
 
@@ -308,4 +307,26 @@ class Component
       x = x.replace /(\{repeat\.length})/g, data.length
 
       repeat = repeat.add(x)
+
     repeat
+
+  reset_collection: (collections)->
+    list = []
+    comma = ""
+
+    if collections instanceof Array is false
+      throw new Error "component: reset expects an array"
+
+    for collection in collections
+      if collection instanceof Collection is false
+        throw new Error "component: reset expects a collection"
+      list.push collection.name
+    # reset the collections
+    @collections = collections
+    @collections_list = list
+
+    comma = list.join(',')
+    $(@element).attr 'collections', comma
+    # jom init is false, triggers rebuild
+    delete @element.jinit
+    debugger

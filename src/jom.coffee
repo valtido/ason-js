@@ -112,11 +112,18 @@ class JOM
   load_collections: ()->
     $("foot script[type='text/json'][asset=collection]")
     .each (i, collection) =>
-      if "jinit" of collection is false and collection.data isnt undefined
+      schema_attr = $(collection).attr('schema')
+      schema = false
+      if schema_attr isnt undefined
+        schema = jom.schemas.get schema_attr
+      if "jinit" of collection is false and
+         collection.data isnt undefined and
+         schema
+
         collection.jinit = true
         name = $(collection).attr "name"
         data = collection.data
-        @collections.push new Collection name, data
+        @collections.push new Collection name, data, schema
 
   assemble_components: ->
     timeout = 60 * 1000

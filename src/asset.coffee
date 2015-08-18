@@ -30,6 +30,7 @@ class Asset
     @name   = ($asset.attr "name") or null
     @source = $asset.attr "source"
     @asset  = $asset.attr "asset"
+    @schema  = $asset.attr "schema"
     # original element
     @original = asset
     # clone of original element, if element is not on the dom tree no more
@@ -60,6 +61,8 @@ class Asset
         @error 'name'
         @error 'source'
         @error 'asset'
+        if @asset is "collection"
+          @error 'schema'
       else
         @error 'source'
     arr = ['schema','collection','template','javascript','css','img','plain']
@@ -68,7 +71,7 @@ class Asset
 
     @
   error: (type) ->
-    arr = ['name', 'source', 'asset']
+    arr = ['name', 'source', 'asset', 'schema']
 
     if type in arr and @[type] is undefined
       throw new Error "jom: #{type} attr is required"
@@ -105,6 +108,7 @@ class Asset
                             async='true'
                             name='#{@name}'
                             asset='#{@asset}'
+                            schema='#{@schema}'
                             />"
       when "text/plain"
         element = "<script  type='#{@content_type.part}'

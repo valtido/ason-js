@@ -24,11 +24,12 @@ class Collection
       throw new Error "jom: collection name is required"
 
     @name   = name
+    @errors = []
     @data   = []
     @schema = {}
     @attach_schema schema
     @attach_data data
-    @errors = []
+
     @observing = false
 
   generate_id: -> new Date().getTime()
@@ -86,10 +87,13 @@ class Collection
 
   is_valid: (doc = null)->
     validator = isMyJsonValid
-    core = jom.schemas_core
     errors = []
 
-    documentValidator = validator core, verbose: true
+    if @schema is undefined
+      return false
+
+    documentValidator = validator @schema.tree, verbose: true
+
     if doc isnt null
       documentValidator doc
       if documentValidator.errors and documentValidator.errors.length
