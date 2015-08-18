@@ -10,17 +10,16 @@ class Collection
   # @property [Object] a JSON Schema object describing data
   @schema : {}
   # @property [Object] reported JSON Schema errors when validated is triggered
-  @errors : null
+  @errors : []
   # @property [Boolean] indicates whether the collection observes changes
   @observing : false
-
-  env = jjv()
 
   # Constructs a new collection
   # @param [String] name name of collection
   # @option data [Array] data data to attach to collection
   # @option schema [Object] schema JSON Schema to attach to collection
-  constructor: (name, data=[], schema={})->
+  # @note see json-schema.org for JSON Schema
+  constructor: (name, data=[], schema)->
     if name is undefined or not name or typeof name isnt "string"
       throw new Error "jom: collection name is required"
 
@@ -29,7 +28,7 @@ class Collection
     @schema = {}
     @attach_schema schema
     @attach_data data
-    @errors = null
+    @errors = []
     @observing = false
 
   generate_id: -> new Date().getTime()
@@ -40,6 +39,14 @@ class Collection
   # @param [Array, Object] data data to attach
   # @option data [Array] data if array, push each element
   # @option data [Object] data if object, push the object
+  add : (obj)->
+    is_valid = @is_valid obj
+    if is_valid
+      @data.push obj
+    else
+      @errors.push "Cannot add the data, is not valid. #{obj.toString()}"
+
+
   attach_data: (data = [])->
     length = data.length || Object.keys(data).length
     if length
@@ -47,21 +54,24 @@ class Collection
         for item in data
           item.meta = @meta()
           Object.defineProperty item, "meta", enumerable: false
-          @data.push item
+          @add item
       else
         data.meta = @meta()
         Object.defineProperty data, "meta", enumerable: false
-        @data.push data
+        @add data
+
+    @is_valid()
     @data
 
   # Attaches a JSON Schema to the collection instance
   # @note see json-schema.org for JSON Schema
   # @param [Object] schema JSON Schema Object to attach to collection
-  attach_schema: (schema = {})->
-    if schema is undefined
-      throw new Error "collection: schema is missing"
-
+  attach_schema: (schema)->
+    if schema isnt undefined and schema['$schema'] is undefined
+      schema['$schema'] = 'http://json-schema.org/draft-04/schema#'
     @schema = schema
+    @is_valid()
+    @schema
 
   # returns errors to a string format if any
   # @return [String] A string of errors, using `JSON.stringify`
@@ -72,10 +82,37 @@ class Collection
   # @note it uses jjv to do the Schema validation
   # @note jjv see https://github.com/acornejo/jjv
   # @return [Boolean] returns true or false if the schema is valid
-  is_valid: ->
-    env = jjv()
-    length = Object.keys(@schema).length
-    return true if length is 0
+  schema_valid: -> @schema.is_valid()
+
+  is_valid: (doc = null)->
+    validator = isMyJsonValid
+    core = jom.schemas_core
+    errors = []
+
+    documentValidator = validator core, verbose: true
+    if doc isnt null
+      documentValidator doc
+      if documentValidator.errors and documentValidator.errors.length
+        errors = documentValidator.errors
+    else
+      for doc in @data
+        documentValidator doc
+        if documentValidator.errors and documentValidator.errors.length
+          errors.push documentValidator.errors
+
+    if errors.length
+      console?.error? "Collection: ", @name, errors
+
+    if errors.length
+      return false
+    else
+      return true
+
+    return true if @schema is undefined
+
+    if data isnt null and data.toString() isnt "[object Object]"
+      @errors.push "collection: data is wrong"
+      return false
 
     # TODO: make further proper checks
 
@@ -83,7 +120,8 @@ class Collection
       throw new Error "jom: $schema is missing"
 
     env.addSchema @name, @schema
-    @errors = env.validate @name, @data
+    data = data or @data
+    @errors = env.validate @name, data
 
     return true if not @errors
 

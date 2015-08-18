@@ -181,24 +181,29 @@ class Component
           text = attr.value
           raw = text
           # TODO: fix the attributes, and allow multiple access
-          try
-            key      = text.match(regx)[1]
-          catch e
-            throw new Error "Component: wrong key on attr value #{text}"
+          rx = new RegExp regx.toString().slice(1, -1),'gi'
+          result = text.match rx
+          $(result).each (i, item)->
+            try
+              key      = item.match(regx)[1]
+            catch e
+              throw new Error "Component: wrong key on attr value #{text}"
 
-          [collection, path] = key.split ':'
+            [collection, path] = key.split ':'
 
-          if collection is undefined
-            throw new Error "component: `#{raw}` is wrong, start with collection."
+            if collection is undefined
+              throw new Error "component: `#{raw}` is wrong, start with collection."
 
-          collection = collections[collection]
+            collection = collections[collection]
 
-          new_text = collection.findByPath $.trim path
+            find_from_collection = collection.findByPath $.trim path
 
-          if new_text is undefined and jom.env is "production"
-            new_text = ""
+            if find_from_collection is undefined and jom.env is "production"
+              text = text.replace regx, ""
+            else
+              text = text.replace regx, find_from_collection
 
-          attr.value = text.replace regx, new_text
+          attr.value = text
 
           node.handle =
             attr: attr

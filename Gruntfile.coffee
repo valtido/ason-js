@@ -31,7 +31,8 @@ module.exports = (grunt) ->
       core:
         src: [
           # 'bower_components/jquery/dist/jquery.js'
-          'public/bower_components/jjv/lib/jjv.js'
+          # 'public/bower_components/jjv/lib/jjv.js'
+          'public/assets/-/is-my-json-valid/is-my-json-valid.min.js'
           'src/observe.js'
           'src/utils.js'
           'src/asset.js'

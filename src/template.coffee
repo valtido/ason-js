@@ -43,6 +43,7 @@ class Template
     @schemas_ready = false
 
     @cloned = null
+    @errors = []
     @show_loader()
     @load_schemas()
 
@@ -50,7 +51,10 @@ class Template
 
   load_schemas: ->
     if @schemas_ready is true
-      @ready = true
+      if @is_valid() is true
+        @ready = true
+      else
+        throw new Error "template: schemas are not valid"
     else
       @schemas_ready = true
 
@@ -86,8 +90,20 @@ class Template
     if @fontello then loader.children('i').addClass @fontello
 
     $(@element).append(loader)
+
   hide_loader: (content)->
     $(content).add(content.children).findAll('.temporary_loader').remove()
+
+  is_valid: ->
+    @errors = []
+    for schema in @schemas
+      if schema.is_valid() is false
+        @errors.push "template: schema `#{schema.name}` is invalid"
+
+    if @errors.length
+      return false
+    else
+      return true
 
   define_schema: (schema)->
     if not schema or schema instanceof Schema is false

@@ -34,7 +34,7 @@ module.exports = function(grunt) {
     },
     concat: {
       core: {
-        src: ['public/bower_components/jjv/lib/jjv.js', 'src/observe.js', 'src/utils.js', 'src/asset.js', 'src/shadow.js', 'src/collection.js', 'src/component.js', 'src/template.js', 'src/schema.js', 'src/jom.js'],
+        src: ['public/assets/-/is-my-json-valid/is-my-json-valid.min.js', 'src/observe.js', 'src/utils.js', 'src/asset.js', 'src/shadow.js', 'src/collection.js', 'src/component.js', 'src/template.js', 'src/schema.js', 'src/jom.js'],
         dest: 'dist/<%= pkg.name %>.js'
       },
       tests: {
