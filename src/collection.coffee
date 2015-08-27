@@ -5,9 +5,9 @@
 class Collection
   # @property [String] Name of the collection from name attr
   @name : ""
-  # @property [Array] An array of data for the collection
-  @data : []
-  # @property [Object] a JSON Schema object describing data
+  # @property [Array] An array of document for the collection
+  @document : []
+  # @property [Object] a JSON Schema object describing document
   @schema : {}
   # @property [Object] reported JSON Schema errors when validated is triggered
   @errors : []
@@ -16,19 +16,19 @@ class Collection
 
   # Constructs a new collection
   # @param [String] name name of collection
-  # @option data [Array] data data to attach to collection
+  # @option document [Array] document document to attach to collection
   # @option schema [Object] schema JSON Schema to attach to collection
   # @note see json-schema.org for JSON Schema
-  constructor: (name, data=[], schema)->
+  constructor: (name, document=[], schema)->
     if name is undefined or not name or typeof name isnt "string"
       throw new Error "jom: collection name is required"
 
     @name   = name
     @errors = []
-    @data   = []
+    @document   = []
     @schema = {}
     @attach_schema schema
-    @attach_data data
+    @attach_document document
 
     @observing = false
 
@@ -36,33 +36,33 @@ class Collection
 
   meta : ->
     return {id: @generate_id()}
-  # Attaches data to the collection instance
-  # @param [Array, Object] data data to attach
-  # @option data [Array] data if array, push each element
-  # @option data [Object] data if object, push the object
+  # Attaches document to the collection instance
+  # @param [Array, Object] document document to attach
+  # @option document [Array] document if array, push each element
+  # @option document [Object] document if object, push the object
   add : (obj)->
     is_valid = @is_valid obj
     if is_valid
-      @data.push obj
+      @document.push obj
     else
-      @errors.push "Cannot add the data, is not valid. #{obj.toString()}"
+      @errors.push "Cannot add the document, is not valid. #{obj.toString()}"
 
 
-  attach_data: (data = [])->
-    length = data.length || Object.keys(data).length
+  attach_document: (document = [])->
+    length = document.length || Object.keys(document).length
     if length
-      if Array.isArray data
-        for item in data
+      if Array.isArray document
+        for item in document
           item.meta = @meta()
           Object.defineProperty item, "meta", enumerable: false
           @add item
       else
-        data.meta = @meta()
-        Object.defineProperty data, "meta", enumerable: false
-        @add data
+        document.meta = @meta()
+        Object.defineProperty document, "meta", enumerable: false
+        @add document
 
     @is_valid()
-    @data
+    @document
 
   # Attaches a JSON Schema to the collection instance
   # @note see json-schema.org for JSON Schema
@@ -99,7 +99,7 @@ class Collection
       if documentValidator.errors and documentValidator.errors.length
         errors = documentValidator.errors
     else
-      for doc in @data
+      for doc in @document
         documentValidator doc
         if documentValidator.errors and documentValidator.errors.length
           errors.push documentValidator.errors
@@ -114,8 +114,8 @@ class Collection
 
     return true if @schema is undefined
 
-    if data isnt null and data.toString() isnt "[object Object]"
-      @errors.push "collection: data is wrong"
+    if document isnt null and document.toString() isnt "[object Object]"
+      @errors.push "collection: document is wrong"
       return false
 
     # TODO: make further proper checks
@@ -124,8 +124,8 @@ class Collection
       throw new Error "jom: $schema is missing"
 
     env.addSchema @name, @schema
-    data = data or @data
-    @errors = env.validate @name, data
+    document = document or @document
+    @errors = env.validate @name, document
 
     return true if not @errors
 
@@ -168,7 +168,7 @@ class Collection
     text   = path.replace regx, ".$2"
                 .replace /^\.*/,""
     split  = text.split "."
-    result = @data
+    result = @document
 
     for item in split
       return result if result is undefined

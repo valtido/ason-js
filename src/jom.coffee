@@ -10,6 +10,7 @@ class JOM
     @schemas     = []
     @schemas_core = {"id":"http://json-schema.org/draft-04/schema#","$schema":"http://json-schema.org/draft-04/schema#","description":"Core schema meta-schema","definitions":{"schemaArray":{"type":"array","minItems":1,"items":{"$ref":"#"}},"positiveInteger":{"type":"integer","minimum":0},"positiveIntegerDefault0":{"allOf":[{"$ref":"#/definitions/positiveInteger"},{"default":0}]},"simpleTypes":{"enum":["array","boolean","integer","null","number","object","string"]},"stringArray":{"type":"array","items":{"type":"string"},"minItems":1,"uniqueItems":true}},"type":"object","properties":{"id":{"type":"string","format":"uri"},"$schema":{"type":"string","format":"uri"},"title":{"type":"string"},"description":{"type":"string"},"default":{},"multipleOf":{"type":"number","minimum":0,"exclusiveMinimum":true},"maximum":{"type":"number"},"exclusiveMaximum":{"type":"boolean","default":false},"minimum":{"type":"number"},"exclusiveMinimum":{"type":"boolean","default":false},"maxLength":{"$ref":"#/definitions/positiveInteger"},"minLength":{"$ref":"#/definitions/positiveIntegerDefault0"},"pattern":{"type":"string","format":"regex"},"additionalItems":{"anyOf":[{"type":"boolean"},{"$ref":"#"}],"default":{}},"items":{"anyOf":[{"$ref":"#"},{"$ref":"#/definitions/schemaArray"}],"default":{}},"maxItems":{"$ref":"#/definitions/positiveInteger"},"minItems":{"$ref":"#/definitions/positiveIntegerDefault0"},"uniqueItems":{"type":"boolean","default":false},"maxProperties":{"$ref":"#/definitions/positiveInteger"},"minProperties":{"$ref":"#/definitions/positiveIntegerDefault0"},"required":{"$ref":"#/definitions/stringArray"},"additionalProperties":{"anyOf":[{"type":"boolean"},{"$ref":"#"}],"default":{}},"definitions":{"type":"object","additionalProperties":{"$ref":"#"},"default":{}},"properties":{"type":"object","additionalProperties":{"$ref":"#"},"default":{}},"patternProperties":{"type":"object","additionalProperties":{"$ref":"#"},"default":{}},"dependencies":{"type":"object","additionalProperties":{"anyOf":[{"$ref":"#"},{"$ref":"#/definitions/stringArray"}]}},"enum":{"type":"array","minItems":1,"uniqueItems":true},"type":{"anyOf":[{"$ref":"#/definitions/simpleTypes"},{"type":"array","items":{"$ref":"#/definitions/simpleTypes"},"minItems":1,"uniqueItems":true}]},"allOf":{"$ref":"#/definitions/schemaArray"},"anyOf":{"$ref":"#/definitions/schemaArray"},"oneOf":{"$ref":"#/definitions/schemaArray"},"not":{"$ref":"#"}},"dependencies":{"exclusiveMaximum":["maximum"],"exclusiveMinimum":["minimum"]},"default":{}}
     @schemas.core = @schemas_core
+    @timeout = 60 * 1000
 
     @collections.get = (name) -> self.get 'collection', name
     @templates.get   = (name) -> self.get 'template', name
@@ -48,6 +49,10 @@ class JOM
     return null
 
   inject_assets: ()->
+    # gets each asset and injects it to the foot tag (same level as body tag)
+    # this way the assets will load the old fashioned way, also load json
+    # with ajax as there is no way to get it any other way, then reference the
+    # response object in element.data = {...}
     $.each @assets, (i, asset)->
       if asset.queued? isnt true
         asset.queued = true
@@ -55,8 +60,10 @@ class JOM
         if asset.content_type.part is "text/json"
           $.getJSON(asset.source)
           .done (response)->
-            foot.find("script[source='#{asset.source}']").get(0).data = response
-          .error (err)->
+            foot.find("script[source='#{asset.source}']")
+            .get(0).response = response
+          .fail (xhr, status, err)->
+            console?.info? status, err
             throw new Error 'Faild: to load a json asset'
         foot.append asset.element
   load_assets: ()->
@@ -83,18 +90,18 @@ class JOM
   load_schemas: ()->
     $('foot script[asset=schema]')
     .each (i, schema) =>
-      if "jinit" of schema is false and schema.data isnt undefined
+      if "jinit" of schema is false and schema.response isnt undefined
         schema.jinit = true
-        s = schema.data || {}
-        name = $(schema).attr 'name'
-        obj = new Schema name, s
+        s            = schema.response || {}
+        name         = $(schema).attr 'name'
+        obj          = new Schema name, s
         @schemas.push obj
   load_components: ()->
     $('component')
     .each (i, component) =>
       if "jinit" of component is false
         component.jinit = true
-        c = new Component component
+        c               = new Component component
         @components.push c
         component.component = c
 
@@ -103,11 +110,12 @@ class JOM
     .filter (i,link)->
       link.import isnt null
     .each (i, link) =>
-      template = link.import.querySelector "template"
-      if template and "jinit" of template is false and link.import isnt undefined
-        template.jinit = true
-        name = $(template).attr 'name'
-        @templates.push new Template template
+      templates = link.import.querySelectorAll "template"
+      $(templates).each (j, template) =>
+        if template and "jinit" of template is false and link.import isnt undefined
+          template.jinit = true
+          name           = $(template).attr 'name'
+          @templates.push new Template template
 
   load_collections: ()->
     $("foot script[type='text/json'][asset=collection]")
@@ -117,19 +125,15 @@ class JOM
       if schema_attr isnt undefined
         schema = jom.schemas.get schema_attr
       if "jinit" of collection is false and
-         collection.data isnt undefined and
+         collection.response isnt undefined and
          schema
 
         collection.jinit = true
-        name = $(collection).attr "name"
-        data = collection.data
-        @collections.push new Collection name, data, schema
+        name             = $(collection).attr "name"
+        response         = collection.response
+        @collections.push new Collection name, response, schema
 
   assemble_components: ->
-    timeout = 60 * 1000
-
-    if jom.env isnt "production" then timeout = 10 * 1000
-
     $.each @components, (i, component)=>
       if component.skip is true
         return true
@@ -141,12 +145,14 @@ class JOM
       if "timer" of component is false
         component.timer = new Date()
 
-      if  new Date() - component.timer > timeout
+      if  new Date() - component.timer > @timeout
+        component.trigger 'timeout'
+        component.trigger 'error', 'timeout'
         throw new Error "jom: Component `#{component.name}` timedout"
 
       template = jom.templates.get component.attr.template
-      # build template
 
+      # build template
       if component.init.template is false and template
         component.init.template = true
         # clean up loading
@@ -226,21 +232,28 @@ class JOM
     for key, collection of @collections
       if collection.observing is false
         collection.observing = true
-        new Observe collection, collection.data, (changes)=>
+        new Observe collection, collection.document, (changes)=>
           for key, change of changes
             $.each @components, (i, component)=>
               if change.collection.name in component.collections_list
                 $(component.root).add(component.root.children)
                 .findAll('[repeated]').remove()
+
                 $(component.root).add(component.root.children)
                 .findAll('[repeat]').show()
+
                 @repeater component, component.root
+
                 component.handlebars component.root, component
+
                 @image_source_change component
+
                 $(component.root.host).trigger "change", [
-                  change, component.data, component.collection
+                  change, component.collections
                 ]
+
                 $(component.root).find('[repeat]').hide()
+
                 component.trigger "change", change
 
   resolve: (path)->

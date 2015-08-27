@@ -11,7 +11,6 @@ class Component
 
     template    = $component.attr "template"
     collections = $component.attr "collections"
-    path        = $component.attr "path"
     throw new Error "jom: component template is required" if not template
     throw new Error "jom: component collections is required" if not collections
 
@@ -30,8 +29,6 @@ class Component
 
     @template     = null
     @collections  = []
-    # FIXME remove path from component
-    @path         = path || "[0]"
 
     @create_shadow()
 
@@ -244,12 +241,15 @@ class Component
 
   on: (type, path, callback)->
     types = type.split " "
+    if arguments.length is 2
+      callback = path
+      path     = null
 
     for type in types
-      event =
-        type    : type
-        path    : path
-        callback: callback
+      event          = {}
+      event.type     = type
+      event.callback = callback
+      event.path     = path
       @events.push event
     return @
 
@@ -259,9 +259,13 @@ class Component
     for type in types
       for event in @events
         if type is event.type
+          if event.path is null
+            event.callback.call handle, event, params
           for handle in @handles
-            if handle.handle.path.indexOf(event.path) isnt -1
+            part = !!~ handle.handle.path.indexOf event.path
+            if handle.handle.path and part
               event.callback.call handle, event, params
+
     return @
   repeat: (element, data = null)->
     data     = [] if data is null
@@ -286,7 +290,7 @@ class Component
     if path isnt undefined and path.length
       data = @collections[collection].findByPath path
     else
-      data = @collections[collection].data
+      data = @collections[collection].document
 
     throw new Error "component: data not found `#{path}`" if data is undefined
 
@@ -329,4 +333,3 @@ class Component
     $(@element).attr 'collections', comma
     # jom init is false, triggers rebuild
     delete @element.jinit
-    debugger

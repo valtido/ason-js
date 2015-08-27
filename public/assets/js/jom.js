@@ -312,7 +312,7 @@ var Collection;
 Collection = (function() {
   Collection.name = "";
 
-  Collection.data = [];
+  Collection.document = [];
 
   Collection.schema = {};
 
@@ -320,19 +320,19 @@ Collection = (function() {
 
   Collection.observing = false;
 
-  function Collection(name, data, schema) {
-    if (data == null) {
-      data = [];
+  function Collection(name, document, schema) {
+    if (document == null) {
+      document = [];
     }
     if (name === void 0 || !name || typeof name !== "string") {
       throw new Error("jom: collection name is required");
     }
     this.name = name;
     this.errors = [];
-    this.data = [];
+    this.document = [];
     this.schema = {};
     this.attach_schema(schema);
-    this.attach_data(data);
+    this.attach_document(document);
     this.observing = false;
   }
 
@@ -350,22 +350,22 @@ Collection = (function() {
     var is_valid;
     is_valid = this.is_valid(obj);
     if (is_valid) {
-      return this.data.push(obj);
+      return this.document.push(obj);
     } else {
-      return this.errors.push("Cannot add the data, is not valid. " + (obj.toString()));
+      return this.errors.push("Cannot add the document, is not valid. " + (obj.toString()));
     }
   };
 
-  Collection.prototype.attach_data = function(data) {
+  Collection.prototype.attach_document = function(document) {
     var i, item, len, length;
-    if (data == null) {
-      data = [];
+    if (document == null) {
+      document = [];
     }
-    length = data.length || Object.keys(data).length;
+    length = document.length || Object.keys(document).length;
     if (length) {
-      if (Array.isArray(data)) {
-        for (i = 0, len = data.length; i < len; i++) {
-          item = data[i];
+      if (Array.isArray(document)) {
+        for (i = 0, len = document.length; i < len; i++) {
+          item = document[i];
           item.meta = this.meta();
           Object.defineProperty(item, "meta", {
             enumerable: false
@@ -373,15 +373,15 @@ Collection = (function() {
           this.add(item);
         }
       } else {
-        data.meta = this.meta();
-        Object.defineProperty(data, "meta", {
+        document.meta = this.meta();
+        Object.defineProperty(document, "meta", {
           enumerable: false
         });
-        this.add(data);
+        this.add(document);
       }
     }
     this.is_valid();
-    return this.data;
+    return this.document;
   };
 
   Collection.prototype.attach_schema = function(schema) {
@@ -402,7 +402,7 @@ Collection = (function() {
   };
 
   Collection.prototype.is_valid = function(doc) {
-    var data, documentValidator, errors, i, len, ref, validator;
+    var document, documentValidator, errors, i, len, ref, validator;
     if (doc == null) {
       doc = null;
     }
@@ -420,7 +420,7 @@ Collection = (function() {
         errors = documentValidator.errors;
       }
     } else {
-      ref = this.data;
+      ref = this.document;
       for (i = 0, len = ref.length; i < len; i++) {
         doc = ref[i];
         documentValidator(doc);
@@ -444,16 +444,16 @@ Collection = (function() {
     if (this.schema === void 0) {
       return true;
     }
-    if (data !== null && data.toString() !== "[object Object]") {
-      this.errors.push("collection: data is wrong");
+    if (document !== null && document.toString() !== "[object Object]") {
+      this.errors.push("collection: document is wrong");
       return false;
     }
     if (this.schema["$schema"] === void 0) {
       throw new Error("jom: $schema is missing");
     }
     env.addSchema(this.name, this.schema);
-    data = data || this.data;
-    this.errors = env.validate(this.name, data);
+    document = document || this.document;
+    this.errors = env.validate(this.name, document);
     if (!this.errors) {
       return true;
     }
@@ -481,7 +481,7 @@ Collection = (function() {
     regx = /(\[)(\d+)(\])/g;
     text = path.replace(regx, ".$2").replace(/^\.*/, "");
     split = text.split(".");
-    result = this.data;
+    result = this.document;
     for (i = 0, len = split.length; i < len; i++) {
       item = split[i];
       if (result === void 0) {
@@ -508,7 +508,7 @@ Component = (function() {
   regxG = /\${([^\s{}]+)}/g;
 
   function Component(component) {
-    var $component, collections, path, template;
+    var $component, collections, template;
     if (component === void 0) {
       throw new Error("jom: component is required");
     }
@@ -516,7 +516,6 @@ Component = (function() {
     $component.get(0).component = true;
     template = $component.attr("template");
     collections = $component.attr("collections");
-    path = $component.attr("path");
     if (!template) {
       throw new Error("jom: component template is required");
     }
@@ -538,7 +537,6 @@ Component = (function() {
     this.ready = false;
     this.template = null;
     this.collections = [];
-    this.path = path || "[0]";
     this.create_shadow();
     this.root = this.element.shadowRoot;
     this.handles = [];
@@ -780,20 +778,23 @@ Component = (function() {
   Component.prototype.on = function(type, path, callback) {
     var event, j, len, types;
     types = type.split(" ");
+    if (arguments.length === 2) {
+      callback = path;
+      path = null;
+    }
     for (j = 0, len = types.length; j < len; j++) {
       type = types[j];
-      event = {
-        type: type,
-        path: path,
-        callback: callback
-      };
+      event = {};
+      event.type = type;
+      event.callback = callback;
+      event.path = path;
       this.events.push(event);
     }
     return this;
   };
 
   Component.prototype.trigger = function(type, params) {
-    var event, handle, j, k, l, len, len1, len2, ref, ref1, types;
+    var event, handle, j, k, l, len, len1, len2, part, ref, ref1, types;
     if (params == null) {
       params = {};
     }
@@ -804,10 +805,14 @@ Component = (function() {
       for (k = 0, len1 = ref.length; k < len1; k++) {
         event = ref[k];
         if (type === event.type) {
+          if (event.path === null) {
+            event.callback.call(handle, event, params);
+          }
           ref1 = this.handles;
           for (l = 0, len2 = ref1.length; l < len2; l++) {
             handle = ref1[l];
-            if (handle.handle.path.indexOf(event.path) !== -1) {
+            part = !!~handle.handle.path.indexOf(event.path);
+            if (handle.handle.path && part) {
               event.callback.call(handle, event, params);
             }
           }
@@ -845,7 +850,7 @@ Component = (function() {
     if (path !== void 0 && path.length) {
       data = this.collections[collection].findByPath(path);
     } else {
-      data = this.collections[collection].data;
+      data = this.collections[collection].document;
     }
     if (data === void 0) {
       throw new Error("component: data not found `" + path + "`");
@@ -888,8 +893,7 @@ Component = (function() {
     this.collections_list = list;
     comma = list.join(',');
     $(this.element).attr('collections', comma);
-    delete this.element.jinit;
-    debugger;
+    return delete this.element.jinit;
   };
 
   return Component;
@@ -1312,6 +1316,7 @@ JOM = (function() {
       "default": {}
     };
     this.schemas.core = this.schemas_core;
+    this.timeout = 60 * 1000;
     this.collections.get = function(name) {
       return self.get('collection', name);
     };
@@ -1352,7 +1357,7 @@ JOM = (function() {
   };
 
   JOM.prototype.get = function(what, name) {
-    var arr, item, j, key, len, ref, ref1;
+    var arr, item, k, key, len, ref, ref1;
     if (name == null) {
       name = false;
     }
@@ -1364,7 +1369,7 @@ JOM = (function() {
       return this[what + "s"];
     }
     ref1 = this[what + "s"];
-    for (key = j = 0, len = ref1.length; j < len; key = ++j) {
+    for (key = k = 0, len = ref1.length; k < len; key = ++k) {
       item = ref1[key];
       if (name === item.name) {
         return this[what + "s"][key];
@@ -1381,8 +1386,13 @@ JOM = (function() {
         foot = $('html>foot');
         if (asset.content_type.part === "text/json") {
           $.getJSON(asset.source).done(function(response) {
-            return foot.find("script[source='" + asset.source + "']").get(0).data = response;
-          }).error(function(err) {
+            return foot.find("script[source='" + asset.source + "']").get(0).response = response;
+          }).fail(function(xhr, status, err) {
+            if (typeof console !== "undefined" && console !== null) {
+              if (typeof console.info === "function") {
+                console.info(status, err);
+              }
+            }
             throw new Error('Faild: to load a json asset');
           });
         }
@@ -1410,9 +1420,9 @@ JOM = (function() {
     return $('foot script[asset=schema]').each((function(_this) {
       return function(i, schema) {
         var name, obj, s;
-        if ("jinit" in schema === false && schema.data !== void 0) {
+        if ("jinit" in schema === false && schema.response !== void 0) {
           schema.jinit = true;
-          s = schema.data || {};
+          s = schema.response || {};
           name = $(schema).attr('name');
           obj = new Schema(name, s);
           return _this.schemas.push(obj);
@@ -1440,13 +1450,16 @@ JOM = (function() {
       return link["import"] !== null;
     }).each((function(_this) {
       return function(i, link) {
-        var name, template;
-        template = link["import"].querySelector("template");
-        if (template && "jinit" in template === false && link["import"] !== void 0) {
-          template.jinit = true;
-          name = $(template).attr('name');
-          return _this.templates.push(new Template(template));
-        }
+        var templates;
+        templates = link["import"].querySelectorAll("template");
+        return $(templates).each(function(j, template) {
+          var name;
+          if (template && "jinit" in template === false && link["import"] !== void 0) {
+            template.jinit = true;
+            name = $(template).attr('name');
+            return _this.templates.push(new Template(template));
+          }
+        });
       };
     })(this));
   };
@@ -1454,31 +1467,26 @@ JOM = (function() {
   JOM.prototype.load_collections = function() {
     return $("foot script[type='text/json'][asset=collection]").each((function(_this) {
       return function(i, collection) {
-        var data, name, schema, schema_attr;
+        var name, response, schema, schema_attr;
         schema_attr = $(collection).attr('schema');
         schema = false;
         if (schema_attr !== void 0) {
           schema = jom.schemas.get(schema_attr);
         }
-        if ("jinit" in collection === false && collection.data !== void 0 && schema) {
+        if ("jinit" in collection === false && collection.response !== void 0 && schema) {
           collection.jinit = true;
           name = $(collection).attr("name");
-          data = collection.data;
-          return _this.collections.push(new Collection(name, data, schema));
+          response = collection.response;
+          return _this.collections.push(new Collection(name, response, schema));
         }
       };
     })(this));
   };
 
   JOM.prototype.assemble_components = function() {
-    var timeout;
-    timeout = 60 * 1000;
-    if (jom.env !== "production") {
-      timeout = 10 * 1000;
-    }
     return $.each(this.components, (function(_this) {
       return function(i, component) {
-        var c, collections_available, j, k, len, len1, ref, ref1, template;
+        var c, collections_available, k, l, len, len1, ref, ref1, template;
         if (component.skip === true) {
           return true;
         }
@@ -1490,7 +1498,9 @@ JOM = (function() {
         if ("timer" in component === false) {
           component.timer = new Date();
         }
-        if (new Date() - component.timer > timeout) {
+        if (new Date() - component.timer > _this.timeout) {
+          component.trigger('timeout');
+          component.trigger('error', 'timeout');
           throw new Error("jom: Component `" + component.name + "` timedout");
         }
         template = jom.templates.get(component.attr.template);
@@ -1513,8 +1523,8 @@ JOM = (function() {
             collections_available = false;
           }
           ref = component.collections_list;
-          for (j = 0, len = ref.length; j < len; j++) {
-            c = ref[j];
+          for (k = 0, len = ref.length; k < len; k++) {
+            c = ref[k];
             if (jom.collections.get(c) === null) {
               collections_available = false;
             }
@@ -1523,8 +1533,8 @@ JOM = (function() {
         if (component.init.collections === false && collections_available === true) {
           component.init.collections = true;
           ref1 = component.collections_list;
-          for (k = 0, len1 = ref1.length; k < len1; k++) {
-            c = ref1[k];
+          for (l = 0, len1 = ref1.length; l < len1; l++) {
+            c = ref1[l];
             component.define_collection(jom.collections.get(c));
           }
         }
@@ -1585,7 +1595,7 @@ JOM = (function() {
       collection = ref[key];
       if (collection.observing === false) {
         collection.observing = true;
-        results.push(new Observe(collection, collection.data, (function(_this) {
+        results.push(new Observe(collection, collection.document, (function(_this) {
           return function(changes) {
             var change, results1;
             results1 = [];
@@ -1599,7 +1609,7 @@ JOM = (function() {
                   _this.repeater(component, component.root);
                   component.handlebars(component.root, component);
                   _this.image_source_change(component);
-                  $(component.root.host).trigger("change", [change, component.data, component.collection]);
+                  $(component.root.host).trigger("change", [change, component.collections]);
                   $(component.root).find('[repeat]').hide();
                   return component.trigger("change", change);
                 }
