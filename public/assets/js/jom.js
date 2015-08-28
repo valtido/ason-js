@@ -357,6 +357,25 @@ Collection = (function() {
     }
   };
 
+  Collection.prototype.del = function(index, id) {
+    var doc, i, len, ref, results;
+    if (id == null) {
+      id = null;
+    }
+    if (id === null) {
+      this.document.splice(index, 1);
+      debugger;
+    }
+    ref = this.document;
+    results = [];
+    for (i = 0, len = ref.length; i < len; i++) {
+      doc = ref[i];
+      debugger;
+      results.push(doc);
+    }
+    return results;
+  };
+
   Collection.prototype.attach_document = function(document) {
     var i, item, len, length;
     if (document == null) {
@@ -464,6 +483,9 @@ Collection = (function() {
   Collection.prototype.join = function(a, b) {
     var args, arr, first, join, result;
     join = this.join;
+    if (!b && a) {
+      return a;
+    }
     b = "" + b;
     first = b[0];
     result = first === "[" ? a + b : a + "." + b;
@@ -543,6 +565,7 @@ Component = (function() {
     this.ready = false;
     this.template = null;
     this.collection = null;
+    this.data = null;
     this.create_shadow();
     this.root = this.element.shadowRoot;
     this.handles = [];
@@ -768,7 +791,7 @@ Component = (function() {
       front = "";
       reg = new RegExp("^" + (escapeRegExp(front)));
       is_script_prepared = reg.test(script.text);
-      script.text = "(function(){\nvar\nshadow      = jom.shadow,\nbody        = shadow.body,\nhost        = shadow.host,\nroot        = shadow.root,\ncomponent   = host.component,\ncollection = component.collection\n;\n\n" + script.text + "\n})()";
+      script.text = "(function(){\nvar\nshadow     = jom.shadow,\nbody       = shadow.body,\nhost       = shadow.host,\nroot       = shadow.root,\ncomponent  = host.component,\ncollection = component.collection,\ndata       = component.data\n;\n\n" + script.text + "\n})()";
       return script;
     });
   };
@@ -1442,6 +1465,11 @@ JOM = (function() {
           component.define_collection(collection);
         }
         if (component.template !== null && component.collection !== null && component.template.ready === true && _this.scripts_loaded(component) === true) {
+          if (component.path) {
+            component.data = collection.findByPath(component.path);
+          } else {
+            component.data = collection;
+          }
           _this.repeater(component);
           component.handlebars(component.root.children, component);
           _this.image_source_change(component);
@@ -1505,8 +1533,8 @@ JOM = (function() {
             for (key in changes) {
               change = changes[key];
               results1.push($.each(_this.components, function(i, component) {
-                var ref1;
-                if (ref1 = change.collection.name, indexOf.call(component.collections_list, ref1) >= 0) {
+                if (change.collection.name === component.collection.name) {
+                  delete component.element.jinit;
                   $(component.root).add(component.root.children).findAll('[repeated]').remove();
                   $(component.root).add(component.root.children).findAll('[repeat]').show();
                   _this.repeater(component, component.root);

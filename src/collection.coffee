@@ -47,6 +47,14 @@ class Collection
     else
       @errors.push "Cannot add the document, is not valid. #{obj.toString()}"
 
+  del : (index, id = null)->
+    if id is null
+      @document.splice(index, 1)
+      debugger
+    for doc in @document
+      debugger
+      doc
+
 
   attach_document: (document = [])->
     length = document.length || Object.keys(document).length
@@ -141,6 +149,8 @@ class Collection
   # @return [String] A string of a JSON PATH
   join : (a, b) ->
     join = @join
+    if not b and a
+      return a
     b      = "#{b}"
     first  = b[0]
     result = if first is "[" then a + b else "#{a}.#{b}"

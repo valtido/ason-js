@@ -176,6 +176,10 @@ class JOM
           component.collection isnt null and
           component.template.ready is true and
           @scripts_loaded(component) is true
+        if component.path
+          component.data = collection.findByPath component.path
+        else
+          component.data = collection
         @repeater component
         component.handlebars component.root.children, component
 
@@ -220,7 +224,9 @@ class JOM
         new Observe collection, collection.document, (changes)=>
           for key, change of changes
             $.each @components, (i, component)=>
-              if change.collection.name in component.collections_list
+              if change.collection.name is component.collection.name
+                delete component.element.jinit
+
                 $(component.root).add(component.root.children)
                 .findAll('[repeated]').remove()
 

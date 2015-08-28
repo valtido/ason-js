@@ -32,6 +32,7 @@ class Component
 
     @template     = null
     @collection  = null
+    @data  = null
 
     @create_shadow()
 
@@ -222,12 +223,13 @@ class Component
       # unless is_script_prepared
       script.text = """(function(){
                 var
-                shadow      = jom.shadow,
-                body        = shadow.body,
-                host        = shadow.host,
-                root        = shadow.root,
-                component   = host.component,
-                collection = component.collection
+                shadow     = jom.shadow,
+                body       = shadow.body,
+                host       = shadow.host,
+                root       = shadow.root,
+                component  = host.component,
+                collection = component.collection,
+                data       = component.data
                 ;
 
                 #{script.text}
