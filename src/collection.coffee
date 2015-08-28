@@ -22,7 +22,7 @@ class Collection
   constructor: (name, document=[], schema)->
     if name is undefined or not name or typeof name isnt "string"
       throw new Error "jom: collection name is required"
-
+    @ready = false
     @name   = name
     @errors = []
     @document   = []

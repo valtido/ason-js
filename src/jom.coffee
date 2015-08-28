@@ -150,15 +150,15 @@ class JOM
         component.trigger 'error', 'timeout'
         throw new Error "jom: Component `#{component.name}` timedout"
 
-      template = jom.templates.get component.attr.template
+      template = jom.templates.get component.prop.template
 
       # build template
-      if component.init.template is false and template
-        component.init.template = true
+      if component.template is null and template and component.collection
         # clean up loading
         # $(component.root.children).remove()
         # create a new instance of template so original remains un touched
         template = new Template template.original
+        component.define_template template
         template.show_loader()
         component.define_template template
         component.handle_template_scripts template.element
@@ -166,29 +166,14 @@ class JOM
         component.root.appendChild template.element
         template.element = component.root
 
-      if template and template.ready is false
-        component.template.load_schemas()
-
       # build collection
-      if component.init.collections is false
-        collections_available = true
+      collection = jom.collections.get component.prop.collection
+      if component.collection is null and collection
+        component.define_collection collection
 
-        if component.collections_list.length is 0
-          collections_available = false
-
-        for c in component.collections_list
-          if jom.collections.get(c) is null then collections_available = false
-
-      if component.init.collections is false and collections_available is true
-        component.init.collections = true
-
-        # if template and collections are available do this once
-        for c in component.collections_list
-          component.define_collection(jom.collections.get(c))
-
-      # when both template and collections are ready
-      if  component.init.template is true and
-          component.init.collections is true and
+      # when both template and collection are ready
+      if  component.template isnt null and
+          component.collection isnt null and
           component.template.ready is true and
           @scripts_loaded(component) is true
         @repeater component

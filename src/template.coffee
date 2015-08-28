@@ -29,44 +29,11 @@ class Template
     if @body is undefined or @body.length is 0
       throw new Error "jom: template body attr is required"
 
-    @schemas = []
-    schemas  = $.trim $template.attr 'schemas'
-    schemas  = schemas.split ','
-
-    for schema, key in schemas
-      schemas[key] = $.trim schema
-
-    @schemas_list = schemas
-    schemas       = schemas.join ','
-    @schemas_attr = schemas
-
-    @schemas_ready = false
-
     @cloned = null
     @errors = []
     @show_loader()
-    @load_schemas()
-
+    @ready = true
     @
-
-  load_schemas: ->
-    if @schemas_ready is true
-      if @is_valid() is true
-        @ready = true
-      else
-        throw new Error "template: schemas are not valid"
-    else
-      @schemas_ready = true
-
-      if @schemas_list.length is 0 then @schemas_ready = false
-
-      for schema in @schemas_list
-        if jom.schemas.get(schema) is null
-          @schemas_ready = false
-
-      if @schemas_ready is true
-        for schema in @schemas_list
-          @schemas.push jom.schemas.get schema
 
   show_loader: ->
     loader = $('<div class="temporary_loader"><i class="icon-loader animate-spin"></i>Loading...</div>')
@@ -93,20 +60,3 @@ class Template
 
   hide_loader: (content)->
     $(content).add(content.children).findAll('.temporary_loader').remove()
-
-  is_valid: ->
-    @errors = []
-    for schema in @schemas
-      if schema.is_valid() is false
-        @errors.push "template: schema `#{schema.name}` is invalid"
-
-    if @errors.length
-      return false
-    else
-      return true
-
-  define_schema: (schema)->
-    if not schema or schema instanceof Schema is false
-      throw new Error "jom: template schemas attr is required"
-
-    @schemas.push schema

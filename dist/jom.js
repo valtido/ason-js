@@ -327,6 +327,7 @@ Collection = (function() {
     if (name === void 0 || !name || typeof name !== "string") {
       throw new Error("jom: collection name is required");
     }
+    this.ready = false;
     this.name = name;
     this.errors = [];
     this.document = [];
@@ -508,45 +509,46 @@ Component = (function() {
   regxG = /\${([^\s{}]+)}/g;
 
   function Component(component) {
-    var $component, collections, template;
+    var $component, collection, path, ref, template;
     if (component === void 0) {
       throw new Error("jom: component is required");
     }
     $component = $(component);
     $component.get(0).component = true;
     template = $component.attr("template");
-    collections = $component.attr("collections");
+    collection = $component.attr("collection");
     if (!template) {
       throw new Error("jom: component template is required");
     }
-    if (!collections) {
-      throw new Error("jom: component collections is required");
+    if (!collection) {
+      throw new Error("jom: component collection is required");
     }
     this.skip = false;
     this.attr = {
       template: template,
-      collections: collections
+      collection: collection
     };
-    collections = collections.split(/\s*,\s*/g);
-    this.collections_list = collections;
+    ref = this.attr.collection.split(':'), collection = ref[0], path = ref[1];
+    this.path = path || "";
     this.element = $component.get(0);
     if (!this.element.createShadowRoot) {
       this.element = wrap(this.element);
     }
+    this.prop = {
+      template: template,
+      collection: collection,
+      path: path
+    };
     this.hide();
     this.ready = false;
     this.template = null;
-    this.collections = [];
+    this.collection = null;
     this.create_shadow();
     this.root = this.element.shadowRoot;
     this.handles = [];
     this.events = [];
     this.scripts = [];
     this.scripts.status = "init";
-    this.init = {
-      template: false,
-      collections: false
-    };
     this;
   }
 
@@ -583,8 +585,8 @@ Component = (function() {
     if (!collection || collection instanceof Collection === false) {
       throw new Error("jom: collection cant be added");
     }
-    this.collections.push(collection);
-    return this.collections;
+    this.collection = collection;
+    return this.collection;
   };
 
   Component.prototype.watcher = function(changes, collection) {
@@ -644,28 +646,26 @@ Component = (function() {
   };
 
   Component.prototype.handlebars = function(content, component) {
-    var $content, c, collections;
+    var $content, c;
     if (content instanceof ShadowRoot) {
       content = content.children;
     }
-    collections = component.collections;
     $content = $(content);
     c = $content.findAll('*').not('script, style, link, [repeat]').filter(function() {
       return $(this).parents('[repeat]').length === 0;
     });
     c.each((function(_this) {
       return function(i, node) {
-        var attr, collection, e, j, key, len, name, new_text, path, raw, ref, ref1, ref2, result, rx, text;
+        var attr, e, j, key, len, name, new_text, path, raw, ref, result, rx, text;
         text = $(node).text();
         if ($(node).children().length === 0 && regx.test(text) === true) {
           raw = text;
           key = text.match(regx)[1];
-          ref = key.split(':'), collection = ref[0], path = ref[1];
-          collection = collections[collection];
-          if (collection === void 0) {
+          path = _this.collection.join(_this.path, key);
+          if (_this.collection === void 0) {
             throw new Error("component: `" + raw + "` is wrong, start with collection.");
           }
-          new_text = collection.findByPath($.trim(path));
+          new_text = _this.collection.findByPath($.trim(path));
           if (new_text === void 0) {
             if (jom.env === "production") {
               console.info(new_text);
@@ -678,13 +678,13 @@ Component = (function() {
           node.handle = {
             type: "node",
             path: path,
-            full: collection.join(collection.name, path)
+            full: _this.collection.join(_this.collection.name, path)
           };
           _this.handles.push(node);
         }
-        ref1 = node.attributes;
-        for (key = j = 0, len = ref1.length; j < len; key = ++j) {
-          attr = ref1[key];
+        ref = node.attributes;
+        for (key = j = 0, len = ref.length; j < len; key = ++j) {
+          attr = ref[key];
           if (regx.test(attr.name)) {
             text = attr.name;
             raw = text;
@@ -694,12 +694,11 @@ Component = (function() {
               e = _error;
               throw new Error("Component: wrong key on attr name " + text);
             }
-            ref2 = key.split(':'), collection = ref2[0], path = ref2[1];
-            collection = collections[collection];
-            if (collection === void 0) {
+            path = _this.collection.join(_this.path, key);
+            if (_this.collection === void 0) {
               throw new Error("component: `" + raw + "` is wrong, start with collection.");
             }
-            new_text = collection.findByPath($.trim(path));
+            new_text = _this.collection.findByPath($.trim(path));
             if (new_text === void 0 && jom.env === "production") {
               new_text = "";
             }
@@ -709,7 +708,7 @@ Component = (function() {
               attr: attr,
               type: "attr_name",
               path: path,
-              full: collection.join(collection.name, path)
+              full: _this.collection.join(_this.collection.name, path)
             };
             _this.handles.push(node);
           }
@@ -719,19 +718,18 @@ Component = (function() {
             rx = new RegExp(regx.toString().slice(1, -1), 'gi');
             result = text.match(rx);
             $(result).each(function(i, item) {
-              var find_from_collection, ref3;
+              var find_from_collection;
               try {
                 key = item.match(regx)[1];
               } catch (_error) {
                 e = _error;
                 throw new Error("Component: wrong key on attr value " + text);
               }
-              ref3 = key.split(':'), collection = ref3[0], path = ref3[1];
-              if (collection === void 0) {
+              path = _this.collection.join(_this.path, key);
+              if (_this.collection === void 0) {
                 throw new Error("component: `" + raw + "` is wrong, start with collection.");
               }
-              collection = collections[collection];
-              find_from_collection = collection.findByPath($.trim(path));
+              find_from_collection = _this.collection.findByPath($.trim(path));
               if (find_from_collection === void 0 && jom.env === "production") {
                 return text = text.replace(regx, "");
               } else {
@@ -743,7 +741,7 @@ Component = (function() {
               attr: attr,
               type: "attr_value",
               path: path,
-              full: collection.join(collection.name, path)
+              full: _this.collection.join(_this.collection.name, path)
             };
             _this.handles.push(node);
           }
@@ -770,7 +768,7 @@ Component = (function() {
       front = "";
       reg = new RegExp("^" + (escapeRegExp(front)));
       is_script_prepared = reg.test(script.text);
-      script.text = "(function(){\nvar\nshadow      = jom.shadow,\nbody        = shadow.body,\nhost        = shadow.host,\nroot        = shadow.root,\ncomponent   = host.component,\ncollections = component.collections\n;\n\n" + script.text + "\n})()";
+      script.text = "(function(){\nvar\nshadow      = jom.shadow,\nbody        = shadow.body,\nhost        = shadow.host,\nroot        = shadow.root,\ncomponent   = host.component,\ncollection = component.collection\n;\n\n" + script.text + "\n})()";
       return script;
     });
   };
@@ -823,7 +821,7 @@ Component = (function() {
   };
 
   Component.prototype.repeat = function(element, data) {
-    var $element, clone, collection, e, index, item, j, key, len, path, prefix, raw, ref, repeat, x;
+    var $element, clone, e, index, item, j, key, len, path, prefix, raw, repeat, x;
     if (data == null) {
       data = null;
     }
@@ -836,24 +834,26 @@ Component = (function() {
     if (key === void 0) {
       throw new Error("component: `repeat` attr missing");
     }
-    try {
-      key = key.match(regx)[1];
-    } catch (_error) {
-      e = _error;
-      throw new Error("Component: Wrong key `" + key + "`");
+    if (key.length) {
+      try {
+        key = key.match(regx)[1];
+      } catch (_error) {
+        e = _error;
+        throw new Error("Component: Wrong key `" + key + "`");
+      }
     }
     repeat = $([]);
-    ref = key.split(":"), collection = ref[0], path = ref[1];
-    if (collection === void 0) {
+    path = key;
+    if (this.collection === void 0) {
       throw new Error("component: `" + raw + "` is wrong, start with collection.");
     }
     if (path !== void 0 && path.length) {
-      data = this.collections[collection].findByPath(path);
+      data = this.collection.findByPath(path);
     } else {
-      data = this.collections[collection].document;
+      data = this.collection.document;
     }
     if (data === void 0) {
-      throw new Error("component: data not found `" + path + "`");
+      throw new Error("component: document data not found `" + path + "`");
     }
     if (path === void 0) {
       path = "";
@@ -865,8 +865,7 @@ Component = (function() {
       clone.attr("repeat", null);
       clone.attr('repeat-index', index);
       clone.get(0).style.display = '';
-      prefix = this.collections[collection].join(path, "[" + index + "]");
-      prefix = collection + ":" + prefix;
+      prefix = this.collection.join(path, "[" + index + "]");
       x = clone[0].outerHTML.replace(/(\${)([^\s{}]+)(})/g, "$1" + prefix + ".$2$3");
       x = x.replace(/(\{repeat\.index})/g, index);
       x = x.replace(/(\{repeat\.length})/g, data.length);
@@ -875,24 +874,15 @@ Component = (function() {
     return repeat;
   };
 
-  Component.prototype.reset_collection = function(collections) {
-    var collection, comma, j, len, list;
-    list = [];
-    comma = "";
+  Component.prototype.reset_collection = function(collection) {
     if (collections instanceof Array === false) {
       throw new Error("component: reset expects an array");
     }
-    for (j = 0, len = collections.length; j < len; j++) {
-      collection = collections[j];
-      if (collection instanceof Collection === false) {
-        throw new Error("component: reset expects a collection");
-      }
-      list.push(collection.name);
+    if (collection instanceof Collection === false) {
+      throw new Error("component: reset expects a collection");
     }
-    this.collections = collections;
-    this.collections_list = list;
-    comma = list.join(',');
-    $(this.element).attr('collections', comma);
+    this.collection = collection;
+    $(this.element).attr('collections', collection.name);
     return delete this.element.jinit;
   };
 
@@ -915,7 +905,7 @@ Template = (function() {
   @return Template
    */
   function Template(template) {
-    var $template, i, key, len, schema, schemas, t;
+    var $template, t;
     if (template == null) {
       template = null;
     }
@@ -937,55 +927,12 @@ Template = (function() {
     if (this.body === void 0 || this.body.length === 0) {
       throw new Error("jom: template body attr is required");
     }
-    this.schemas = [];
-    schemas = $.trim($template.attr('schemas'));
-    schemas = schemas.split(',');
-    for (key = i = 0, len = schemas.length; i < len; key = ++i) {
-      schema = schemas[key];
-      schemas[key] = $.trim(schema);
-    }
-    this.schemas_list = schemas;
-    schemas = schemas.join(',');
-    this.schemas_attr = schemas;
-    this.schemas_ready = false;
     this.cloned = null;
     this.errors = [];
     this.show_loader();
-    this.load_schemas();
+    this.ready = true;
     this;
   }
-
-  Template.prototype.load_schemas = function() {
-    var i, j, len, len1, ref, ref1, results, schema;
-    if (this.schemas_ready === true) {
-      if (this.is_valid() === true) {
-        return this.ready = true;
-      } else {
-        throw new Error("template: schemas are not valid");
-      }
-    } else {
-      this.schemas_ready = true;
-      if (this.schemas_list.length === 0) {
-        this.schemas_ready = false;
-      }
-      ref = this.schemas_list;
-      for (i = 0, len = ref.length; i < len; i++) {
-        schema = ref[i];
-        if (jom.schemas.get(schema) === null) {
-          this.schemas_ready = false;
-        }
-      }
-      if (this.schemas_ready === true) {
-        ref1 = this.schemas_list;
-        results = [];
-        for (j = 0, len1 = ref1.length; j < len1; j++) {
-          schema = ref1[j];
-          results.push(this.schemas.push(jom.schemas.get(schema)));
-        }
-        return results;
-      }
-    }
-  };
 
   Template.prototype.show_loader = function() {
     var css, loader;
@@ -1014,30 +961,6 @@ Template = (function() {
 
   Template.prototype.hide_loader = function(content) {
     return $(content).add(content.children).findAll('.temporary_loader').remove();
-  };
-
-  Template.prototype.is_valid = function() {
-    var i, len, ref, schema;
-    this.errors = [];
-    ref = this.schemas;
-    for (i = 0, len = ref.length; i < len; i++) {
-      schema = ref[i];
-      if (schema.is_valid() === false) {
-        this.errors.push("template: schema `" + schema.name + "` is invalid");
-      }
-    }
-    if (this.errors.length) {
-      return false;
-    } else {
-      return true;
-    }
-  };
-
-  Template.prototype.define_schema = function(schema) {
-    if (!schema || schema instanceof Schema === false) {
-      throw new Error("jom: template schemas attr is required");
-    }
-    return this.schemas.push(schema);
   };
 
   return Template;
@@ -1486,7 +1409,7 @@ JOM = (function() {
   JOM.prototype.assemble_components = function() {
     return $.each(this.components, (function(_this) {
       return function(i, component) {
-        var c, collections_available, k, l, len, len1, ref, ref1, template;
+        var collection, template;
         if (component.skip === true) {
           return true;
         }
@@ -1503,10 +1426,10 @@ JOM = (function() {
           component.trigger('error', 'timeout');
           throw new Error("jom: Component `" + component.name + "` timedout");
         }
-        template = jom.templates.get(component.attr.template);
-        if (component.init.template === false && template) {
-          component.init.template = true;
+        template = jom.templates.get(component.prop.template);
+        if (component.template === null && template && component.collection) {
           template = new Template(template.original);
+          component.define_template(template);
           template.show_loader();
           component.define_template(template);
           component.handle_template_scripts(template.element);
@@ -1514,31 +1437,11 @@ JOM = (function() {
           component.root.appendChild(template.element);
           template.element = component.root;
         }
-        if (template && template.ready === false) {
-          component.template.load_schemas();
+        collection = jom.collections.get(component.prop.collection);
+        if (component.collection === null && collection) {
+          component.define_collection(collection);
         }
-        if (component.init.collections === false) {
-          collections_available = true;
-          if (component.collections_list.length === 0) {
-            collections_available = false;
-          }
-          ref = component.collections_list;
-          for (k = 0, len = ref.length; k < len; k++) {
-            c = ref[k];
-            if (jom.collections.get(c) === null) {
-              collections_available = false;
-            }
-          }
-        }
-        if (component.init.collections === false && collections_available === true) {
-          component.init.collections = true;
-          ref1 = component.collections_list;
-          for (l = 0, len1 = ref1.length; l < len1; l++) {
-            c = ref1[l];
-            component.define_collection(jom.collections.get(c));
-          }
-        }
-        if (component.init.template === true && component.init.collections === true && component.template.ready === true && _this.scripts_loaded(component) === true) {
+        if (component.template !== null && component.collection !== null && component.template.ready === true && _this.scripts_loaded(component) === true) {
           _this.repeater(component);
           component.handlebars(component.root.children, component);
           _this.image_source_change(component);
