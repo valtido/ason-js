@@ -43,30 +43,27 @@ class Collection
   add : (obj)->
     is_valid = @is_valid obj
     if is_valid
+      obj.meta = @meta()
+      Object.defineProperty obj, "meta", enumerable: false
       @document.push obj
     else
       @errors.push "Cannot add the document, is not valid. #{obj.toString()}"
 
-  del : (index, id = null)->
-    if id is null
-      @document.splice(index, 1)
-      debugger
-    for doc in @document
-      debugger
-      doc
-
+  del : (id = null)->
+    index = null
+    for doc, i in @document
+      if doc.meta.id is id
+        index = i
+    if index isnt null
+      @document.splice index, 1
 
   attach_document: (document = [])->
     length = document.length || Object.keys(document).length
     if length
       if Array.isArray document
         for item in document
-          item.meta = @meta()
-          Object.defineProperty item, "meta", enumerable: false
           @add item
       else
-        document.meta = @meta()
-        Object.defineProperty document, "meta", enumerable: false
         @add document
 
     @is_valid()

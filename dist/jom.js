@@ -351,52 +351,47 @@ Collection = (function() {
     var is_valid;
     is_valid = this.is_valid(obj);
     if (is_valid) {
+      obj.meta = this.meta();
+      Object.defineProperty(obj, "meta", {
+        enumerable: false
+      });
       return this.document.push(obj);
     } else {
       return this.errors.push("Cannot add the document, is not valid. " + (obj.toString()));
     }
   };
 
-  Collection.prototype.del = function(index, id) {
-    var doc, i, len, ref, results;
+  Collection.prototype.del = function(id) {
+    var doc, i, index, j, len, ref;
     if (id == null) {
       id = null;
     }
-    if (id === null) {
-      this.document.splice(index, 1);
-      debugger;
-    }
+    index = null;
     ref = this.document;
-    results = [];
-    for (i = 0, len = ref.length; i < len; i++) {
+    for (i = j = 0, len = ref.length; j < len; i = ++j) {
       doc = ref[i];
-      debugger;
-      results.push(doc);
+      if (doc.meta.id === id) {
+        index = i;
+      }
     }
-    return results;
+    if (index !== null) {
+      return this.document.splice(index, 1);
+    }
   };
 
   Collection.prototype.attach_document = function(document) {
-    var i, item, len, length;
+    var item, j, len, length;
     if (document == null) {
       document = [];
     }
     length = document.length || Object.keys(document).length;
     if (length) {
       if (Array.isArray(document)) {
-        for (i = 0, len = document.length; i < len; i++) {
-          item = document[i];
-          item.meta = this.meta();
-          Object.defineProperty(item, "meta", {
-            enumerable: false
-          });
+        for (j = 0, len = document.length; j < len; j++) {
+          item = document[j];
           this.add(item);
         }
       } else {
-        document.meta = this.meta();
-        Object.defineProperty(document, "meta", {
-          enumerable: false
-        });
         this.add(document);
       }
     }
@@ -422,7 +417,7 @@ Collection = (function() {
   };
 
   Collection.prototype.is_valid = function(doc) {
-    var document, documentValidator, errors, i, len, ref, validator;
+    var document, documentValidator, errors, j, len, ref, validator;
     if (doc == null) {
       doc = null;
     }
@@ -441,8 +436,8 @@ Collection = (function() {
       }
     } else {
       ref = this.document;
-      for (i = 0, len = ref.length; i < len; i++) {
-        doc = ref[i];
+      for (j = 0, len = ref.length; j < len; j++) {
+        doc = ref[j];
         documentValidator(doc);
         if (documentValidator.errors && documentValidator.errors.length) {
           errors.push(documentValidator.errors);
@@ -500,13 +495,13 @@ Collection = (function() {
   };
 
   Collection.prototype.findByPath = function(path) {
-    var i, item, len, regx, result, split, text;
+    var item, j, len, regx, result, split, text;
     regx = /(\[)(\d+)(\])/g;
     text = path.replace(regx, ".$2").replace(/^\.*/, "");
     split = text.split(".");
     result = this.document;
-    for (i = 0, len = split.length; i < len; i++) {
-      item = split[i];
+    for (j = 0, len = split.length; j < len; j++) {
+      item = split[j];
       if (result === void 0) {
         return result;
       }
