@@ -379,6 +379,19 @@ Collection = (function() {
     }
   };
 
+  Collection.prototype.add_part = function(newObj, path) {
+    var obj;
+    if (path === void 0 || !path) {
+      throw new Error("Collection: path is required");
+    }
+    obj = this.findByPath(path);
+    newObj.meta = this.meta();
+    Object.defineProperty(newObj, "meta", {
+      enumerable: false
+    });
+    return obj.push(newObj);
+  };
+
   Collection.prototype.attach_document = function(document) {
     var item, j, len, length;
     if (document == null) {
@@ -478,6 +491,9 @@ Collection = (function() {
   Collection.prototype.join = function(a, b) {
     var args, arr, first, join, result;
     join = this.join;
+    if (b.length === 0 && a.length === 0) {
+      return "";
+    }
     if (!b && a) {
       return a;
     }
@@ -531,7 +547,7 @@ Component = (function() {
       throw new Error("jom: component is required");
     }
     $component = $(component);
-    $component.get(0).component = true;
+    $component.children().empty();
     template = $component.attr("template");
     collection = $component.attr("collection");
     if (!template) {
@@ -589,7 +605,11 @@ Component = (function() {
   Component.prototype.destroy = function() {};
 
   Component.prototype.create_shadow = function() {
-    return this.element.createShadowRoot();
+    if (this.element.shadowRoot === null) {
+      return this.element.createShadowRoot();
+    } else {
+      return $(this.element.shadowRoot.children).remove();
+    }
   };
 
   Component.prototype.define_template = function(template) {
@@ -867,6 +887,8 @@ Component = (function() {
     }
     if (path !== void 0 && path.length) {
       data = this.collection.findByPath(path);
+    } else if (this.path.length > 0) {
+      data = this.collection.findByPath(this.path);
     } else {
       data = this.collection.document;
     }

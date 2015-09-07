@@ -7,7 +7,7 @@ class Component
     throw new Error "jom: component is required" if component is undefined
 
     $component = $ component
-    $component.get(0).component = true
+    $component.children().empty();
 
     template    = $component.attr "template"
     collection = $component.attr "collection"
@@ -55,7 +55,11 @@ class Component
   disable : -> disabled = true
   destroy : ->
 
-  create_shadow : -> @element.createShadowRoot()
+  create_shadow : ->
+    if @element.shadowRoot is null
+      @element.createShadowRoot()
+    else
+      $(@element.shadowRoot.children).remove()
 
   define_template : (template)->
     if not template or template instanceof Template is false
@@ -286,6 +290,8 @@ class Component
 
     if path isnt undefined and path.length
       data = @collection.findByPath path
+    else if @path.length > 0
+      data = @collection.findByPath @path
     else
       data = @collection.document
 

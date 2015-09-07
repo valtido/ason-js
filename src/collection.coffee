@@ -57,6 +57,14 @@ class Collection
     if index isnt null
       @document.splice index, 1
 
+  add_part : (newObj, path)->
+    if path is undefined or not path
+      throw new Error "Collection: path is required"
+    obj = @findByPath path
+    newObj.meta = @meta()
+    Object.defineProperty newObj, "meta", enumerable: false
+    obj.push newObj
+
   attach_document: (document = [])->
     length = document.length || Object.keys(document).length
     if length
@@ -146,6 +154,8 @@ class Collection
   # @return [String] A string of a JSON PATH
   join : (a, b) ->
     join = @join
+    if b.length is 0 and a.length is 0
+      return ""
     if not b and a
       return a
     b      = "#{b}"
