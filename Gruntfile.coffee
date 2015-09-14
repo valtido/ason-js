@@ -19,14 +19,35 @@ module.exports = (grunt) ->
         cache: "build/.sizecache.json"
 
     clean:
-      options:
-        force: true
       files: [
         'public/assets/js/jom.js'
+        'public/assets/js/jom.min.js'
+        'public/assets/js/jom.min.js.map'
+        'src/**/*.js'
+        'test/unit/**/*.js'
         'dist/**/*'
         'coverage'
       ]
 
+    coffee:
+        src:
+            options:
+                bare: true
+            expand: true
+            flatten: true
+            cwd: 'src'
+            src: ['*.coffee']
+            dest: 'src'
+            ext: '.js'
+        test:
+            options:
+                bare: true
+            expand: true
+            flatten: true
+            cwd: 'test/unit'
+            src: ['*.coffee']
+            dest: 'test/unit'
+            ext: '.js'
     concat:
       core:
         src: [
@@ -117,7 +138,7 @@ module.exports = (grunt) ->
         browsers: ['PhantomJS']
       dev:
         configFile: 'test/karma.config.js'
-        singleRun: true
+        singleRun: false
         browsers: ['Chrome']
       unit:
         configFile: 'test/karma.config.js'
@@ -126,19 +147,16 @@ module.exports = (grunt) ->
 
     watch:
       files: [ "src/**/*.coffee", "test/**/*.coffee" ]
-      tasks: ['build', 'karma:dev']
+      tasks: ['build']
   # Load the plugin that provides the "autoload" task.
 
-  # Default task(s).
-  grunt.registerTask "build", [
-    "clean"
-    "concat:*:*"
-    "uglify:*:*"
-    # "copy:*:*"
-    "compare_size"
-  ]
-  grunt.registerTask "test",
-    ['build',"karma:single"]
 
-  grunt.registerTask "dev", ["build", "karma:chrome","watch"]
-  grunt.registerTask "default", ["build", "karma:chrome"]
+  grunt.registerTask "test",
+    ['build',"karma:chrome"]
+
+  grunt.registerTask "clear", ["clean"]
+  grunt.registerTask "builder", ["build","watch"]
+  grunt.registerTask "dev", ["build", "karma:dev","watch"]
+  # grunt.registerTask "default", ["build", "karma:chrome"]
+  grunt.registerTask "build", ["clean",'coffee','concat','uglify','compare_size']
+  grunt.registerTask "default", ['test']

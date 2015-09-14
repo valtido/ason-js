@@ -135,6 +135,10 @@ class JOM
 
   assemble_components: ->
     $.each @components, (i, component)=>
+      if component.reset is true
+        component = new Component component.element.outerHTML
+        debugger
+        return true
       if component.skip is true
         return true
       if component.ready is true
@@ -148,6 +152,8 @@ class JOM
       if  new Date() - component.timer > @timeout
         component.trigger 'timeout'
         component.trigger 'error', 'timeout'
+        console?.debug?("template: ", component.template);
+        console?.debug?("collection: ", component.collection);
         throw new Error "jom: Component `#{component.name}` timedout"
 
       template = jom.templates.get component.prop.template
@@ -175,11 +181,12 @@ class JOM
       if  component.template isnt null and
           component.collection isnt null and
           component.template.ready is true and
-          @scripts_loaded(component) is true
+          @scripts_loaded(component) is true and
+          component.ready is false
         if component.path
-          component.data = collection.findByPath component.path
+          component.document = collection.findByPath component.path
         else
-          component.data = collection
+          component.document = collection.document
         @repeater component
         component.handlebars component.root.children, component
 
@@ -219,33 +226,58 @@ class JOM
       repeater.hide()
   watch_collections: ->
     for key, collection of @collections
+      for component, key in @components
+        if $(component.element).attr('collection') isnt component.attr.collection
+          component.collection_changed()
+
+        # observer the element
+        for handle, k in component.handles
+
+          switch handle.type
+            when "node"
+              text = $(handle.element).text()
+              if handle.value isnt text
+                handle.collection.changeByPath handle.path, text
+                handle.value = text
+            when "attr_value"
+              if handle.attr.name is "value"
+                value = handle.element.value
+              else
+                value = handle.attr.value
+              if value isnt handle.value
+                handle.collection.changeByPath handle.path, value
+                handle.value = value
+            else
+              throw new Error "jom: error could not observe node"
+
       if collection.observing is false
         collection.observing = true
+        # observe the collection
+
         new Observe collection, collection.document, (changes)=>
           for key, change of changes
             $.each @components, (i, component)=>
               if change.collection.name is component.collection.name
-                delete component.element.jinit
+                for key, handle of component.handles
+                  if change.path is handle.path
+                    switch handle.type
+                      when "node"
+                        $(handle.element).text change.value
+                      when "attr_value"
+                        $(handle.element).attr handle.attr.name, change.value
+                      else
+                        throw new Error "jom: handle type `#{handle.type} is wrong.`"
 
-                $(component.root).add(component.root.children)
-                .findAll('[repeated]').remove()
 
-                $(component.root).add(component.root.children)
-                .findAll('[repeat]').show()
+                    # @image_source_change component
 
-                @repeater component, component.root
+                    $(component.root.host).trigger "change", [
+                      change, component.collections
+                    ]
 
-                component.handlebars component.root, component
+                    # $(component.root).find('[repeat]').hide()
 
-                @image_source_change component
-
-                $(component.root.host).trigger "change", [
-                  change, component.collections
-                ]
-
-                $(component.root).find('[repeat]').hide()
-
-                component.trigger "change", change
+                    component.trigger "change", change
 
   resolve: (path)->
     # return location.pathname+

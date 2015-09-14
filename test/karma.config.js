@@ -19,7 +19,6 @@ module.exports = function(config) {
       {pattern: 'public/bower_components/webcomponentsjs/webcomponents.js', included: true},
       {pattern: 'public/bower_components/jquery/dist/jquery.js', included: true},
       // {pattern: 'test/_helper.js', included: true},
-      {pattern: 'public/bower_components/jjv/lib/jjv.js', included: true},
       {pattern: 'dist/jom.js', included: true},
       {pattern: 'test/unit.js', included: true}
       // {pattern: 'test/unit/all.min.map', included: false}

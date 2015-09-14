@@ -1,7 +1,9 @@
-template(name=inputs)
+template(name="input")
   style.
     :host {display: block; padding: 20px; background: #f5f5f5;  margin-bottom: 10px;}
-  h1 Test
+  div(body)
+    label ${label}
+    input(value="${key}")
   script.
     $(body)
     .on("click", "div", function(event){

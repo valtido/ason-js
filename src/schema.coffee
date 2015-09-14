@@ -2,7 +2,7 @@ class Schema
   constructor: (name, obj, description = null)->
 
     @name = name
-    throw new Error "Schema: name is not defined" if !@name
+    throw new Error "Schema: name is not defined" if !@name or @name is "null"
 
     @description = description
     @tree  = obj

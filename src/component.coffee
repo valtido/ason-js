@@ -28,11 +28,12 @@ class Component
     @prop = template: template, collection: collection, path : path
 
     @hide()
+    @reset = false
     @ready = false
 
     @template     = null
     @collection  = null
-    @data  = null
+    @document  = null
 
     @create_shadow()
 
@@ -77,32 +78,8 @@ class Component
     # @data  = @collection.findByPath @path
     @collection
 
-  watcher: (changes, collection)->
-    throw new Error "what watcher!!!"
-    if collection.name is @collection.name
-      for key, change of changes
-        if change.path.slice(0, @path.length) is @path
-          $(@handles).each (i, handle)=>
-            if handle.handle.path is change.path
-              $(handle).trigger('change', change)
-              partial = change.path.replace(@path,"").replace(/^\./,"")
-              for event in @events
-                if event.type is "change:before" and event.path is partial
-                  event.callback.call @
 
-              switch handle.handle.type
-                when "attr_name"
-                  $(handle).attr handle.handle.attr.name, ""
-                when "attr_value"
-                  $(handle).attr handle.handle.attr.name, change.value
-                when "node"
-                  $(handle).text change.value
-                else
-                  throw new Error "jom: unexpected handle type"
 
-              for event in @events
-                if event.type is "change" and event.path is partial
-                  event.callback.call @
   handlebars: (content, component)->
     if content instanceof ShadowRoot
       content = content.children
@@ -128,20 +105,23 @@ class Component
 
         if new_text is undefined
           if jom.env is "production"
-            console.info new_text
             new_text = ""
           else
             throw new Error "Data: not found for `#{raw}` key."
-
-        $(node).text text.replace regx, new_text
-        node.handle =
+        value = text.replace regx, new_text
+        $(node).text value
+        handle =
+          collection: @collection
+          element: node
+          value: value
           type: "node"
           path : path
           full : @collection.join @collection.name, path
-        @handles.push node
+        @handles.push handle
 
       for attr, key in node.attributes
         if regx.test attr.name
+          throw new Error "component: attr name should not be a handlebar"
           text = attr.name
           raw = text
 
@@ -163,16 +143,22 @@ class Component
             new_text = ""
 
           name = text.replace regx, new_text
+
           $(node)
           .removeAttr attr.name
           .attr name, attr.value
+          new_attr = node.attributes[name]
+          attr = new_attr
 
-          node.handle =
-            attr: attr
+          handle =
+            collection: @collection
+            element: node
+            attr: new_attr
+            value: name
             type: "attr_name"
             path: path
             full: @collection.join @collection.name, path
-          @handles.push node
+          @handles.push handle
 
         if regx.test attr.value
           text = attr.value
@@ -201,12 +187,15 @@ class Component
 
           attr.value = text
 
-          node.handle =
+          handle =
+            collection: @collection
+            element: node
             attr: attr
+            value: text
             type: "attr_value"
             path: path
             full: @collection.join @collection.name, path
-          @handles.push node
+          @handles.push handle
       node
     $content
 
@@ -233,8 +222,9 @@ class Component
                 root       = shadow.root,
                 component  = host.component,
                 collection = component.collection,
-                data       = component.data
+                doc        = component.document
                 ;
+                component.on('ready', function(){ doc = component.document })
 
                 #{script.text}
                 })()"""
@@ -263,8 +253,8 @@ class Component
           if event.path is null
             event.callback.call handle, event, params
           for handle in @handles
-            part = !!~ handle.handle.path.indexOf event.path
-            if handle.handle.path and part
+            part = !!~ handle.path.indexOf event.path
+            if handle.path and part
               event.callback.call handle, event, params
 
     return @
@@ -289,7 +279,10 @@ class Component
       throw new Error "component: `#{raw}` is wrong, start with collection."
 
     if path isnt undefined and path.length
-      data = @collection.findByPath path
+      if @path
+        data = @collection.findByPath @collection.join @path, path
+      else
+        data = @collection.findByPath path
     else if @path.length > 0
       data = @collection.findByPath @path
     else
@@ -315,17 +308,20 @@ class Component
       repeat = repeat.add(x)
 
     repeat
+  collection_changed: ()->
+    @attr.collection = $(@element).attr 'collection'
+    [collection, path] = @attr.collection.split ':'
+    @path = path or ""
+    @prop.collection = collection
+    @prop.path = path
+    col = jom.collections.get collection
+    @ready = false
+    @reset_collection col
 
   reset_collection: (collection)->
-    if collections instanceof Array is false
-      throw new Error "component: reset expects an array"
-
-
     if collection instanceof Collection is false
       throw new Error "component: reset expects a collection"
     # reset the collections
     @collection = collection
 
-    $(@element).attr 'collections', collection.name
-    # jom init is false, triggers rebuild
-    delete @element.jinit
+    @reset = true

@@ -1,4 +1,4 @@
-template(name="my_template")
+template(name="person")
   style.
     @import url("/assets/-/fontello/css/fontello.css");
     div[body]{background: white; padding: 20px;}
@@ -35,12 +35,17 @@ template(name="my_template")
   script.
     $(body)
     .on('change keyup',".location", function(event){
-      data.location = $(this).val()
+        debugger
+      doc.location = $(this).val()
     })
     .on('change keyup',".first", function(event){
-      data.name.first = $(this).val()
+      doc.name.first = $(this).val()
     })
     .on('change keyup',".last", function(event){
-      data.name.last = $(this).val()
+      doc.name.last = $(this).val()
     })
     ;
+    
+    component
+    .on('ready',function(event){
+    })

@@ -274,15 +274,15 @@ var Shadow;
 
 Shadow = (function() {
   function Shadow() {
-    var _ref, _ref1, _ref2, _ref3, _ref4;
-    this.root = ((_ref = document.currentScript) != null ? _ref.parentNode : void 0) || ((_ref1 = arguments.callee) != null ? (_ref2 = _ref1.caller) != null ? (_ref3 = _ref2.caller) != null ? (_ref4 = _ref3["arguments"][0]) != null ? _ref4.target : void 0 : void 0 : void 0 : void 0) || null;
+    var ref, ref1, ref2, ref3, ref4;
+    this.root = ((ref = document.currentScript) != null ? ref.parentNode : void 0) || ((ref1 = arguments.callee) != null ? (ref2 = ref1.caller) != null ? (ref3 = ref2.caller) != null ? (ref4 = ref3["arguments"][0]) != null ? ref4.target : void 0 : void 0 : void 0 : void 0) || null;
     this.traverseAncestry();
     this.root;
   }
 
   Shadow.prototype.traverseAncestry = function(parent) {
-    var _ref;
-    if (((_ref = this.root) != null ? _ref.parentNode : void 0) || parent) {
+    var ref;
+    if (((ref = this.root) != null ? ref.parentNode : void 0) || parent) {
       this.root = this.root.parentNode || parent;
       return this.traverseAncestry(this.root.parentNode);
     }
@@ -293,8 +293,8 @@ Shadow = (function() {
   });
 
   Shadow.getter("host", function() {
-    var _ref;
-    return ((_ref = this.root) != null ? _ref.host : void 0) || null;
+    var ref;
+    return ((ref = this.root) != null ? ref.host : void 0) || null;
   });
 
   return Shadow;
@@ -324,7 +324,7 @@ Collection = (function() {
     if (document == null) {
       document = [];
     }
-    if (name === void 0 || !name || typeof name !== "string") {
+    if (name === void 0 || !name || typeof name !== "string" || name === "null") {
       throw new Error("jom: collection name is required");
     }
     this.ready = false;
@@ -526,6 +526,27 @@ Collection = (function() {
     return result;
   };
 
+  Collection.prototype.changeByPath = function(path, value) {
+    var item, j, key, len, regx, result, split, text;
+    regx = /(\[)(\d+)(\])/g;
+    text = path.replace(regx, ".$2").replace(/^\.*/, "");
+    split = text.split(".");
+    result = this.document;
+    for (key = j = 0, len = split.length; j < len; key = ++j) {
+      item = split[key];
+      if (result === void 0) {
+        return result;
+      }
+      if (key === (split.length - 1)) {
+        result[item] = value;
+        result = result[item];
+      } else {
+        result = result[item];
+      }
+    }
+    return result;
+  };
+
   return Collection;
 
 })();
@@ -573,10 +594,11 @@ Component = (function() {
       path: path
     };
     this.hide();
+    this.reset = false;
     this.ready = false;
     this.template = null;
     this.collection = null;
-    this.data = null;
+    this.document = null;
     this.create_shadow();
     this.root = this.element.shadowRoot;
     this.handles = [];
@@ -627,62 +649,6 @@ Component = (function() {
     return this.collection;
   };
 
-  Component.prototype.watcher = function(changes, collection) {
-    var change, key, results;
-    throw new Error("what watcher!!!");
-    if (collection.name === this.collection.name) {
-      results = [];
-      for (key in changes) {
-        change = changes[key];
-        if (change.path.slice(0, this.path.length) === this.path) {
-          results.push($(this.handles).each((function(_this) {
-            return function(i, handle) {
-              var event, j, k, len, len1, partial, ref, ref1, results1;
-              if (handle.handle.path === change.path) {
-                $(handle).trigger('change', change);
-                partial = change.path.replace(_this.path, "").replace(/^\./, "");
-                ref = _this.events;
-                for (j = 0, len = ref.length; j < len; j++) {
-                  event = ref[j];
-                  if (event.type === "change:before" && event.path === partial) {
-                    event.callback.call(_this);
-                  }
-                }
-                switch (handle.handle.type) {
-                  case "attr_name":
-                    $(handle).attr(handle.handle.attr.name, "");
-                    break;
-                  case "attr_value":
-                    $(handle).attr(handle.handle.attr.name, change.value);
-                    break;
-                  case "node":
-                    $(handle).text(change.value);
-                    break;
-                  default:
-                    throw new Error("jom: unexpected handle type");
-                }
-                ref1 = _this.events;
-                results1 = [];
-                for (k = 0, len1 = ref1.length; k < len1; k++) {
-                  event = ref1[k];
-                  if (event.type === "change" && event.path === partial) {
-                    results1.push(event.callback.call(_this));
-                  } else {
-                    results1.push(void 0);
-                  }
-                }
-                return results1;
-              }
-            };
-          })(this)));
-        } else {
-          results.push(void 0);
-        }
-      }
-      return results;
-    }
-  };
-
   Component.prototype.handlebars = function(content, component) {
     var $content, c;
     if (content instanceof ShadowRoot) {
@@ -694,7 +660,7 @@ Component = (function() {
     });
     c.each((function(_this) {
       return function(i, node) {
-        var attr, e, j, key, len, name, new_text, path, raw, ref, result, rx, text;
+        var attr, e, handle, j, key, len, name, new_attr, new_text, path, raw, ref, result, rx, text, value;
         text = $(node).text();
         if ($(node).children().length === 0 && regx.test(text) === true) {
           raw = text;
@@ -706,24 +672,28 @@ Component = (function() {
           new_text = _this.collection.findByPath($.trim(path));
           if (new_text === void 0) {
             if (jom.env === "production") {
-              console.info(new_text);
               new_text = "";
             } else {
               throw new Error("Data: not found for `" + raw + "` key.");
             }
           }
-          $(node).text(text.replace(regx, new_text));
-          node.handle = {
+          value = text.replace(regx, new_text);
+          $(node).text(value);
+          handle = {
+            collection: _this.collection,
+            element: node,
+            value: value,
             type: "node",
             path: path,
             full: _this.collection.join(_this.collection.name, path)
           };
-          _this.handles.push(node);
+          _this.handles.push(handle);
         }
         ref = node.attributes;
         for (key = j = 0, len = ref.length; j < len; key = ++j) {
           attr = ref[key];
           if (regx.test(attr.name)) {
+            throw new Error("component: attr name should not be a handlebar");
             text = attr.name;
             raw = text;
             try {
@@ -742,13 +712,18 @@ Component = (function() {
             }
             name = text.replace(regx, new_text);
             $(node).removeAttr(attr.name).attr(name, attr.value);
-            node.handle = {
-              attr: attr,
+            new_attr = node.attributes[name];
+            attr = new_attr;
+            handle = {
+              collection: _this.collection,
+              element: node,
+              attr: new_attr,
+              value: name,
               type: "attr_name",
               path: path,
               full: _this.collection.join(_this.collection.name, path)
             };
-            _this.handles.push(node);
+            _this.handles.push(handle);
           }
           if (regx.test(attr.value)) {
             text = attr.value;
@@ -775,13 +750,16 @@ Component = (function() {
               }
             });
             attr.value = text;
-            node.handle = {
+            handle = {
+              collection: _this.collection,
+              element: node,
               attr: attr,
+              value: text,
               type: "attr_value",
               path: path,
               full: _this.collection.join(_this.collection.name, path)
             };
-            _this.handles.push(node);
+            _this.handles.push(handle);
           }
         }
         return node;
@@ -806,7 +784,7 @@ Component = (function() {
       front = "";
       reg = new RegExp("^" + (escapeRegExp(front)));
       is_script_prepared = reg.test(script.text);
-      script.text = "(function(){\nvar\nshadow     = jom.shadow,\nbody       = shadow.body,\nhost       = shadow.host,\nroot       = shadow.root,\ncomponent  = host.component,\ncollection = component.collection,\ndata       = component.data\n;\n\n" + script.text + "\n})()";
+      script.text = "(function(){\nvar\nshadow     = jom.shadow,\nbody       = shadow.body,\nhost       = shadow.host,\nroot       = shadow.root,\ncomponent  = host.component,\ncollection = component.collection,\ndoc        = component.document\n;\ncomponent.on('ready', function(){ doc = component.document })\n\n" + script.text + "\n})()";
       return script;
     });
   };
@@ -847,8 +825,8 @@ Component = (function() {
           ref1 = this.handles;
           for (l = 0, len2 = ref1.length; l < len2; l++) {
             handle = ref1[l];
-            part = !!~handle.handle.path.indexOf(event.path);
-            if (handle.handle.path && part) {
+            part = !!~handle.path.indexOf(event.path);
+            if (handle.path && part) {
               event.callback.call(handle, event, params);
             }
           }
@@ -886,7 +864,11 @@ Component = (function() {
       throw new Error("component: `" + raw + "` is wrong, start with collection.");
     }
     if (path !== void 0 && path.length) {
-      data = this.collection.findByPath(path);
+      if (this.path) {
+        data = this.collection.findByPath(this.collection.join(this.path, path));
+      } else {
+        data = this.collection.findByPath(path);
+      }
     } else if (this.path.length > 0) {
       data = this.collection.findByPath(this.path);
     } else {
@@ -914,16 +896,24 @@ Component = (function() {
     return repeat;
   };
 
+  Component.prototype.collection_changed = function() {
+    var col, collection, path, ref;
+    this.attr.collection = $(this.element).attr('collection');
+    ref = this.attr.collection.split(':'), collection = ref[0], path = ref[1];
+    this.path = path || "";
+    this.prop.collection = collection;
+    this.prop.path = path;
+    col = jom.collections.get(collection);
+    this.ready = false;
+    return this.reset_collection(col);
+  };
+
   Component.prototype.reset_collection = function(collection) {
-    if (collections instanceof Array === false) {
-      throw new Error("component: reset expects an array");
-    }
     if (collection instanceof Collection === false) {
       throw new Error("component: reset expects a collection");
     }
     this.collection = collection;
-    $(this.element).attr('collections', collection.name);
-    return delete this.element.jinit;
+    return this.reset = true;
   };
 
   return Component;
@@ -1015,7 +1005,7 @@ Schema = (function() {
       description = null;
     }
     this.name = name;
-    if (!this.name) {
+    if (!this.name || this.name === "null") {
       throw new Error("Schema: name is not defined");
     }
     this.description = description;
@@ -1320,7 +1310,7 @@ JOM = (function() {
   };
 
   JOM.prototype.get = function(what, name) {
-    var arr, item, k, key, len, ref, ref1;
+    var arr, item, key, l, len, ref, ref1;
     if (name == null) {
       name = false;
     }
@@ -1332,7 +1322,7 @@ JOM = (function() {
       return this[what + "s"];
     }
     ref1 = this[what + "s"];
-    for (key = k = 0, len = ref1.length; k < len; key = ++k) {
+    for (key = l = 0, len = ref1.length; l < len; key = ++l) {
       item = ref1[key];
       if (name === item.name) {
         return this[what + "s"][key];
@@ -1450,6 +1440,11 @@ JOM = (function() {
     return $.each(this.components, (function(_this) {
       return function(i, component) {
         var collection, template;
+        if (component.reset === true) {
+          component = new Component(component.element.outerHTML);
+          debugger;
+          return true;
+        }
         if (component.skip === true) {
           return true;
         }
@@ -1464,6 +1459,16 @@ JOM = (function() {
         if (new Date() - component.timer > _this.timeout) {
           component.trigger('timeout');
           component.trigger('error', 'timeout');
+          if (typeof console !== "undefined" && console !== null) {
+            if (typeof console.debug === "function") {
+              console.debug("template: ", component.template);
+            }
+          }
+          if (typeof console !== "undefined" && console !== null) {
+            if (typeof console.debug === "function") {
+              console.debug("collection: ", component.collection);
+            }
+          }
           throw new Error("jom: Component `" + component.name + "` timedout");
         }
         template = jom.templates.get(component.prop.template);
@@ -1481,11 +1486,11 @@ JOM = (function() {
         if (component.collection === null && collection) {
           component.define_collection(collection);
         }
-        if (component.template !== null && component.collection !== null && component.template.ready === true && _this.scripts_loaded(component) === true) {
+        if (component.template !== null && component.collection !== null && component.template.ready === true && _this.scripts_loaded(component) === true && component.ready === false) {
           if (component.path) {
-            component.data = collection.findByPath(component.path);
+            component.document = collection.findByPath(component.path);
           } else {
-            component.data = collection;
+            component.document = collection.document;
           }
           _this.repeater(component);
           component.handlebars(component.root.children, component);
@@ -1536,11 +1541,44 @@ JOM = (function() {
   };
 
   JOM.prototype.watch_collections = function() {
-    var collection, key, ref, results;
+    var collection, component, handle, k, key, l, len, len1, m, ref, ref1, ref2, results, text, value;
     ref = this.collections;
     results = [];
     for (key in ref) {
       collection = ref[key];
+      ref1 = this.components;
+      for (key = l = 0, len = ref1.length; l < len; key = ++l) {
+        component = ref1[key];
+        if ($(component.element).attr('collection') !== component.attr.collection) {
+          component.collection_changed();
+        }
+        ref2 = component.handles;
+        for (k = m = 0, len1 = ref2.length; m < len1; k = ++m) {
+          handle = ref2[k];
+          switch (handle.type) {
+            case "node":
+              text = $(handle.element).text();
+              if (handle.value !== text) {
+                handle.collection.changeByPath(handle.path, text);
+                handle.value = text;
+              }
+              break;
+            case "attr_value":
+              if (handle.attr.name === "value") {
+                value = handle.element.value;
+              } else {
+                value = handle.attr.value;
+              }
+              if (value !== handle.value) {
+                handle.collection.changeByPath(handle.path, value);
+                handle.value = value;
+              }
+              break;
+            default:
+              throw new Error("jom: error could not observe node");
+          }
+        }
+      }
       if (collection.observing === false) {
         collection.observing = true;
         results.push(new Observe(collection, collection.document, (function(_this) {
@@ -1550,16 +1588,30 @@ JOM = (function() {
             for (key in changes) {
               change = changes[key];
               results1.push($.each(_this.components, function(i, component) {
+                var ref3, results2;
                 if (change.collection.name === component.collection.name) {
-                  delete component.element.jinit;
-                  $(component.root).add(component.root.children).findAll('[repeated]').remove();
-                  $(component.root).add(component.root.children).findAll('[repeat]').show();
-                  _this.repeater(component, component.root);
-                  component.handlebars(component.root, component);
-                  _this.image_source_change(component);
-                  $(component.root.host).trigger("change", [change, component.collections]);
-                  $(component.root).find('[repeat]').hide();
-                  return component.trigger("change", change);
+                  ref3 = component.handles;
+                  results2 = [];
+                  for (key in ref3) {
+                    handle = ref3[key];
+                    if (change.path === handle.path) {
+                      switch (handle.type) {
+                        case "node":
+                          $(handle.element).text(change.value);
+                          break;
+                        case "attr_value":
+                          $(handle.element).attr(handle.attr.name, change.value);
+                          break;
+                        default:
+                          throw new Error("jom: handle type `" + handle.type + " is wrong.`");
+                      }
+                      $(component.root.host).trigger("change", [change, component.collections]);
+                      results2.push(component.trigger("change", change));
+                    } else {
+                      results2.push(void 0);
+                    }
+                  }
+                  return results2;
                 }
               }));
             }

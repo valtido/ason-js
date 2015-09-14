@@ -1,20 +1,29 @@
-[
-  {
-    "_id": 123,
-    "user":{ "name": {"first":"Valtid", "last":"Caushi"}, "image": "http://placehold.it/32x32" },
-    "comment": "Valtid is the best thing ever!!!",
-    "likes": 2,
-    "commented_on": 1429027264
-  },
-  {
-    "_meta":{
-      "deleted": true,
-      "last_modified": true
+[{
+  "comments":[
+    {
+      "_id": 123,
+      "user":{ "name": {"first":"Valtid", "last":"Caushi"}, "image": "http://placehold.it/32x32" },
+      "comment": "Valtid is the best thing ever!!!",
+      "likes": 2,
+      "commented_on": 1429027264
     },
-    "_id": 124,
-    "user": { "name": {"first":"John", "last":"Doe"}, "image": "http://placehold.it/32x32" },
-    "comment": "I agree",
-    "likes": 4,
-    "commented_on": 1429027292
+    {
+      "_meta":{
+        "deleted": true,
+        "last_modified": true
+      },
+      "_id": 124,
+      "user": { "name": {"first":"John", "last":"Doe"}, "image": "http://placehold.it/32x32" },
+      "comment": "I agree",
+      "likes": 4,
+      "commented_on": 1429027292
+    }
+  ],
+  "user":{
+    "name": {"first": "Valtid", "last": "Caushi", "middle":"Xhemil"},
+    "location": "London",
+    "dob": "31/06/1988",
+    "likes": 0,
+    "image":"http://placehold.it/90x90?2"
   }
-]
+}]

@@ -1,12 +1,12 @@
-template
+template(name="string")
   style.
     :host {display: block; padding: 20px; background: #900;  margin-bottom: 10px;}
-  div
+  div(body)
     label ${label}
     input(type="text" value="${name}")
   script.
     $(body)
     .on("change keyup", "input", function (){
       //- debugger
-      data.name = $(this).val()
+      doc.name = $(this).val()
     })

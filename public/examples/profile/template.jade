@@ -19,19 +19,19 @@ template(name="profile")
     .likes{-webkit-user-select: none;user-select: none;-moz-user-select: none;-ms-user-select: none;}
     .front,.back{backface-visibility: hidden; width:100%;}
     .hidden{display: none;}
-    .edit{right: 5px; position: absolute; top: -15px;}
+    .edit{right: 5px; position: absolute; top: 5px;}
     [body]{position: relative;perspective: 1000;}
     
     .show_edit .edit{transform: rotateY(180deg); right: auto; left: 5px;}
-    .show_edit .flip{transform: rotateY(180deg);}
-    .show_edit .flip .back{ display:block; }
-    .show_edit .flip .front{ display:none; }
-    .flip{transition: 0.6s;  transform-style: preserve-3d;}
+    .show_edit{transform: rotateY(180deg);}
+    .show_edit .back{ display:block; }
+    .show_edit .front{ display:none; }
+    .flip{background: whitesmoke; padding: 20px; transition: 0.6s;  transform-style: preserve-3d; display: block; margin-bottom: 10px;}
     .front { z-index: 2;  transform: rotateY(0deg); display: block;    }
     .back {  transform: rotateY(180deg); display: none; }
 
   div#wrap(body)
-    div.flip.clearfix
+    div.flip(repeat="")
       a.edit(href="#") Edit
       div.back
         div
@@ -39,7 +39,7 @@ template(name="profile")
           input(type="text" value="${name.first}")
         div
           label Middle
-          input(type="text" value="${name.middle}")
+          input(type="text" value="${name.middle}" name="middle" )
         div
           label Last
           input(type="text" value="${name.last}")
@@ -67,19 +67,23 @@ template(name="profile")
   script.
     $(body)
     .on("click", ".edit", function(){
-      $(body).toggleClass("show_edit")
+      $(this).parent().toggleClass("show_edit")
     })
     .on("click", ".location_list .item", function(){
       var value = $.trim($(this).text());
-      data.location = value;
+      var index = $(this).parents('.flip').attr('repeat-index')
+      doc[index].location = value;
     })
     .on("click", "i.icon-location", function(){
-      $(body).find(".location_list").toggle();
+      var parent = $(this).parents('.flip')
+      $(parent ,body).find(".location_list").toggle();
     })
     .on("click", ".img", function(){
-      data.image = "http://placehold.it/100x100?2";
+      var index = $(this).parents('.flip').attr('repeat-index')
+      doc[index].image = "http://placehold.it/100x100?2";
     })
     .on("click", "i.icon-thumbs-up-alt", function(){
-      data.likes++;
-      console.info("likes: ",data.likes)
+      var index = $(this).parents('.flip').attr('repeat-index')
+      doc[index].likes++;
+      console.info("likes: ",doc[index].likes)
     })

@@ -20,7 +20,7 @@ class Collection
   # @option schema [Object] schema JSON Schema to attach to collection
   # @note see json-schema.org for JSON Schema
   constructor: (name, document=[], schema)->
-    if name is undefined or not name or typeof name isnt "string"
+    if name is undefined or not name or typeof name isnt "string" or name is "null"
       throw new Error "jom: collection name is required"
     @ready = false
     @name   = name
@@ -190,5 +190,22 @@ class Collection
     for item in split
       return result if result is undefined
       result = result[item]
+
+    result
+
+  changeByPath : (path, value) ->
+    regx   = /(\[)(\d+)(\])/g
+    text   = path.replace regx, ".$2"
+                .replace /^\.*/,""
+    split  = text.split "."
+    result = @document
+
+    for item, key in split
+      return result if result is undefined
+      if key is (split.length-1)
+        result[item] = value
+        result = result[item]
+      else
+        result = result[item]
 
     result

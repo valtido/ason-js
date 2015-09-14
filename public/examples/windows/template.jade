@@ -21,8 +21,8 @@ template(name="template")
     $(body)
     .on('click',".item", function(event){
       var index = $(this).attr('repeat-index')
-      var url   = data.items[index].url;
-      var id    = data.items[index].id;
+      var url   = doc.items[index].url;
+      var id    = doc.items[index].id;
       var win   = $('.windows .window[id="'+id+'"]', body);
       
       if(win.length){

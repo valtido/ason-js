@@ -1,0 +1,13 @@
+extends ../../_layout
+block assets
+  link(rel="asset" source="template.html" type="text/html" asset="template")
+  link(rel="asset" source="data.json" type="text/json" asset="collection" name="inp" schema="inp")
+  link(rel="asset" source="schema.json" type="text/json" asset="schema" name="inp")
+  script.
+    jom.app = {
+      title       : "Profile",
+      description : "Holds information about a user."
+    }
+  
+block content
+  component(template="input" collection="inp:[0]")

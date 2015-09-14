@@ -1,13 +1,14 @@
 extends ../../_layout
 block assets
-  link(rel="asset" source="template.html" type="text/template" name="checklist")
-  link(rel="asset" source="data.json" type="text/json" name="checklist")
+  link(rel="asset" source="template.html" type="text/html" asset="template" name="checklist")
+  link(rel="asset" source="data.json" type="text/json" asset="collection" name="checklist" schema="checklist")
+  link(rel="asset" source="schema.json" type="text/json" asset="schema" name="checklist")
   script.
-    jom.env = "production"
+    //- jom.env = "production"
     jom.app = {
       title       : "Profile",
       description : "Holds checklist information about a user.",
     }
   
 block content
-  component(template="template.html" collection="checklist:[0]")
+  component(template="checklist" collection="checklist")

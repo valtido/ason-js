@@ -1,7 +1,8 @@
 extends ../../_layout
 block assets
-  link(rel="asset" source="template.html" type="text/html")
-  link(rel="asset" source="data.json" type="text/json" name="expressions")
+  link(rel="asset" source="template.html" type="text/html" asset="template")
+  link(rel="asset" source="data.json" type="text/json" asset="collection" name="expressions" schema="expressions")
+  link(rel="asset" source="schema.json" type="text/json" asset="schema" name="expressions")
   style.
     #exp{background: white;}
 
@@ -12,4 +13,4 @@ block content
       title       : "Expressions",
       description : "A Working expressions"
     }
-  component#exp(template="template.html" collection="expressions:[0]")
+  component#exp(template="exp" collection="expressions")

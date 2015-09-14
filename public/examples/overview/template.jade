@@ -5,12 +5,15 @@ template(name="overview")
     @import url("/assets/css/toggle.css");
     :host{position:relative; margin: 1em;}
     div[body]{background: #F6F7F8; padding: 2em; vertical-align: top;}
+    .item{clear:both; display: block;}
     .item>div,
     .header>div{float: left; width:  50%; min-height: 30px;}
     .header{background: #ccc;}
     .item:nth-child(even) {background: #fff; }
-    .item>div>a{margin-right: 1em;}
-    .list>div{padding: 1em;}
+    .item>div>a,
+    .item>div>.wrapper{margin-right: 1em; float: left; display:block;}
+    input[type="checkbox"]{display: none;}
+    .list>div{padding: 1em; display: block;}
     .item>div>a{color: #326ca6;}
     .item>div>a i{color: #333; font-size: 120%;}
     
@@ -29,14 +32,20 @@ template(name="overview")
             i.icon-pencil
             span Edit
           .wrapper
-            input.toggle(id="toggle{repeat.index}", type='checkbox', name='toggle', ${active}="")
+            input.toggle(id="toggle{repeat.index}", type='checkbox', name='toggle', active="${active}")
             label(for='toggle{repeat.index}')
           a(href="edit.page?id=${id}")
             i.icon-trash-empty 
             span Delete
       
       
-  script.
-    $(body)
-    .on('click',".cancel", function(event){
+  script(type="text/javascript").
+    component
+    .on('ready',function(event){
+      $('.item[repeated=true] input[type="checkbox"]', body).each(function(i, checkbox){
+        var active = $(checkbox).attr('active');
+        if(active === "true"){
+          $(checkbox).attr('checked','checked');
+        }
+      })
     })

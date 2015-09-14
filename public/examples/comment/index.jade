@@ -1,9 +1,8 @@
 extends ../../_layout
 block assets
   //- load assets (order is not important)
-  link(rel="asset" source="template.html" type="text/html" name="comment" asset="template")
+  link(rel="asset" source="template.html" type="text/html" asset="template")
   link(rel="asset" source="comments.data.json" type="text/json" name="comments" asset="collection" schema="comments")
-  link(rel="asset" source="user.data.json" type="text/json" name="users" asset="collection" schema="users")
   link(rel="asset" source="user.schema.json" type="text/json" name="users" asset="schema")
   link(rel="asset" source="comments.schema.json" type="text/json" name="comments" asset="schema")
     
@@ -15,7 +14,7 @@ block assets
 
 block content
   //- use the new component (when template and collection are ready)
-  component(template="comment" collections="comments,users, train:[0].driver")
+  component(template="comment" collection="comments:[0]")
   
   
   script.

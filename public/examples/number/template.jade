@@ -5,7 +5,6 @@ template(name="number")
   div(body)
     label ${label}
     input(type="number" value="${num}")
-    span ${num}
   script.
     $(body)
     .on("change keyup", "input", function (){

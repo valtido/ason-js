@@ -1,7 +1,7 @@
-template(name=checklist)
+template(name="checklist")
   style.
     :host {display: block; padding: 20px; background: #900;  margin-bottom: 10px;}
-  repeater
-    div
+  div(body)
+    div(repeat="")
       input(type="checkbox")
-      label Male
+      label ${key}

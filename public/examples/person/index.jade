@@ -4,12 +4,13 @@ block assets
   //- script(type="text/javascript" src="jom.min.js")
 
   //- load assets (order is not important)
-  link(rel="asset" source="template.html" type="text/template" name="my_template")
-  link(rel="asset" source="data.json" type="text/json" name="my_collection")
+  link(rel="asset" source="template.html" type="text/html" asset="template")
+  link(rel="asset" source="data.json" type="text/json" asset="collection" name="person" schema="person")
+  link(rel="asset" source="schema.json" type="text/json" asset="schema" name="person")
   style.
-    component::shadow i.icon-location{color: red;}
-    component::shadow i.icon-user{color: green;}
+    //- component::shadow i.icon-location{color: red;}
+    //- component::shadow i.icon-user{color: green;}
 
 block content
   //- use the new component (when template and collection are ready)
-  component(template="my_template" collection="my_collection" path="[0]")
+  component(template="person" collection="person:[0]")
