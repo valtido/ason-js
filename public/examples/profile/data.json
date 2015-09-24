@@ -4,6 +4,7 @@
     "location": "London",
     "dob": "31/06/1988",
     "likes": 0,
+    "current": false,
     "image":"http://placehold.it/90x90?2"
   },
   {
@@ -11,6 +12,7 @@
     "location": "Paris",
     "dob": "31/06/1988",
     "likes": 5,
+    "current": true,
     "image":"http://placehold.it/90x90?3"
   },
   {
@@ -18,6 +20,7 @@
     "location": "Rome",
     "dob": "31/06/1988",
     "likes": 2,
+    "current": false,
     "image":"http://placehold.it/90x90?4"
   },
   {
@@ -25,6 +28,7 @@
     "location": "Mumbai",
     "dob": "31/06/1908",
     "likes": -11,
+    "current": false,
     "image":"http://placehold.it/90x90?4"
   }
 ]

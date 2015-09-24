@@ -2,7 +2,7 @@ template(name="profile")
   style.
     @import url("/assets/-/fontello/css/fontello.css");
     @import url("/assets/css/main.css");
-    :host {display: block; padding: 20px; background: #fff;  margin-bottom: 10px;}
+    :host {display: block; padding: 20px; background: #fff;  margin-bottom: 10px; position:relative;}
     header {font-size: 30px;margin-bottom: 20px;}
     .icon-location {font-size: 25px; color: #900;}
     img {float: right;border: 5px solid #f0f0f0; }
@@ -29,9 +29,14 @@ template(name="profile")
     .flip{background: whitesmoke; padding: 20px; transition: 0.6s;  transform-style: preserve-3d; display: block; margin-bottom: 10px;}
     .front { z-index: 2;  transform: rotateY(0deg); display: block;    }
     .back {  transform: rotateY(180deg); display: none; }
+    .flip[current="true"]{ background: green; }
 
   div#wrap(body)
-    div.flip(repeat="")
+
+    hr
+    hr
+
+    div.flip(repeat="", current="${current}", id="1")
       a.edit(href="#") Edit
       div.back
         div
@@ -64,7 +69,10 @@ template(name="profile")
         div(visible)
           i.icon-thumbs-up-alt
           span.likes ${likes}
+    hr
+
   script.
+    
     $(body)
     .on("click", ".edit", function(){
       $(this).parent().toggleClass("show_edit")
@@ -72,14 +80,17 @@ template(name="profile")
     .on("click", ".location_list .item", function(){
       var value = $.trim($(this).text());
       var index = $(this).parents('.flip').attr('repeat-index')
+      debugger
       doc[index].location = value;
     })
     .on("click", "i.icon-location", function(){
-      var parent = $(this).parents('.flip')
-      $(parent ,body).find(".location_list").toggle();
+      var parent = $(this).parents('.flip');
+      target=$(parent ,body).find(".location_list")
+      target.toggle(!target.is(':visible'));
     })
-    .on("click", ".img", function(){
+    .on("click", ".img", function(event){
       var index = $(this).parents('.flip').attr('repeat-index')
+      component
       doc[index].image = "http://placehold.it/100x100?2";
     })
     .on("click", "i.icon-thumbs-up-alt", function(){
@@ -87,3 +98,5 @@ template(name="profile")
       doc[index].likes++;
       console.info("likes: ",doc[index].likes)
     })
+    ;
+    

@@ -3,7 +3,37 @@ class Component
   regx  = /\${([^\s{}]+)}/
   regxG = /\${([^\s{}]+)}/g
 
+  @element = null
+  @attr = {}
+  @prop = {}
+  @ready = false
+
+  @collection = null
+  @template = null
+  @document  = null
+  @handles = []
+  @events  = []
+  @scripts = []
+  @root = null
+  @path = null
+  @active = false
+
   constructor: (component)->
+    @uid = jom.guid
+    @element = null
+    @attr = {}
+    @prop = {}
+    @ready = false
+
+    @collection = null
+    @template = null
+    @document  = null
+    @handles = []
+    @events  = []
+    @scripts = []
+    @root = null
+    @path = null
+    @active = false
     throw new Error "jom: component is required" if component is undefined
 
     $component = $ component
@@ -16,7 +46,7 @@ class Component
     throw new Error "jom: component collection is required" if not collection
 
     # once it's done and ready it can skip doing anything on the engine
-    @skip = false
+
     @attr       = template: template, collection: collection
 
     [collection, path] = @attr.collection.split ':'
@@ -27,40 +57,62 @@ class Component
 
     @prop = template: template, collection: collection, path : path
 
-    @hide()
-    @reset = false
-    @ready = false
-
-    @template     = null
-    @collection  = null
-    @document  = null
 
     @create_shadow()
-
     @root = @element.shadowRoot
+    @hide()
 
-    @handles = []
-    @events  = []
+
+    repeaters = @root.querySelectorAll '[repeat]'
+
     @scripts = []
     @scripts.status = "init"
-
+    @ready = false
     @
 
 
-  hide : ->
-    $root = $ @root
-    $root.find("")
   show : ->
+    loader = @root.querySelector '.temporary_loader'
+    loader?.remove()
+  hide : ->
+    loader = $('<div class="temporary_loader">Loading...</div>')
+    loader = document.createElement 'div'
+    icon =  document.createElement 'i'
+    text = document.createTextNode "Loading..."
+    loader.className = "temporary_loader"
+    icon.className = "icon-loader animate-spin"
 
-  enable  : -> disabled = false
-  disable : -> disabled = true
+    loader.style.position           = "absolute"
+    loader.style.top                = 0
+    loader.style.left               = 0
+    loader.style.bottom             = 0
+    loader.style.right              = 0
+    loader.style.display            = "block"
+    loader.style["text-align"]       = "center"
+    loader.style["background-color"] = "#fff"
+
+    loader.appendChild icon
+    loader.appendChild text
+
+    icon.style.top= "50%"
+    icon.style.position = 'absolute'
+
+    @root.querySelector('.temporary_loader')?.remove()
+
+    @root.appendChild loader
+
+  enable  : -> @active = false
+  disable : -> @active = true
   destroy : ->
 
   create_shadow : ->
     if @element.shadowRoot is null
       @element.createShadowRoot()
     else
-      $(@element.shadowRoot.children).remove()
+      children = @element.shadowRoot.childNodes
+      children[0].remove() while children.length if children.length
+
+    @element.shadowRoot
 
   define_template : (template)->
     if not template or template instanceof Template is false
@@ -80,124 +132,32 @@ class Component
 
 
 
-  handlebars: (content, component)->
-    if content instanceof ShadowRoot
-      content = content.children
-    $content = $ content
+  handlebars: ->
+    list = ['script', 'link', 'style']
+    all = @root.querySelectorAll '*'
 
-    c = $content
-    .findAll('*')
-    .not('script, style, link, [repeat]')
-    .filter ->
-      $(this).parents('[repeat]').length is 0
-    c.each (i, node)=>
-      text = $(node).text()
+    for node, i in all
+      name = node.nodeName.toLowerCase()
+      continue if name in list
+      text = node.textContent
 
-      if $(node).children().length is 0 and regx.test(text) is true
-        raw  = text
-        key  = text.match(regx)[1]
-
-        path = @collection.join @path, key
-        if @collection is undefined
-          throw new Error "component: `#{raw}` is wrong, start with collection."
-
-        new_text   = @collection.findByPath $.trim path
-
-        if new_text is undefined
-          if jom.env is "production"
-            new_text = ""
-          else
-            throw new Error "Data: not found for `#{raw}` key."
-        value = text.replace regx, new_text
-        $(node).text value
-        handle =
-          collection: @collection
-          element: node
-          value: value
-          type: "node"
-          path : path
-          full : @collection.join @collection.name, path
+      if node.children.length is 0 and regx.test(text) is true
+        handle = new Handle @, node, text, 'node'
         @handles.push handle
 
       for attr, key in node.attributes
         if regx.test attr.name
           throw new Error "component: attr name should not be a handlebar"
-          text = attr.name
-          raw = text
-
-          # TODO: fix the attributes, and allow multiple access
-          try
-            key      = text.match(regx)[1]
-          catch e
-            throw new Error "Component: wrong key on attr name #{text}"
-
-          path = @collection.join @path, key
-
-
-          if @collection is undefined
-            throw new Error "component: `#{raw}` is wrong, start with collection."
-
-          new_text = @collection.findByPath $.trim path
-
-          if new_text is undefined and jom.env is "production"
-            new_text = ""
-
-          name = text.replace regx, new_text
-
-          $(node)
-          .removeAttr attr.name
-          .attr name, attr.value
-          new_attr = node.attributes[name]
-          attr = new_attr
-
-          handle =
-            collection: @collection
-            element: node
-            attr: new_attr
-            value: name
-            type: "attr_name"
-            path: path
-            full: @collection.join @collection.name, path
+          text = attr.value
+          handle = new Handle @, attr, text, 'attr_name'
           @handles.push handle
 
         if regx.test attr.value
           text = attr.value
-          raw = text
-          # TODO: fix the attributes, and allow multiple access
-          rx = new RegExp regx.toString().slice(1, -1),'gi'
-          result = text.match rx
-          $(result).each (i, item)=>
-            try
-              key      = item.match(regx)[1]
-            catch e
-              throw new Error "Component: wrong key on attr value #{text}"
-
-            path = @collection.join @path, key
-
-            if @collection is undefined
-              throw new Error "component: `#{raw}` is wrong, start with collection."
-
-
-            find_from_collection = @collection.findByPath $.trim path
-
-            if find_from_collection is undefined and jom.env is "production"
-              text = text.replace regx, ""
-            else
-              text = text.replace regx, find_from_collection
-
-          attr.value = text
-
-          handle =
-            collection: @collection
-            element: node
-            attr: attr
-            value: text
-            type: "attr_value"
-            path: path
-            full: @collection.join @collection.name, path
+          handle = new Handle @, attr, text, 'attr_value'
           @handles.push handle
       node
-    $content
+    all
 
   handle_template_scripts: (content) ->
     escapeRegExp = (str) ->
@@ -208,26 +168,24 @@ class Component
     $(scripts).filter('[src]').each (i, script)->
       script.onload = -> script.has_loaded = true
 
-    $(scripts).not('[src]').eq(0).each (i,script)->
+    $(scripts).not('[src]').eq(0).each (i,script)=>
       front = ""
       reg                = new RegExp("^#{escapeRegExp(front)}")
       is_script_prepared = reg.test(script.text)
 
       # unless is_script_prepared
-      script.text = """(function(){
+      script.text = """ /* template: #{@template.name} */
+      var shadow = jom.shadow;
+      new (function(){
                 var
-                shadow     = jom.shadow,
                 body       = shadow.body,
                 host       = shadow.host,
                 root       = shadow.root,
-                component  = host.component,
-                collection = component.collection,
-                doc        = component.document
-                ;
-                component.on('ready', function(){ doc = component.document })
+                component  = host.component;
 
                 #{script.text}
-                })()"""
+
+                })(shadow.host)"""
       return script
 
   on: (type, path, callback)->
@@ -251,63 +209,89 @@ class Component
       for event in @events
         if type is event.type
           if event.path is null
-            event.callback.call handle, event, params
+            event.callback.call handle, event, params, @
           for handle in @handles
             part = !!~ handle.path.indexOf event.path
             if handle.path and part
-              event.callback.call handle, event, params
+              event.target = handle.node
+              event.callback.call handle, event, params, @
 
     return @
-  repeat: (element, data = null)->
-    data     = [] if data is null
-    $element = $ element
-    key      = $element.attr 'repeat'
-    raw      = key
 
-    throw new Error "component: `repeat` attr missing" if key is undefined
-    if key.length
-      try
-        key    = key.match(regx)[1]
-      catch e
-        throw new Error "Component: Wrong key `#{key}`"
+  image_source_change : ->
+    imgs = @root.querySelectorAll '[body] img'
+    for img, key in imgs
+      img.setAttribute "src", img.attributes.source.value
 
-    repeat = $([])
+  repeat: ->
+    last = null
 
-    path = key
+    for repeater, repeater_key in @template.repeaters
+      key  = repeater.node.attributes.repeat.value
+      raw  = key
+      repeats = @root.querySelectorAll '[repeated]'
+      for item, repeats_key in repeats
+        if item.repeatGUID is repeater.node.guid
+            repeater.parent.replaceChild repeater.node, item
+            removeable = item
+            while removeable.nextSibling
+              if removeable.repeatGUID isnt undefined and removeable.repeatGUID is repeater.node.guid
+                removeable = removeable.nextSibling
+                removeable.remove()
 
-    if @collection is undefined
-      throw new Error "component: `#{raw}` is wrong, start with collection."
+      throw new Error "component: `repeat` attr missing" if key is undefined
+      if key.length
+        try
+          key    = key.match(regx)[1]
+        catch e
+          throw new Error "Component: Wrong key `#{key}`"
 
-    if path isnt undefined and path.length
-      if @path
-        data = @collection.findByPath @collection.join @path, path
+      path = key
+
+      if @collection is undefined
+        throw new Error "component: `#{raw}` is wrong, start with collection."
+
+      if path isnt undefined and path.length
+        if @path
+          data = @collection.findByPath @collection.join @path, path
+        else
+          data = @collection.findByPath path
+      else if @path.length > 0
+        data = @collection.findByPath @path
       else
-        data = @collection.findByPath path
-    else if @path.length > 0
-      data = @collection.findByPath @path
-    else
-      data = @collection.document
+        data = @document || []
 
-    throw new Error "component: document data not found `#{path}`" if data is undefined
+      throw new Error "component: document data not found `#{path}`" if data is undefined
 
-    if path is undefined
-      path = ""
+      if path is undefined
+        path = ""
 
-    for item, index in data
-      clone = $element.clone()
-      clone.attr "repeated", true
-      clone.attr "repeat", null
-      clone.attr 'repeat-index', index
-      clone.get(0).style.display = ''
-      prefix = @collection.join path, "[#{index}]"
+      repeated = document.createDocumentFragment()
 
-      x = clone[0].outerHTML.replace /(\${)([^\s{}]+)(})/g, "$1#{prefix}.$2$3"
-      x = x.replace /(\{repeat\.index})/g, index
-      x = x.replace /(\{repeat\.length})/g, data.length
+      for item, index in data
+        clone = repeater.node.cloneNode true
+        clone.setAttribute "repeated", "true"
+        clone.setAttribute 'repeat-index', index
+        clone.removeAttribute "repeat"
+        clone.style.display = ''
+        prefix = @collection.join path, "[#{index}]"
 
-      repeat = repeat.add(x)
+        x = clone.outerHTML.replace /(\${)([^\s{}]+)(})/g, "$1#{prefix}.$2$3"
+        x = x.replace /(\{repeat\.index})/g, index
+        x = x.replace /(\{repeat\.length})/g, data.length
+        y = document.createElement 'div'
+        y.innerHTML = x
+        x = y.childNodes[0]
+        x.repeatGUID = repeater.node.guid
 
-    repeat
+        repeated.appendChild x
+
+      repeater.parent.replaceChild repeated, repeater.node
+
+
+
+
+    @
   collection_changed: ()->
     @attr.collection = $(@element).attr 'collection'
     [collection, path] = @attr.collection.split ':'
@@ -315,13 +299,9 @@ class Component
     @prop.collection = collection
     @prop.path = path
     col = jom.collections.get collection
-    @ready = false
-    @reset_collection col
-
-  reset_collection: (collection)->
-    if collection instanceof Collection is false
+    @handles = []
+    if col instanceof Collection is false
       throw new Error "component: reset expects a collection"
+    @document = col.findByPath(@path) or col.document
     # reset the collections
-    @collection = collection
-
-    @reset = true
+    @collection = col

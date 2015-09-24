@@ -2,6 +2,7 @@ extends ../../_layout
 block assets
   link(rel="asset" source="template.html" type="text/html" asset="template")
   link(rel="asset" source="data.json" type="text/json" name="profile" asset="collection" schema="profile")
+  link(rel="asset" source="data2.json" type="text/json" name="profile2" asset="collection" schema="profile")
   link(rel="asset" source="schema.json" type="text/json" name="profile" asset="schema")
   script.
     jom.env = "production"
@@ -13,6 +14,12 @@ block assets
   
 block content
   component(template="profile" collection="profile")
-  //- component(template="profile" collection="profile:[1]")
-  //- component(template="profile" collection="profile:[2]")
+  hr
+  br
+  a#test(href="#") Dynamic Collection changes
+  script.
+    $('body')
+    .on('click', '#test',function(){
+      $('component').attr('collection','profile2');
+    })
   

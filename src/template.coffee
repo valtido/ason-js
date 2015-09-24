@@ -20,6 +20,9 @@ class Template
     throw new Error "jom: template name attr is required" if @name is undefined
 
     t = $template.get 0
+    imgs = $(t.content).find 'img'
+    imgs.attr 'source', imgs.attr 'src'
+    imgs.attr 'src', null
 
     @element = document.importNode t.content, true
     # @element = template
@@ -29,34 +32,24 @@ class Template
     if @body is undefined or @body.length is 0
       throw new Error "jom: template body attr is required"
 
-    @cloned = null
-    @errors = []
-    @show_loader()
+    @handlebars = []
+    @repeaters = []
+
+    for repeater, key in @element.querySelectorAll '[repeat]'
+      index = @getIndex repeater
+      repeater.guid = jom.guid
+
+      @repeaters.push
+        index: index
+        node: repeater
+        parent: repeater.parentNode
+
     @ready = true
     @
 
-  show_loader: ->
-    loader = $('<div class="temporary_loader"><i class="icon-loader animate-spin"></i>Loading...</div>')
+  getIndex: (node)->
+    i = 0
 
-    css =
-      position          : "absolute"
-      top               : 0
-      left              : 0
-      bottom            : 0
-      right             : 0
-      "text-align"      : "center"
-      display           : "block"
-      "background-color": "#fff"
-    loader.css css
+    i++ while node = node.previousElementSibling
 
-    loader.children 'i'
-    .css position: 'absolute', top: "50%"
-
-    $(@element).add(@element.children).findAll('.temporary_loader').remove()
-
-    if @fontello then loader.children('i').addClass @fontello
-
-    $(@element).append(loader)
-
-  hide_loader: (content)->
-    $(content).add(content.children).findAll('.temporary_loader').remove()
+    i

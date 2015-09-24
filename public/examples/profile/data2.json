@@ -1,0 +1,16 @@
+[
+  {
+    "name": {"first": "Joe", "last":"Doe"},
+    "location": "London",
+    "dob": "31/06/1988",
+    "likes": 0,
+    "image":"http://placehold.it/90x90?2"
+  },
+  {
+    "name": {"first": "John", "last": "Smith"},
+    "location": "Paris",
+    "dob": "31/06/1988",
+    "likes": 5,
+    "image":"http://placehold.it/90x90?3"
+  }
+]

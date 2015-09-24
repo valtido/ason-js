@@ -3,6 +3,152 @@
 }b.exports=d},{}],13:[function(a,b,c){var d=(a("console"),function(a){return a.replace(/~./g,function(a){switch(a){case"~0":return"~";case"~1":return"/"}throw"Invalid tilde escape: "+a})}),e=function(a,b,c){var f=d(b.shift());if("undefined"==typeof a[f])throw"Value for pointer '"+b+"' not found.";if(0!==b.length)return e(a[f],b,c);if("undefined"==typeof c)return a[f];var g=a[f];return null===c?delete a[f]:a[f]=c,g},f=function(a,b){if("object"!=typeof a)throw"Invalid input object.";if(""===b)return[];if(!b)throw"Invalid JSON pointer.";b=b.split("/");var c=b.shift();if(""!==c)throw"Invalid JSON pointer.";return b},g=function(a,b){return b=f(a,b),0===b.length?a:e(a,b)},h=function(a,b,c){if(b=f(a,b),0===b.length)throw"Invalid JSON pointer for set.";return e(a,b,c)};c.get=g,c.set=h},{console:2}],14:[function(a,b,c){function d(){for(var a={},b=0;b<arguments.length;b++){var c=arguments[b];for(var d in c)c.hasOwnProperty(d)&&(a[d]=c[d])}return a}b.exports=d},{}]},{},[9])(9)});
 //# sourceMappingURL=is-my-json-valid.min.js.map
 
+Function.prototype.getter = function(prop, get) {
+  return Object.defineProperty(this.prototype, prop, {
+    get: get,
+    configurable: true,
+    enumerable: false
+  });
+};
+
+Function.prototype.setter = function(prop, set) {
+  return Object.defineProperty(this.prototype, prop, {
+    set: set,
+    configurable: true,
+    enumerable: false
+  });
+};
+
+Function.prototype.property = function(prop, desc) {
+  return Object.defineProperty(this.prototype, prop, desc);
+};
+
+if ($.fn.findAll == null) {
+  $.fn.findAll = function(selector) {
+    return this.find(selector).add(this.filter(selector));
+  };
+}
+
+if ($.fn.value == null) {
+  $.fn.value = function(val, text) {
+    var txt;
+    if (text == null) {
+      text = false;
+    }
+    console.info("go back to value change how it works");
+    if (val) {
+      $(this).data('value', arguments[0]);
+      if (text === true) {
+        txt = $.trim(val);
+        $(this).text(txt);
+      }
+      $(this).trigger('jom.change');
+      return $(this);
+    }
+    return $(this).data('value');
+  };
+}
+
+var Handle,
+  indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
+Handle = (function() {
+  var regx;
+
+  Handle.component = null;
+
+  Handle.node = null;
+
+  Handle.full = null;
+
+  Handle.path = null;
+
+  Handle.key = null;
+
+  regx = /\${([^\s{}]+)}/;
+
+  function Handle(component, node, key, type1) {
+    var allowed_types, path, ref;
+    this.component = component;
+    this.node = node;
+    this.key = key;
+    this.type = type1;
+    allowed_types = ['node', 'attr_value', 'attr_name'];
+    if (this.component instanceof Component === false) {
+      throw new Error("handle: needs a component");
+    }
+    if (!this.node) {
+      throw new Error("handle: needs a node");
+    }
+    if (!this.key) {
+      throw new Error("handle: needs a key");
+    }
+    if (!this.type) {
+      throw new Error("handle: type should be one of `" + (allowed_types.toString()) + "`");
+    }
+    if (ref = this.type, indexOf.call(allowed_types, ref) < 0) {
+      throw new Error("handle: wrong type given");
+    }
+    path = this.key.match(regx)[1];
+    this.path = this.component.collection.join(this.component.path, path);
+    if (this.node.constructor.name === "Attr") {
+      this.attr = this.node;
+      this.node = this.node.ownerElement;
+    }
+    this.full = this.component.collection.name + ":" + this.path;
+    this.value = this.component.collection.findByPath(this.path);
+    this;
+  }
+
+  Handle.setter("value", function(value) {
+    var sType, type, val;
+    val = this.component.collection.findByPath(this.path);
+    if (val === void 0) {
+      value = "";
+    } else {
+      sType = this.component.collection.schema.findByPath(this.path);
+      sType = (sType != null ? sType.type : void 0) || void 0;
+      if (sType !== void 0) {
+        sType = sType.charAt(0).toUpperCase() + sType.slice(1);
+      }
+      type = sType || val.constructor.name;
+      value = (new window[type](value)).valueOf();
+    }
+    switch (this.type) {
+      case 'node':
+        this.node.textContent = value;
+        break;
+      case 'attr_value':
+        this.attr.value = value;
+        this.node.value = value;
+    }
+    this.component.collection.changeByPath(this.path, value);
+    return value;
+  });
+
+  Handle.getter("value", function() {
+    var default_value, schema, value;
+    value = this.component.collection.findByPath(this.path);
+    if (value === void 0) {
+      schema = this.component.collection.schema.findByPath(this.path);
+      if (schema !== void 0) {
+        default_value = schema["default"];
+      }
+      if (default_value !== void 0) {
+        value = default_value;
+      }
+    }
+    return value;
+  });
+
+  Handle.getter("collection", function() {
+    return this.component.collection;
+  });
+
+  return Handle;
+
+})();
+
 var Observe;
 
 Observe = (function() {
@@ -64,6 +210,7 @@ Observe = (function() {
             part = {
               collection: _this.collection,
               path: new_path,
+              base: base || '',
               value: change.object[change.index] || change.object[change.name] || change.object
             };
             is_add = change.addedCount > 0 || change.type === "add";
@@ -95,6 +242,7 @@ Observe = (function() {
             part = {
               collection: _this.collection,
               path: new_path,
+              base: base || '',
               value: change.object[change.name]
             };
             is_add = change.type === "add" || change.addedCount > 0;
@@ -114,52 +262,6 @@ Observe = (function() {
   return Observe;
 
 })();
-
-Function.prototype.getter = function(prop, get) {
-  return Object.defineProperty(this.prototype, prop, {
-    get: get,
-    configurable: true,
-    enumerable: false
-  });
-};
-
-Function.prototype.setter = function(prop, set) {
-  return Object.defineProperty(this.prototype, prop, {
-    set: set,
-    configurable: true,
-    enumerable: false
-  });
-};
-
-Function.prototype.property = function(prop, desc) {
-  return Object.defineProperty(this.prototype, prop, desc);
-};
-
-if ($.fn.findAll == null) {
-  $.fn.findAll = function(selector) {
-    return this.find(selector).add(this.filter(selector));
-  };
-}
-
-if ($.fn.value == null) {
-  $.fn.value = function(val, text) {
-    var txt;
-    if (text == null) {
-      text = false;
-    }
-    console.info("go back to value change how it works");
-    if (val) {
-      $(this).data('value', arguments[0]);
-      if (text === true) {
-        txt = $.trim(val);
-        $(this).text(txt);
-      }
-      $(this).trigger('jom.change');
-      return $(this);
-    }
-    return $(this).data('value');
-  };
-}
 
 var Asset,
   indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -206,17 +308,10 @@ Asset = (function() {
     this.element = this.create_element();
     switch (this.content_type.part) {
       case 'text/html':
-        this.error('name');
-        this.error('source');
-        this.error('asset');
-        break;
       case 'text/json':
-        this.error('name');
         this.error('source');
+        this.error('name');
         this.error('asset');
-        if (this.asset === "collection") {
-          this.error('schema');
-        }
         break;
       default:
         this.error('source');
@@ -307,6 +402,44 @@ Object.defineProperty(window, "Root", {
   }
 });
 
+Object.defineProperty(window, "doc", {
+  get: function() {
+    var arg, args, caller, component, found, i, offset, result, timer;
+    args = arguments.callee.caller["arguments"];
+    found = false;
+    timer = Date.now();
+    i = -1;
+    while (found === false) {
+      i++;
+      if (timer + 1000 < Date.now()) {
+        throw new Error("doc: could not be found");
+      }
+      arg = args[i] || {};
+      if (arg.callback !== void 0) {
+        args = arg.callback["arguments"];
+      } else if (arg.target !== void 0) {
+        offset = arg.target;
+        while (offset.parentNode !== null) {
+          offset = offset.parentNode;
+        }
+        component = offset.host.component;
+        result = component.document;
+        found = true;
+      } else if (arg.document !== void 0) {
+        result = arg.document;
+        found = true;
+      } else {
+        if (args.length === i) {
+          caller = args.caller || args.callee.caller;
+          args = caller["arguments"];
+          i = -1;
+        }
+      }
+    }
+    return result;
+  }
+});
+
 var Collection;
 
 Collection = (function() {
@@ -337,13 +470,9 @@ Collection = (function() {
     this.observing = false;
   }
 
-  Collection.prototype.generate_id = function() {
-    return new Date().getTime();
-  };
-
   Collection.prototype.meta = function() {
     return {
-      id: this.generate_id()
+      id: jom.uuid
     };
   };
 
@@ -351,14 +480,19 @@ Collection = (function() {
     var is_valid;
     is_valid = this.is_valid(obj);
     if (is_valid) {
-      obj.meta = this.meta();
-      Object.defineProperty(obj, "meta", {
-        enumerable: false
-      });
-      return this.document.push(obj);
+      if (obj.meta === void 0) {
+        Object.defineProperty(obj, "meta", {
+          enumerable: false,
+          writable: false,
+          value: this.meta()
+        });
+      }
+      this.document.push(obj);
     } else {
-      return this.errors.push("Cannot add the document, is not valid. " + (obj.toString()));
+      this.errors.push("Cannot add the document, is not valid. " + (obj.toString()));
     }
+    this.is_valid();
+    return obj;
   };
 
   Collection.prototype.del = function(id) {
@@ -375,8 +509,9 @@ Collection = (function() {
       }
     }
     if (index !== null) {
-      return this.document.splice(index, 1);
+      this.document.splice(index, 1);
     }
+    return this.is_valid();
   };
 
   Collection.prototype.add_part = function(newObj, path) {
@@ -385,11 +520,16 @@ Collection = (function() {
       throw new Error("Collection: path is required");
     }
     obj = this.findByPath(path);
-    newObj.meta = this.meta();
-    Object.defineProperty(newObj, "meta", {
-      enumerable: false
-    });
-    return obj.push(newObj);
+    if (obj.meta === void 0) {
+      Object.defineProperty(newObj, "meta", {
+        enumerable: false,
+        writable: false,
+        value: this.meta()
+      });
+    }
+    obj.push(newObj);
+    this.is_valid();
+    return obj;
   };
 
   Collection.prototype.attach_document = function(document) {
@@ -539,6 +679,7 @@ Collection = (function() {
       }
       if (key === (split.length - 1)) {
         result[item] = value;
+        this.is_valid();
         result = result[item];
       } else {
         result = result[item];
@@ -547,11 +688,16 @@ Collection = (function() {
     return result;
   };
 
+  Collection.prototype.empty = function() {
+    return this.document = [];
+  };
+
   return Collection;
 
 })();
 
-var Component;
+var Component,
+  indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 Component = (function() {
   var disabled, regx, regxG;
@@ -562,8 +708,48 @@ Component = (function() {
 
   regxG = /\${([^\s{}]+)}/g;
 
+  Component.element = null;
+
+  Component.attr = {};
+
+  Component.prop = {};
+
+  Component.ready = false;
+
+  Component.collection = null;
+
+  Component.template = null;
+
+  Component.document = null;
+
+  Component.handles = [];
+
+  Component.events = [];
+
+  Component.scripts = [];
+
+  Component.root = null;
+
+  Component.path = null;
+
+  Component.active = false;
+
   function Component(component) {
-    var $component, collection, path, ref, template;
+    var $component, collection, path, ref, repeaters, template;
+    this.uid = jom.guid;
+    this.element = null;
+    this.attr = {};
+    this.prop = {};
+    this.ready = false;
+    this.collection = null;
+    this.template = null;
+    this.document = null;
+    this.handles = [];
+    this.events = [];
+    this.scripts = [];
+    this.root = null;
+    this.path = null;
+    this.active = false;
     if (component === void 0) {
       throw new Error("jom: component is required");
     }
@@ -577,7 +763,6 @@ Component = (function() {
     if (!collection) {
       throw new Error("jom: component collection is required");
     }
-    this.skip = false;
     this.attr = {
       template: template,
       collection: collection
@@ -593,45 +778,71 @@ Component = (function() {
       collection: collection,
       path: path
     };
-    this.hide();
-    this.reset = false;
-    this.ready = false;
-    this.template = null;
-    this.collection = null;
-    this.document = null;
     this.create_shadow();
     this.root = this.element.shadowRoot;
-    this.handles = [];
-    this.events = [];
+    this.hide();
+    repeaters = this.root.querySelectorAll('[repeat]');
     this.scripts = [];
     this.scripts.status = "init";
+    this.ready = false;
     this;
   }
 
-  Component.prototype.hide = function() {
-    var $root;
-    $root = $(this.root);
-    return $root.find("");
+  Component.prototype.show = function() {
+    var loader;
+    loader = this.root.querySelector('.temporary_loader');
+    return loader != null ? loader.remove() : void 0;
   };
 
-  Component.prototype.show = function() {};
+  Component.prototype.hide = function() {
+    var icon, loader, ref, text;
+    loader = $('<div class="temporary_loader">Loading...</div>');
+    loader = document.createElement('div');
+    icon = document.createElement('i');
+    text = document.createTextNode("Loading...");
+    loader.className = "temporary_loader";
+    icon.className = "icon-loader animate-spin";
+    loader.style.position = "absolute";
+    loader.style.top = 0;
+    loader.style.left = 0;
+    loader.style.bottom = 0;
+    loader.style.right = 0;
+    loader.style.display = "block";
+    loader.style["text-align"] = "center";
+    loader.style["background-color"] = "#fff";
+    loader.appendChild(icon);
+    loader.appendChild(text);
+    icon.style.top = "50%";
+    icon.style.position = 'absolute';
+    if ((ref = this.root.querySelector('.temporary_loader')) != null) {
+      ref.remove();
+    }
+    return this.root.appendChild(loader);
+  };
 
   Component.prototype.enable = function() {
-    return disabled = false;
+    return this.active = false;
   };
 
   Component.prototype.disable = function() {
-    return disabled = true;
+    return this.active = true;
   };
 
   Component.prototype.destroy = function() {};
 
   Component.prototype.create_shadow = function() {
+    var children;
     if (this.element.shadowRoot === null) {
-      return this.element.createShadowRoot();
+      this.element.createShadowRoot();
     } else {
-      return $(this.element.shadowRoot.children).remove();
+      children = this.element.shadowRoot.childNodes;
+      if (children.length) {
+        while (children.length) {
+          children[0].remove();
+        }
+      }
     }
+    return this.element.shadowRoot;
   };
 
   Component.prototype.define_template = function(template) {
@@ -649,123 +860,39 @@ Component = (function() {
     return this.collection;
   };
 
-  Component.prototype.handlebars = function(content, component) {
-    var $content, c;
-    if (content instanceof ShadowRoot) {
-      content = content.children;
+  Component.prototype.handlebars = function() {
+    var all, attr, handle, i, j, k, key, len, len1, list, name, node, ref, text;
+    list = ['script', 'link', 'style'];
+    all = this.root.querySelectorAll('*');
+    for (i = j = 0, len = all.length; j < len; i = ++j) {
+      node = all[i];
+      name = node.nodeName.toLowerCase();
+      if (indexOf.call(list, name) >= 0) {
+        continue;
+      }
+      text = node.textContent;
+      if (node.children.length === 0 && regx.test(text) === true) {
+        handle = new Handle(this, node, text, 'node');
+        this.handles.push(handle);
+      }
+      ref = node.attributes;
+      for (key = k = 0, len1 = ref.length; k < len1; key = ++k) {
+        attr = ref[key];
+        if (regx.test(attr.name)) {
+          throw new Error("component: attr name should not be a handlebar");
+          text = attr.value;
+          handle = new Handle(this, attr, text, 'attr_name');
+          this.handles.push(handle);
+        }
+        if (regx.test(attr.value)) {
+          text = attr.value;
+          handle = new Handle(this, attr, text, 'attr_value');
+          this.handles.push(handle);
+        }
+      }
+      node;
     }
-    $content = $(content);
-    c = $content.findAll('*').not('script, style, link, [repeat]').filter(function() {
-      return $(this).parents('[repeat]').length === 0;
-    });
-    c.each((function(_this) {
-      return function(i, node) {
-        var attr, e, handle, j, key, len, name, new_attr, new_text, path, raw, ref, result, rx, text, value;
-        text = $(node).text();
-        if ($(node).children().length === 0 && regx.test(text) === true) {
-          raw = text;
-          key = text.match(regx)[1];
-          path = _this.collection.join(_this.path, key);
-          if (_this.collection === void 0) {
-            throw new Error("component: `" + raw + "` is wrong, start with collection.");
-          }
-          new_text = _this.collection.findByPath($.trim(path));
-          if (new_text === void 0) {
-            if (jom.env === "production") {
-              new_text = "";
-            } else {
-              throw new Error("Data: not found for `" + raw + "` key.");
-            }
-          }
-          value = text.replace(regx, new_text);
-          $(node).text(value);
-          handle = {
-            collection: _this.collection,
-            element: node,
-            value: value,
-            type: "node",
-            path: path,
-            full: _this.collection.join(_this.collection.name, path)
-          };
-          _this.handles.push(handle);
-        }
-        ref = node.attributes;
-        for (key = j = 0, len = ref.length; j < len; key = ++j) {
-          attr = ref[key];
-          if (regx.test(attr.name)) {
-            throw new Error("component: attr name should not be a handlebar");
-            text = attr.name;
-            raw = text;
-            try {
-              key = text.match(regx)[1];
-            } catch (_error) {
-              e = _error;
-              throw new Error("Component: wrong key on attr name " + text);
-            }
-            path = _this.collection.join(_this.path, key);
-            if (_this.collection === void 0) {
-              throw new Error("component: `" + raw + "` is wrong, start with collection.");
-            }
-            new_text = _this.collection.findByPath($.trim(path));
-            if (new_text === void 0 && jom.env === "production") {
-              new_text = "";
-            }
-            name = text.replace(regx, new_text);
-            $(node).removeAttr(attr.name).attr(name, attr.value);
-            new_attr = node.attributes[name];
-            attr = new_attr;
-            handle = {
-              collection: _this.collection,
-              element: node,
-              attr: new_attr,
-              value: name,
-              type: "attr_name",
-              path: path,
-              full: _this.collection.join(_this.collection.name, path)
-            };
-            _this.handles.push(handle);
-          }
-          if (regx.test(attr.value)) {
-            text = attr.value;
-            raw = text;
-            rx = new RegExp(regx.toString().slice(1, -1), 'gi');
-            result = text.match(rx);
-            $(result).each(function(i, item) {
-              var find_from_collection;
-              try {
-                key = item.match(regx)[1];
-              } catch (_error) {
-                e = _error;
-                throw new Error("Component: wrong key on attr value " + text);
-              }
-              path = _this.collection.join(_this.path, key);
-              if (_this.collection === void 0) {
-                throw new Error("component: `" + raw + "` is wrong, start with collection.");
-              }
-              find_from_collection = _this.collection.findByPath($.trim(path));
-              if (find_from_collection === void 0 && jom.env === "production") {
-                return text = text.replace(regx, "");
-              } else {
-                return text = text.replace(regx, find_from_collection);
-              }
-            });
-            attr.value = text;
-            handle = {
-              collection: _this.collection,
-              element: node,
-              attr: attr,
-              value: text,
-              type: "attr_value",
-              path: path,
-              full: _this.collection.join(_this.collection.name, path)
-            };
-            _this.handles.push(handle);
-          }
-        }
-        return node;
-      };
-    })(this));
-    return $content;
+    return all;
   };
 
   Component.prototype.handle_template_scripts = function(content) {
@@ -779,14 +906,16 @@ Component = (function() {
         return script.has_loaded = true;
       };
     });
-    return $(scripts).not('[src]').eq(0).each(function(i, script) {
-      var front, is_script_prepared, reg;
-      front = "";
-      reg = new RegExp("^" + (escapeRegExp(front)));
-      is_script_prepared = reg.test(script.text);
-      script.text = "(function(){\nvar\nshadow     = jom.shadow,\nbody       = shadow.body,\nhost       = shadow.host,\nroot       = shadow.root,\ncomponent  = host.component,\ncollection = component.collection,\ndoc        = component.document\n;\ncomponent.on('ready', function(){ doc = component.document })\n\n" + script.text + "\n})()";
-      return script;
-    });
+    return $(scripts).not('[src]').eq(0).each((function(_this) {
+      return function(i, script) {
+        var front, is_script_prepared, reg;
+        front = "";
+        reg = new RegExp("^" + (escapeRegExp(front)));
+        is_script_prepared = reg.test(script.text);
+        script.text = " /* template: " + _this.template.name + " */\nvar shadow = jom.shadow;\nnew (function(){\n          var\n          body       = shadow.body,\n          host       = shadow.host,\n          root       = shadow.root,\n          component  = host.component;\n\n          " + script.text + "\n\n          })(shadow.host)";
+        return script;
+      };
+    })(this));
   };
 
   Component.prototype.on = function(type, path, callback) {
@@ -820,14 +949,15 @@ Component = (function() {
         event = ref[k];
         if (type === event.type) {
           if (event.path === null) {
-            event.callback.call(handle, event, params);
+            event.callback.call(handle, event, params, this);
           }
           ref1 = this.handles;
           for (l = 0, len2 = ref1.length; l < len2; l++) {
             handle = ref1[l];
             part = !!~handle.path.indexOf(event.path);
             if (handle.path && part) {
-              event.callback.call(handle, event, params);
+              event.target = handle.node;
+              event.callback.call(handle, event, params, this);
             }
           }
         }
@@ -836,64 +966,92 @@ Component = (function() {
     return this;
   };
 
-  Component.prototype.repeat = function(element, data) {
-    var $element, clone, e, index, item, j, key, len, path, prefix, raw, repeat, x;
-    if (data == null) {
-      data = null;
+  Component.prototype.image_source_change = function() {
+    var img, imgs, j, key, len, results;
+    imgs = this.root.querySelectorAll('[body] img');
+    results = [];
+    for (key = j = 0, len = imgs.length; j < len; key = ++j) {
+      img = imgs[key];
+      results.push(img.setAttribute("src", img.attributes.source.value));
     }
-    if (data === null) {
-      data = [];
-    }
-    $element = $(element);
-    key = $element.attr('repeat');
-    raw = key;
-    if (key === void 0) {
-      throw new Error("component: `repeat` attr missing");
-    }
-    if (key.length) {
-      try {
-        key = key.match(regx)[1];
-      } catch (_error) {
-        e = _error;
-        throw new Error("Component: Wrong key `" + key + "`");
+    return results;
+  };
+
+  Component.prototype.repeat = function() {
+    var clone, data, e, index, item, j, k, key, l, last, len, len1, len2, path, prefix, raw, ref, removeable, repeated, repeater, repeater_key, repeats, repeats_key, x, y;
+    last = null;
+    ref = this.template.repeaters;
+    for (repeater_key = j = 0, len = ref.length; j < len; repeater_key = ++j) {
+      repeater = ref[repeater_key];
+      key = repeater.node.attributes.repeat.value;
+      raw = key;
+      repeats = this.root.querySelectorAll('[repeated]');
+      for (repeats_key = k = 0, len1 = repeats.length; k < len1; repeats_key = ++k) {
+        item = repeats[repeats_key];
+        if (item.repeatGUID === repeater.node.guid) {
+          repeater.parent.replaceChild(repeater.node, item);
+          removeable = item;
+          while (removeable.nextSibling) {
+            if (removeable.repeatGUID !== void 0 && removeable.repeatGUID === repeater.node.guid) {
+              removeable = removeable.nextSibling;
+              removeable.remove();
+            }
+          }
+        }
       }
-    }
-    repeat = $([]);
-    path = key;
-    if (this.collection === void 0) {
-      throw new Error("component: `" + raw + "` is wrong, start with collection.");
-    }
-    if (path !== void 0 && path.length) {
-      if (this.path) {
-        data = this.collection.findByPath(this.collection.join(this.path, path));
+      if (key === void 0) {
+        throw new Error("component: `repeat` attr missing");
+      }
+      if (key.length) {
+        try {
+          key = key.match(regx)[1];
+        } catch (_error) {
+          e = _error;
+          throw new Error("Component: Wrong key `" + key + "`");
+        }
+      }
+      path = key;
+      if (this.collection === void 0) {
+        throw new Error("component: `" + raw + "` is wrong, start with collection.");
+      }
+      if (path !== void 0 && path.length) {
+        if (this.path) {
+          data = this.collection.findByPath(this.collection.join(this.path, path));
+        } else {
+          data = this.collection.findByPath(path);
+        }
+      } else if (this.path.length > 0) {
+        data = this.collection.findByPath(this.path);
       } else {
-        data = this.collection.findByPath(path);
+        data = this.document || [];
       }
-    } else if (this.path.length > 0) {
-      data = this.collection.findByPath(this.path);
-    } else {
-      data = this.collection.document;
+      if (data === void 0) {
+        throw new Error("component: document data not found `" + path + "`");
+      }
+      if (path === void 0) {
+        path = "";
+      }
+      repeated = document.createDocumentFragment();
+      for (index = l = 0, len2 = data.length; l < len2; index = ++l) {
+        item = data[index];
+        clone = repeater.node.cloneNode(true);
+        clone.setAttribute("repeated", "true");
+        clone.setAttribute('repeat-index', index);
+        clone.removeAttribute("repeat");
+        clone.style.display = '';
+        prefix = this.collection.join(path, "[" + index + "]");
+        x = clone.outerHTML.replace(/(\${)([^\s{}]+)(})/g, "$1" + prefix + ".$2$3");
+        x = x.replace(/(\{repeat\.index})/g, index);
+        x = x.replace(/(\{repeat\.length})/g, data.length);
+        y = document.createElement('div');
+        y.innerHTML = x;
+        x = y.childNodes[0];
+        x.repeatGUID = repeater.node.guid;
+        repeated.appendChild(x);
+      }
+      repeater.parent.replaceChild(repeated, repeater.node);
     }
-    if (data === void 0) {
-      throw new Error("component: document data not found `" + path + "`");
-    }
-    if (path === void 0) {
-      path = "";
-    }
-    for (index = j = 0, len = data.length; j < len; index = ++j) {
-      item = data[index];
-      clone = $element.clone();
-      clone.attr("repeated", true);
-      clone.attr("repeat", null);
-      clone.attr('repeat-index', index);
-      clone.get(0).style.display = '';
-      prefix = this.collection.join(path, "[" + index + "]");
-      x = clone[0].outerHTML.replace(/(\${)([^\s{}]+)(})/g, "$1" + prefix + ".$2$3");
-      x = x.replace(/(\{repeat\.index})/g, index);
-      x = x.replace(/(\{repeat\.length})/g, data.length);
-      repeat = repeat.add(x);
-    }
-    return repeat;
+    return this;
   };
 
   Component.prototype.collection_changed = function() {
@@ -904,16 +1062,12 @@ Component = (function() {
     this.prop.collection = collection;
     this.prop.path = path;
     col = jom.collections.get(collection);
-    this.ready = false;
-    return this.reset_collection(col);
-  };
-
-  Component.prototype.reset_collection = function(collection) {
-    if (collection instanceof Collection === false) {
+    this.handles = [];
+    if (col instanceof Collection === false) {
       throw new Error("component: reset expects a collection");
     }
-    this.collection = collection;
-    return this.reset = true;
+    this.document = col.findByPath(this.path) || col.document;
+    return this.collection = col;
   };
 
   return Component;
@@ -935,7 +1089,7 @@ Template = (function() {
   @return Template
    */
   function Template(template) {
-    var $template, t;
+    var $template, imgs, index, j, key, len, ref, repeater, t;
     if (template == null) {
       template = null;
     }
@@ -951,46 +1105,39 @@ Template = (function() {
       throw new Error("jom: template name attr is required");
     }
     t = $template.get(0);
+    imgs = $(t.content).find('img');
+    imgs.attr('source', imgs.attr('src'));
+    imgs.attr('src', null);
     this.element = document.importNode(t.content, true);
     this.body = $(this.element).children("[body]");
     $template.get(0).template = true;
     if (this.body === void 0 || this.body.length === 0) {
       throw new Error("jom: template body attr is required");
     }
-    this.cloned = null;
-    this.errors = [];
-    this.show_loader();
+    this.handlebars = [];
+    this.repeaters = [];
+    ref = this.element.querySelectorAll('[repeat]');
+    for (key = j = 0, len = ref.length; j < len; key = ++j) {
+      repeater = ref[key];
+      index = this.getIndex(repeater);
+      repeater.guid = jom.guid;
+      this.repeaters.push({
+        index: index,
+        node: repeater,
+        parent: repeater.parentNode
+      });
+    }
     this.ready = true;
     this;
   }
 
-  Template.prototype.show_loader = function() {
-    var css, loader;
-    loader = $('<div class="temporary_loader"><i class="icon-loader animate-spin"></i>Loading...</div>');
-    css = {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      bottom: 0,
-      right: 0,
-      "text-align": "center",
-      display: "block",
-      "background-color": "#fff"
-    };
-    loader.css(css);
-    loader.children('i').css({
-      position: 'absolute',
-      top: "50%"
-    });
-    $(this.element).add(this.element.children).findAll('.temporary_loader').remove();
-    if (this.fontello) {
-      loader.children('i').addClass(this.fontello);
+  Template.prototype.getIndex = function(node) {
+    var i;
+    i = 0;
+    while (node = node.previousElementSibling) {
+      i++;
     }
-    return $(this.element).append(loader);
-  };
-
-  Template.prototype.hide_loader = function(content) {
-    return $(content).add(content.children).findAll('.temporary_loader').remove();
+    return i;
   };
 
   return Template;
@@ -1014,6 +1161,29 @@ Schema = (function() {
     this.is_valid();
     this;
   }
+
+  Schema.prototype.findByPath = function(path) {
+    var i, item, len, regx, result, split, text;
+    regx = /(\[)(\d+)(\])/g;
+    text = path.replace(regx, ".$2").replace(/^\.*/, "");
+    text = text.replace(/^\d+\.{1}/, "");
+    split = text.split(".");
+    result = this.tree.properties;
+    for (i = 0, len = split.length; i < len; i++) {
+      item = split[i];
+      if (result === void 0) {
+        return result;
+      }
+      if (item.type === "array") {
+        result = item.items.properties[item];
+      } else if (item.type === "object") {
+        result = item.properties[item];
+      } else {
+        result = result[item];
+      }
+    }
+    return result;
+  };
 
   Schema.prototype.is_valid = function() {
     var core, errors, schemaValidator, validator;
@@ -1440,17 +1610,7 @@ JOM = (function() {
     return $.each(this.components, (function(_this) {
       return function(i, component) {
         var collection, template;
-        if (component.reset === true) {
-          component = new Component(component.element.outerHTML);
-          debugger;
-          return true;
-        }
-        if (component.skip === true) {
-          return true;
-        }
         if (component.ready === true) {
-          component.skip = true;
-          component.template.hide_loader(component.root);
           return true;
         }
         if ("timer" in component === false) {
@@ -1475,8 +1635,7 @@ JOM = (function() {
         if (component.template === null && template && component.collection) {
           template = new Template(template.original);
           component.define_template(template);
-          template.show_loader();
-          component.define_template(template);
+          component.hide();
           component.handle_template_scripts(template.element);
           component.template.component = component;
           component.root.appendChild(template.element);
@@ -1494,10 +1653,10 @@ JOM = (function() {
           }
           _this.repeater(component);
           component.handlebars(component.root.children, component);
-          _this.image_source_change(component);
+          component.image_source_change();
           component.show();
           component.ready = true;
-          return component.trigger('ready');
+          return component.trigger('ready', component);
         }
       };
     })(this));
@@ -1515,33 +1674,79 @@ JOM = (function() {
     return all_done;
   };
 
-  JOM.prototype.image_source_change = function(component) {
-    return $(component.root).add(component.root.children).findAll('[body] img').not('[repeat] img').each(function(i, image) {
-      var $image;
-      $image = $(image);
-      return $image.attr('src', $image.attr("source"));
-    });
-  };
-
   JOM.prototype.repeater = function(component, context) {
     if (context == null) {
       context = null;
     }
+    component.repeat();
+    return this;
     if (context instanceof ShadowRoot) {
       context = context.children;
     }
     context = context || $(component.template.element.children).findAll('[body]');
-    return $('[repeat]', context).each(function(i, repeater) {
-      var items;
+    $('[repeat]', context).each(function(i, repeater) {
+      var parent;
       repeater = $(repeater);
-      items = component.repeat(repeater);
-      items.insertAfter(repeater);
-      return repeater.hide();
+      parent = repeater.parent().get(0);
+      parent.repeaters = parent.repeaters || [];
+      parent.repeaters.push({
+        index: repeater.index(),
+        element: repeater
+      });
+      return repeater.remove();
+    });
+    return $(context).findAll('*').each(function(i, item) {
+      var children, fake_i, index, items, key, l, len, ref, repeater;
+      if (item.repeaters !== void 0 && item.repeaters.length > 0) {
+        ref = item.repeaters;
+        for (key = l = 0, len = ref.length; l < len; key = ++l) {
+          repeater = ref[key];
+          items = component.repeat(repeater.element);
+          index = repeater.index;
+          children = $(item).children();
+          if (children.length === 0) {
+            $(item).append(items);
+          } else {
+            fake_i = -1;
+            $(item).children().each(function(i, child) {
+              if (child.attributes['repeated'] === void 0) {
+                fake_i++;
+              }
+              if (fake_i === index) {
+                return items.insertAfter(child);
+              }
+            });
+          }
+        }
+      }
+      return this;
     });
   };
 
+  JOM.prototype.remove = function(what, uid) {
+    var index, item, list, plural, ref, results;
+    plural = (what.replace(/s$/, '')) + 's';
+    list = ['components', 'collections', 'templates', 'schemas'];
+    if (indexOf.call(list, plural) >= 0 === -1) {
+      throw new Error("jom: " + plural + "; is not a valid asset to remove");
+    }
+    ref = this[plural];
+    results = [];
+    for (index in ref) {
+      item = ref[index];
+      if (item.uid !== void 0 && item.uid.length === 36 && item.uid === uid) {
+        delete this[plural][index].element.jinit;
+        results.push(this[plural].splice(index, 1));
+      } else {
+        results.push(void 0);
+      }
+    }
+    return results;
+  };
+
   JOM.prototype.watch_collections = function() {
-    var collection, component, handle, k, key, l, len, len1, m, ref, ref1, ref2, results, text, value;
+    var collection, component, error, handle, item, k, key, l, len, len1, len2, m, n, ref, ref1, ref2, results, stack, type, val, value;
+    stack = [];
     ref = this.collections;
     results = [];
     for (key in ref) {
@@ -1549,75 +1754,107 @@ JOM = (function() {
       ref1 = this.components;
       for (key = l = 0, len = ref1.length; l < len; key = ++l) {
         component = ref1[key];
+        if (component === void 0) {
+          continue;
+        }
         if ($(component.element).attr('collection') !== component.attr.collection) {
-          component.collection_changed();
+          component.hide();
+          this.remove('component', component.uid);
+          continue;
         }
         ref2 = component.handles;
         for (k = m = 0, len1 = ref2.length; m < len1; k = ++m) {
           handle = ref2[k];
           switch (handle.type) {
             case "node":
-              text = $(handle.element).text();
-              if (handle.value !== text) {
-                handle.collection.changeByPath(handle.path, text);
-                handle.value = text;
-              }
+              value = $(handle.node).text();
               break;
             case "attr_value":
               if (handle.attr.name === "value") {
-                value = handle.element.value;
+                value = handle.node.value;
               } else {
                 value = handle.attr.value;
-              }
-              if (value !== handle.value) {
-                handle.collection.changeByPath(handle.path, value);
-                handle.value = value;
               }
               break;
             default:
               throw new Error("jom: error could not observe node");
           }
+          val = value;
+          if (val === void 0) {
+            value = void 0;
+          } else {
+            try {
+              type = handle.collection.schema.findByPath(handle.path);
+              if (type === void 0) {
+                type = handle.collection.findByPath(handle.path);
+                type = type.constructor.name;
+              } else {
+                type = type.type.charAt(0).toUpperCase() + type.type.slice(1);
+              }
+            } catch (_error) {
+              error = _error;
+              type = "String";
+            }
+            if (type === "Boolean") {
+              if (value === "false") {
+                value = false;
+              } else {
+                value = true;
+              }
+            } else {
+              value = (new window[type || "String"](value)).valueOf();
+            }
+          }
+          if (value !== handle.value) {
+            stack.unshift({
+              handle: handle,
+              value: value
+            });
+          }
         }
+      }
+      for (key = n = 0, len2 = stack.length; n < len2; key = ++n) {
+        item = stack[key];
+        item.handle.value = item.value;
       }
       if (collection.observing === false) {
         collection.observing = true;
-        results.push(new Observe(collection, collection.document, (function(_this) {
-          return function(changes) {
-            var change, results1;
-            results1 = [];
+        new Observe(collection, collection.document, (function(_this) {
+          return function(changes, natives) {
+            var change, len3, nat, o, ref3, ref4, ref5;
             for (key in changes) {
               change = changes[key];
-              results1.push($.each(_this.components, function(i, component) {
-                var ref3, results2;
-                if (change.collection.name === component.collection.name) {
-                  ref3 = component.handles;
-                  results2 = [];
-                  for (key in ref3) {
-                    handle = ref3[key];
-                    if (change.path === handle.path) {
-                      switch (handle.type) {
-                        case "node":
-                          $(handle.element).text(change.value);
-                          break;
-                        case "attr_value":
-                          $(handle.element).attr(handle.attr.name, change.value);
-                          break;
-                        default:
-                          throw new Error("jom: handle type `" + handle.type + " is wrong.`");
+              nat = natives[key];
+              ref3 = _this.components;
+              for (o = 0, len3 = ref3.length; o < len3; o++) {
+                component = ref3[o];
+                if (component.ready && change.collection.name === ((ref4 = component.collection) != null ? ref4.name : void 0)) {
+                  if (nat.type === "update") {
+                    ref5 = component.handles;
+                    for (key in ref5) {
+                      handle = ref5[key];
+                      if (change.path === handle.path) {
+                        handle.value = change.value;
+                        component.image_source_change();
+                        $(component.root.host).trigger("change", [change, component.collections]);
+                        component.trigger("change", change);
                       }
-                      $(component.root.host).trigger("change", [change, component.collections]);
-                      results2.push(component.trigger("change", change));
-                    } else {
-                      results2.push(void 0);
                     }
+                  } else {
+                    console.warn('Collection Observe: handle it better');
+                    _this.repeater(component);
+                    component.handlebars(component.root.children, component);
+                    component.image_source_change();
+                    component.trigger("change", change);
                   }
-                  return results2;
                 }
-              }));
+              }
+              changes;
             }
-            return results1;
+            return changes;
           };
-        })(this)));
+        })(this));
+        results.push(this);
       } else {
         results.push(void 0);
       }
@@ -1647,6 +1884,19 @@ JOM = (function() {
 
   JOM.getter('shadow', function() {
     return new Shadow();
+  });
+
+  JOM.getter('guid', function() {
+    var d, performance, uuid;
+    performance = window.performance || Date;
+    d = window.performance.now();
+    uuid = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
+      var r;
+      r = (d + Math.random() * 16) % 16 | 0;
+      d = Math.floor(d / 16);
+      return (c === "x" ? r : r & 0x3 | 0x8).toString(16);
+    });
+    return uuid;
   });
 
   return JOM;

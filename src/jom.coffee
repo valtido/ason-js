@@ -135,15 +135,7 @@ class JOM
 
   assemble_components: ->
     $.each @components, (i, component)=>
-      if component.reset is true
-        component = new Component component.element.outerHTML
-        debugger
-        return true
-      if component.skip is true
-        return true
       if component.ready is true
-        component.skip = true
-        component.template.hide_loader(component.root)
         return true
 
       if "timer" of component is false
@@ -164,9 +156,9 @@ class JOM
         # $(component.root.children).remove()
         # create a new instance of template so original remains un touched
         template = new Template template.original
+
         component.define_template template
-        template.show_loader()
-        component.define_template template
+        component.hide()
         component.handle_template_scripts template.element
         component.template.component = component
         component.root.appendChild template.element
@@ -190,10 +182,10 @@ class JOM
         @repeater component
         component.handlebars component.root.children, component
 
-        @image_source_change component
+        component.image_source_change()
         component.show()
         component.ready = true
-        component.trigger 'ready'
+        component.trigger 'ready', component
 
   scripts_loaded  : (component)->
     all_done = true
@@ -206,78 +198,143 @@ class JOM
 
     all_done
 
-  image_source_change : (component)->
-    $ component.root
-    .add component.root.children
-    .findAll '[body] img'
-    .not '[repeat] img'
-    .each (i, image)->
-      $image = $ image
-      $image.attr 'src', $image.attr "source"
   repeater: (component, context = null)->
+    component.repeat()
+    return @
     if context instanceof ShadowRoot
       context = context.children
+
     context = context or $(component.template.element.children).findAll '[body]'
+
     $ '[repeat]', context
     .each (i, repeater)->
       repeater = $ repeater
-      items = component.repeat repeater
-      items.insertAfter repeater
-      repeater.hide()
+      parent = repeater.parent().get(0)
+      parent.repeaters = parent.repeaters || []
+      parent.repeaters.push index: repeater.index(), element: repeater
+      repeater.remove()
+
+    $ context
+    .findAll '*'
+    .each (i, item) ->
+      if item.repeaters isnt undefined and item.repeaters.length > 0
+        for repeater, key in item.repeaters
+          items = component.repeat repeater.element
+          index = repeater.index
+          children = $(item).children()
+
+          if children.length is 0
+            $(item).append items
+          else
+            fake_i = -1
+            $(item).children().each (i, child)->
+              if child.attributes['repeated'] is undefined
+                fake_i++
+
+              if fake_i is index
+                items.insertAfter child
+
+      @
+  remove: (what, uid)->
+    plural = (what.replace /s$/, '')+'s'
+    list = ['components','collections','templates', 'schemas']
+
+    if plural in list is -1
+      throw new Error "jom: #{plural}; is not a valid asset to remove"
+    for index, item of @[plural]
+      if item.uid isnt undefined and item.uid.length is 36 and item.uid is uid
+        delete @[plural][index].element.jinit
+        @[plural].splice index, 1
   watch_collections: ->
+    stack = []
     for key, collection of @collections
       for component, key in @components
+        continue if component is undefined
+
         if $(component.element).attr('collection') isnt component.attr.collection
-          component.collection_changed()
+          component.hide()
+          @remove 'component', component.uid
+          continue
 
         # observer the element
         for handle, k in component.handles
 
           switch handle.type
             when "node"
-              text = $(handle.element).text()
-              if handle.value isnt text
-                handle.collection.changeByPath handle.path, text
-                handle.value = text
+              value = $(handle.node).text()
             when "attr_value"
               if handle.attr.name is "value"
-                value = handle.element.value
+                # inputs are different :(
+                value = handle.node.value
               else
+                # normal attributes
                 value = handle.attr.value
-              if value isnt handle.value
-                handle.collection.changeByPath handle.path, value
-                handle.value = value
             else
               throw new Error "jom: error could not observe node"
+
+          val = value
+          if val is undefined
+            value = undefined
+          else
+            try
+              type = handle.collection.schema.findByPath(handle.path)
+              if type is undefined
+                type = handle.collection.findByPath handle.path
+                type = type.constructor.name
+              else
+                type = type.type.charAt(0).toUpperCase() + type.type.slice 1
+            catch error
+              type = "String"
+
+            if type is "Boolean"
+              if value is "false"
+                value = false
+              else
+                value = true
+            else
+              value = (new window[type||"String"](value)).valueOf()
+
+          if value isnt handle.value
+            stack.unshift handle: handle, value: value
+
+      for item, key in stack
+        item.handle.value = item.value
 
       if collection.observing is false
         collection.observing = true
         # observe the collection
 
-        new Observe collection, collection.document, (changes)=>
+        new Observe collection, collection.document, (changes, natives)=>
           for key, change of changes
-            $.each @components, (i, component)=>
-              if change.collection.name is component.collection.name
-                for key, handle of component.handles
-                  if change.path is handle.path
-                    switch handle.type
-                      when "node"
-                        $(handle.element).text change.value
-                      when "attr_value"
-                        $(handle.element).attr handle.attr.name, change.value
-                      else
-                        throw new Error "jom: handle type `#{handle.type} is wrong.`"
+            nat = natives[key]
+            for component in  @components
+              if component.ready and change.collection.name is component.collection?.name
+                if nat.type is "update"
+                  for key, handle of component.handles
+                    if change.path is handle.path
+                      # debugger
+                      # figgure out how to change handles only
+                      handle.value = change.value
+                      component.image_source_change()
 
+                      $(component.root.host).trigger "change", [
+                        change, component.collections
+                      ]
 
-                    # @image_source_change component
+                      # $(component.root).find('[repeat]').hide()
 
-                    $(component.root.host).trigger "change", [
-                      change, component.collections
-                    ]
+                      component.trigger "change", change
+                else
+                  console.warn 'Collection Observe: handle it better'
+                  # component.collection_changed()
 
-                    # $(component.root).find('[repeat]').hide()
-
-                    component.trigger "change", change
+                  @repeater component
+                  component.handlebars component.root.children, component
+                  component.image_source_change()
+                  component.trigger "change", change
+            changes
+          changes
+        @
 
   resolve: (path)->
     # return location.pathname+
@@ -296,5 +353,16 @@ class JOM
     return result
 
   @getter 'shadow', -> new Shadow()
+
+  @getter 'guid', ->
+    performance = window.performance or Date
+    d = window.performance.now()
+    uuid = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) ->
+      r = (d + Math.random() * 16) % 16 | 0
+      d = Math.floor(d / 16)
+      ((if c is "x" then r else (r & 0x3 | 0x8))).toString 16
+    )
+
+    uuid
 
 jom = JOM = new JOM()

@@ -32,10 +32,8 @@ class Collection
 
     @observing = false
 
-  generate_id: -> new Date().getTime()
-
   meta : ->
-    return {id: @generate_id()}
+    return {id: jom.uuid}
   # Attaches document to the collection instance
   # @param [Array, Object] document document to attach
   # @option document [Array] document if array, push each element
@@ -43,11 +41,18 @@ class Collection
   add : (obj)->
     is_valid = @is_valid obj
     if is_valid
-      obj.meta = @meta()
-      Object.defineProperty obj, "meta", enumerable: false
+      if obj.meta is undefined
+        Object.defineProperty obj, "meta",
+          enumerable: false
+          writable: false
+          value: @meta()
       @document.push obj
     else
       @errors.push "Cannot add the document, is not valid. #{obj.toString()}"
+
+    @is_valid()
+
+    obj
 
   del : (id = null)->
     index = null
@@ -57,13 +62,20 @@ class Collection
     if index isnt null
       @document.splice index, 1
 
+    @is_valid()
+
   add_part : (newObj, path)->
     if path is undefined or not path
       throw new Error "Collection: path is required"
     obj = @findByPath path
-    newObj.meta = @meta()
-    Object.defineProperty newObj, "meta", enumerable: false
+    if obj.meta is undefined
+      Object.defineProperty newObj, "meta",
+        enumerable: false
+        writable: false
+        value: @meta()
     obj.push newObj
+    @is_valid()
+    obj
 
   attach_document: (document = [])->
     length = document.length || Object.keys(document).length
@@ -204,8 +216,12 @@ class Collection
       return result if result is undefined
       if key is (split.length-1)
         result[item] = value
+        @is_valid()
         result = result[item]
       else
         result = result[item]
 
     result
+
+  empty: ->
+    @document = []

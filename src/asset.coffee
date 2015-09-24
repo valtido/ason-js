@@ -53,16 +53,10 @@ class Asset
     @element = @create_element()
 
     switch @content_type.part
-      when 'text/html'
-        @error 'name'
+      when 'text/html', 'text/json'
         @error 'source'
-        @error 'asset'
-      when 'text/json'
         @error 'name'
-        @error 'source'
         @error 'asset'
-        if @asset is "collection"
-          @error 'schema'
       else
         @error 'source'
     arr = ['schema','collection','template','javascript','css','img','plain']

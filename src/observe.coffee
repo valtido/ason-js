@@ -40,6 +40,7 @@ class Observe
           part =
             collection: @collection
             path: new_path
+            base: base || ''
             value : change.object[change.index] or
                     change.object[change.name] or
                     change.object
@@ -66,6 +67,7 @@ class Observe
           part =
             collection: @collection
             path: new_path
+            base: base || ''
             value : change.object[change.name]
 
           is_add = change.type is "add" or change.addedCount > 0

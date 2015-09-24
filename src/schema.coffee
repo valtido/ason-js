@@ -11,6 +11,25 @@ class Schema
 
     @
 
+  findByPath : (path)->
+
+    regx   = /(\[)(\d+)(\])/g
+    text   = path.replace regx, ".$2"
+                .replace /^\.*/,""
+    text = text.replace /^\d+\.{1}/, ""
+    split  = text.split "."
+    result = @tree.properties
+
+    for item in split
+      return result if result is undefined
+      if item.type is "array"
+        result = item.items.properties[item]
+      else if item.type is "object"
+        result = item.properties[item]
+      else
+        result = result[item]
+
+    result
   is_valid : ->
     validator = isMyJsonValid
     errors = []
