@@ -72,7 +72,7 @@ template(name="profile")
     hr
 
   script.
-    
+    var doc = component.document
     $(body)
     .on("click", ".edit", function(){
       $(this).parent().toggleClass("show_edit")
@@ -81,7 +81,7 @@ template(name="profile")
       var value = $.trim($(this).text());
       var index = $(this).parents('.flip').attr('repeat-index')
       debugger
-      doc[index].location = value;
+      component.document[index].location = value;
     })
     .on("click", "i.icon-location", function(){
       var parent = $(this).parents('.flip');
@@ -91,12 +91,12 @@ template(name="profile")
     .on("click", ".img", function(event){
       var index = $(this).parents('.flip').attr('repeat-index')
       component
-      doc[index].image = "http://placehold.it/100x100?2";
+      component.document[index].image = "http://placehold.it/100x100?2";
     })
     .on("click", "i.icon-thumbs-up-alt", function(){
       var index = $(this).parents('.flip').attr('repeat-index')
-      doc[index].likes++;
-      console.info("likes: ",doc[index].likes)
+      component.document[index].likes++;
+      console.info("likes: ",component.document[index].likes)
     })
     ;
     

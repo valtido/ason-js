@@ -18,10 +18,13 @@ class JOM
     @components.get  = (name) -> self.get 'component', name
     @assets.get      = (name) -> self.get 'asset', name
     # @template
-    @tasks()
     @env = "production"
     @app =
       title: "JOM is Awesome"
+
+    window.addEventListener 'WebComponentsReady', =>
+      @tasks()
+
     @
   tasks: ->
     setTimeout =>
@@ -135,7 +138,9 @@ class JOM
 
   assemble_components: ->
     $.each @components, (i, component)=>
-      if component.ready is true
+      if component.ready is true or component.idle is true
+        # component.show()
+        # debugger
         return true
 
       if "timer" of component is false
@@ -149,92 +154,36 @@ class JOM
         throw new Error "jom: Component `#{component.name}` timedout"
 
       template = jom.templates.get component.prop.template
-
-      # build template
-      if component.template is null and template and component.collection
-        # clean up loading
-        # $(component.root.children).remove()
-        # create a new instance of template so original remains un touched
-        template = new Template template.original
-
-        component.define_template template
-        component.hide()
-        component.handle_template_scripts template.element
-        component.template.component = component
-        component.root.appendChild template.element
-        template.element = component.root
-
-      # build collection
       collection = jom.collections.get component.prop.collection
-      if component.collection is null and collection
-        component.define_collection collection
 
       # when both template and collection are ready
-      if  component.template isnt null and
-          component.collection isnt null and
-          component.template.ready is true and
+      if  template isnt null and
+          collection isnt null and
+          template.ready is true and
           @scripts_loaded(component) is true and
           component.ready is false
         if component.path
           component.document = collection.findByPath component.path
         else
           component.document = collection.document
-        @repeater component
-        component.handlebars component.root.children, component
 
-        component.image_source_change()
-        component.show()
+        component.define_collection collection
+        template = new Template template.original
+        component.define_template template
+        component.render()
         component.ready = true
+        component.idle = true
         component.trigger 'ready', component
 
   scripts_loaded  : (component)->
     all_done = true
-    scripts = $ component.root
-              .add component.root.children
-              .findAll 'script[src]'
-    $ scripts
-    .each (i, script)->
+    scripts = component.root.querySelectorAll 'script[src]'
+
+    for script in scripts
       all_done = false if script.has_loaded? isnt true
 
     all_done
 
-  repeater: (component, context = null)->
-    component.repeat()
-    return @
-    if context instanceof ShadowRoot
-      context = context.children
-
-    context = context or $(component.template.element.children).findAll '[body]'
-
-    $ '[repeat]', context
-    .each (i, repeater)->
-      repeater = $ repeater
-      parent = repeater.parent().get(0)
-      parent.repeaters = parent.repeaters || []
-      parent.repeaters.push index: repeater.index(), element: repeater
-      repeater.remove()
-
-    $ context
-    .findAll '*'
-    .each (i, item) ->
-      if item.repeaters isnt undefined and item.repeaters.length > 0
-        for repeater, key in item.repeaters
-          items = component.repeat repeater.element
-          index = repeater.index
-          children = $(item).children()
-
-          if children.length is 0
-            $(item).append items
-          else
-            fake_i = -1
-            $(item).children().each (i, child)->
-              if child.attributes['repeated'] is undefined
-                fake_i++
-
-              if fake_i is index
-                items.insertAfter child
-
-      @
   remove: (what, uid)->
     plural = (what.replace /s$/, '')+'s'
     list = ['components','collections','templates', 'schemas']
@@ -258,47 +207,30 @@ class JOM
 
         # observer the element
         for handle, k in component.handles
+          # handle.sync()
+          if handle.observing is false
+            handle.observing = true
 
-          switch handle.type
-            when "node"
-              value = $(handle.node).text()
-            when "attr_value"
-              if handle.attr.name is "value"
-                # inputs are different :(
-                value = handle.node.value
-              else
-                # normal attributes
-                value = handle.attr.value
-            else
-              throw new Error "jom: error could not observe node"
+            observer = new MutationObserver (mutations) ->
+              mutations.forEach (mutation) ->
+                target = mutation.target.handle
+                if target.stringify(target.value) isnt target.dom
+                  debugger
+                  target.value = target.dom
 
-          val = value
-          if val is undefined
-            value = undefined
-          else
-            try
-              type = handle.collection.schema.findByPath(handle.path)
-              if type is undefined
-                type = handle.collection.findByPath handle.path
-                type = type.constructor.name
-              else
-                type = type.type.charAt(0).toUpperCase() + type.type.slice 1
-            catch error
-              type = "String"
+                console.log mutation.type
 
-            if type is "Boolean"
-              if value is "false"
-                value = false
-              else
-                value = true
-            else
-              value = (new window[type||"String"](value)).valueOf()
+            config = attributes: true, childList: true, characterData: true
 
-          if value isnt handle.value
-            stack.unshift handle: handle, value: value
+            observer.observe handle.node, config
 
-      for item, key in stack
-        item.handle.value = item.value
+            if handle.node.value isnt undefined and handle.node.formTarget isnt undefined
+              handle.node.addEventListener 'change', ->
+                target = @handle
+                if target.stringify(target.value) isnt target.dom
+                  debugger
+                  target.value = target.dom
+                debugger
 
       if collection.observing is false
         collection.observing = true
@@ -328,9 +260,7 @@ class JOM
                   console.warn 'Collection Observe: handle it better'
                   # component.collection_changed()
 
-                  @repeater component
-                  component.handlebars component.root.children, component
-                  component.image_source_change()
+                  component.render()
                   component.trigger "change", change
             changes
           changes

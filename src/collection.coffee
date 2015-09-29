@@ -112,7 +112,7 @@ class Collection
 
   is_valid: (doc = null)->
     validator = isMyJsonValid
-    errors = []
+    @errors = []
 
     if @schema is undefined
       return false
@@ -122,17 +122,17 @@ class Collection
     if doc isnt null
       documentValidator doc
       if documentValidator.errors and documentValidator.errors.length
-        errors = documentValidator.errors
+        @errors = documentValidator.errors
     else
       for doc in @document
         documentValidator doc
         if documentValidator.errors and documentValidator.errors.length
-          errors.push documentValidator.errors
+          @errors.push documentValidator.errors
 
-    if errors.length
-      console?.error? "Collection: ", @name, errors
+    if @errors.length
+      console?.error? "Collection: ", @name, @errors
 
-    if errors.length
+    if @errors.length
       return false
     else
       return true

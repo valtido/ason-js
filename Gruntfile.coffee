@@ -52,9 +52,9 @@ module.exports = (grunt) ->
       core:
         src: [
           # 'bower_components/jquery/dist/jquery.js'
-          # 'public/bower_components/jjv/lib/jjv.js'
-          'public/assets/-/is-my-json-valid/is-my-json-valid.min.js'
           'src/utils.js'
+          'public/bower_components/webcomponentsjs/webcomponents.js'
+          'public/assets/-/is-my-json-valid/is-my-json-valid.min.js'
           'src/handle.js'
           'src/observe.js'
           'src/asset.js'

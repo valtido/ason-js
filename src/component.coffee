@@ -57,13 +57,10 @@ class Component
 
     @prop = template: template, collection: collection, path : path
 
-
     @create_shadow()
     @root = @element.shadowRoot
+
     @hide()
-
-
-    repeaters = @root.querySelectorAll '[repeat]'
 
     @scripts = []
     @scripts.status = "init"
@@ -79,17 +76,19 @@ class Component
     loader = document.createElement 'div'
     icon =  document.createElement 'i'
     text = document.createTextNode "Loading..."
+    loader.id = "temporary_loader"
     loader.className = "temporary_loader"
     icon.className = "icon-loader animate-spin"
 
-    loader.style.position           = "absolute"
-    loader.style.top                = 0
-    loader.style.left               = 0
-    loader.style.bottom             = 0
-    loader.style.right              = 0
-    loader.style.display            = "block"
+    loader.style.position            = "absolute"
+    loader.style.top                 = 0
+    loader.style.left                = 0
+    loader.style.bottom              = 0
+    loader.style.right               = 0
+    loader.style.display             = "block"
     loader.style["text-align"]       = "center"
     loader.style["background-color"] = "#fff"
+    loader.style["z-index"]          = "9999"
 
     loader.appendChild icon
     loader.appendChild text
@@ -108,9 +107,6 @@ class Component
   create_shadow : ->
     if @element.shadowRoot is null
       @element.createShadowRoot()
-    else
-      children = @element.shadowRoot.childNodes
-      children[0].remove() while children.length if children.length
 
     @element.shadowRoot
 
@@ -149,44 +145,44 @@ class Component
         if regx.test attr.name
           throw new Error "component: attr name should not be a handlebar"
           text = attr.value
-          handle = new Handle @, attr, text, 'attr_name'
+          handle = new Handle @, node, text, 'attr_name', attr
           @handles.push handle
 
         if regx.test attr.value
           text = attr.value
-          handle = new Handle @, attr, text, 'attr_value'
+          handle = new Handle @, node, text, 'attr_value', attr
           @handles.push handle
       node
     all
 
-  handle_template_scripts: (content) ->
+  handle_template_scripts: ->
     escapeRegExp = (str) ->
       str.replace /[-\/\\^$*+?.()|[\]{}]/g, '\\$&'
+    scripts = @template.element.querySelectorAll 'script'
 
-    scripts = $(content).add(content.children).findAll 'script'
+    for script in scripts
+      script.component = @
+      if script.src
+        script.onload = -> script.has_loaded = true
+      else
+        front = ""
+        reg                = new RegExp("^#{escapeRegExp(front)}")
+        is_script_prepared = reg.test(script.text)
 
-    $(scripts).filter('[src]').each (i, script)->
-      script.onload = -> script.has_loaded = true
+        # unless is_script_prepared
+        script.text = """ /* template: #{@template.name} */
+        var shadow = jom.shadow;
+        new (function(){
+                  var
+                  body       = shadow.body,
+                  host       = shadow.host,
+                  root       = shadow.root,
+                  component  = host.component;
 
-    $(scripts).not('[src]').eq(0).each (i,script)=>
-      front = ""
-      reg                = new RegExp("^#{escapeRegExp(front)}")
-      is_script_prepared = reg.test(script.text)
+                  #{script.text}
 
-      # unless is_script_prepared
-      script.text = """ /* template: #{@template.name} */
-      var shadow = jom.shadow;
-      new (function(){
-                var
-                body       = shadow.body,
-                host       = shadow.host,
-                root       = shadow.root,
-                component  = host.component;
-
-                #{script.text}
-
-                })(shadow.host)"""
-      return script
+                  })(shadow.host)"""
+    @
 
   on: (type, path, callback)->
     types = type.split " "
@@ -209,6 +205,7 @@ class Component
       for event in @events
         if type is event.type
           if event.path is null
+            event.target = @root
             event.callback.call handle, event, params, @
           for handle in @handles
             part = !!~ handle.path.indexOf event.path
@@ -221,23 +218,57 @@ class Component
   image_source_change : ->
     imgs = @root.querySelectorAll '[body] img'
     for img, key in imgs
-      img.setAttribute "src", img.attributes.source.value
+      if img.getAttribute('src') isnt img.attributes.source.value
+        img.setAttribute "src", img.attributes.source.value
+  render: ->
+    originalHeight = @element.style.height
+    originalPosition = @element.style.position
+    el = window.getComputedStyle @element, null
+    height = el.height
+    @element.style.height = height
+    @element.style.position = 'relative'
+    style = null
 
+    child = @root.firstChild
+    while child
+      sibling = null
+
+      if child.id isnt "temporary_loader"
+        sibling = child.nextSibling
+        child.remove()
+
+      child = sibling or child.nextSibling
+
+    template = new Template @template.original
+    @define_template template
+    @hide()
+
+
+    @handle_template_scripts()
+    clone = @template.element.cloneNode true
+
+    child = clone.firstChild
+    while child
+      sibling = child.nextSibling
+      style = child if child.nodeName.toLowerCase() is "style"
+      @root.appendChild child
+      child = sibling
+
+    if style
+      style.onload = =>
+        @show()
+
+    @repeat()
+    @handlebars()
+    @image_source_change()
+    @element.style.height = originalHeight
+    @element.style.position = originalPosition
   repeat: ->
     last = null
 
-    for repeater, repeater_key in @template.repeaters
-      key  = repeater.node.attributes.repeat.value
+    for repeater, repeater_key in @root.querySelectorAll '[repeat]'
+      key  = repeater.attributes.repeat.value
       raw  = key
-      repeats = @root.querySelectorAll '[repeated]'
-      for item, repeats_key in repeats
-        if item.repeatGUID is repeater.node.guid
-            repeater.parent.replaceChild repeater.node, item
-            removeable = item
-            while removeable.nextSibling
-              if removeable.repeatGUID isnt undefined and removeable.repeatGUID is repeater.node.guid
-                removeable = removeable.nextSibling
-                removeable.remove()
 
       throw new Error "component: `repeat` attr missing" if key is undefined
       if key.length
@@ -266,10 +297,9 @@ class Component
       if path is undefined
         path = ""
 
-      repeated = document.createDocumentFragment()
-
+      nextSibling = repeater.nextSibling
       for item, index in data
-        clone = repeater.node.cloneNode true
+        clone = repeater.cloneNode true
         clone.setAttribute "repeated", "true"
         clone.setAttribute 'repeat-index', index
         clone.removeAttribute "repeat"
@@ -282,11 +312,11 @@ class Component
         y = document.createElement 'div'
         y.innerHTML = x
         x = y.childNodes[0]
-        x.repeatGUID = repeater.node.guid
 
-        repeated.appendChild x
+        repeater.parentNode.insertBefore x, nextSibling
+        nextSibling = x.nextSibling
 
-      repeater.parent.replaceChild repeated, repeater.node
+      repeater.remove()
 
 
 

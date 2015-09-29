@@ -10,20 +10,3 @@ Function::setter = (prop, set) ->
 
 Function::property = (prop, desc) ->
   Object.defineProperty @prototype, prop, desc
-
-unless $.fn.findAll?
-  $.fn.findAll = (selector) ->
-    return this.find(selector).add(this.filter(selector))
-unless $.fn.value?
-  $.fn.value = (val, text=false)->
-    console.info "go back to value change how it works"
-
-    if val
-      $(this).data('value',arguments[0])
-      if text is true
-        txt = $.trim val
-        $(this).text txt
-      $(this).trigger 'jom.change'
-      return $(this)
-
-    return $(this).data 'value'

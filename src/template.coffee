@@ -33,23 +33,6 @@ class Template
       throw new Error "jom: template body attr is required"
 
     @handlebars = []
-    @repeaters = []
-
-    for repeater, key in @element.querySelectorAll '[repeat]'
-      index = @getIndex repeater
-      repeater.guid = jom.guid
-
-      @repeaters.push
-        index: index
-        node: repeater
-        parent: repeater.parentNode
 
     @ready = true
     @
-
-  getIndex: (node)->
-    i = 0
-
-    i++ while node = node.previousElementSibling
-
-    i
