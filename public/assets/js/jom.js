@@ -1095,6 +1095,8 @@ Collection = (function() {
 var Component,
   indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
+document.createElement("component");
+
 Component = (function() {
   var disabled, regx, regxG;
 
@@ -1182,16 +1184,10 @@ Component = (function() {
   }
 
   Component.prototype.show = function() {
-    var j, len, loader, ref, script;
+    var loader;
     loader = this.root.querySelector('.temporary_loader');
     if (loader != null) {
       loader.remove();
-    }
-    ref = this.scripts;
-    for (j = 0, len = ref.length; j < len; j++) {
-      script = ref[j];
-      debugger;
-      this.root.appendChild(script);
     }
     return this;
   };
@@ -1336,6 +1332,18 @@ Component = (function() {
     return this;
   };
 
+  Component.prototype.swapScript = function(script) {
+    var clone;
+    if (script.nodeName.toUpperCase() !== 'SCRIPT') {
+      throw new Error('swapScript requires script');
+    }
+    clone = document.createElement('script');
+    clone.appendChild(document.createTextNode(script.textContent));
+    script.parentNode.insertBefore(clone, script);
+    script.parentNode.removeChild(script);
+    return this;
+  };
+
   Component.prototype.trigger = function(type, params) {
     var event, handle, j, k, l, len, len1, len2, part, ref, ref1, types;
     if (params == null) {
@@ -1383,7 +1391,7 @@ Component = (function() {
   };
 
   Component.prototype.render = function() {
-    var child, clone, el, height, originalHeight, originalPosition, sibling, style, template;
+    var child, clone, el, height, j, len, originalHeight, originalPosition, ref, script, sibling, style, template;
     originalHeight = this.element.style.height;
     originalPosition = this.element.style.position;
     el = window.getComputedStyle(this.element, null);
@@ -1405,31 +1413,19 @@ Component = (function() {
     this.hide();
     this.handle_template_scripts();
     clone = this.template.element.cloneNode(true);
-    child = clone.firstChild;
-    while (child) {
-      sibling = child.nextSibling;
-      if (child.nodeName.toLowerCase() === 'script') {
-        this.scripts.push(child);
-      } else {
-        if (child.nodeName.toLowerCase() === "style") {
-          style = child;
-        }
-        this.root.appendChild(child);
-      }
-      child = sibling;
+    ref = clone.querySelectorAll('script');
+    for (j = 0, len = ref.length; j < len; j++) {
+      script = ref[j];
+      this.swapScript(script);
     }
-    if (style) {
-      style.onload = (function(_this) {
-        return function() {
-          return _this.show();
-        };
-      })(this);
-    }
+    this.root.appendChild(clone);
     this.repeat();
     this.handlebars();
     this.image_source_change();
     this.element.style.height = originalHeight;
-    return this.element.style.position = originalPosition;
+    this.element.style.position = originalPosition;
+    this.show();
+    debugger;
   };
 
   Component.prototype.repeat = function() {

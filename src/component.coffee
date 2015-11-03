@@ -1,4 +1,4 @@
-
+document.createElement "component"
 class Component
   disabled   = false
   regx  = /\${([^\s{}]+)}/
@@ -70,10 +70,6 @@ class Component
   show : ->
     loader = @root.querySelector '.temporary_loader'
     loader?.remove()
-    for script in @scripts
-      debugger
-      @root
-      .appendChild script
     @
   hide : ->
     loader = $('<div class="temporary_loader">Loading...</div>')
@@ -206,7 +202,14 @@ class Component
       event.path     = path
       @events.push event
     return @
-
+  swapScript : (script) ->
+    if script.nodeName.toUpperCase() isnt 'SCRIPT'
+      throw new Error('swapScript requires script')
+    clone = document.createElement('script')
+    clone.appendChild document.createTextNode(script.textContent)
+    script.parentNode.insertBefore clone, script
+    script.parentNode.removeChild script
+    @
   trigger: (type, params = {})->
     types = type.split " "
 
@@ -254,26 +257,18 @@ class Component
 
     @handle_template_scripts()
     clone = @template.element.cloneNode true
-
-    child = clone.firstChild
-    while child
-      sibling = child.nextSibling
-      if child.nodeName.toLowerCase() is 'script'
-        @scripts.push child
-      else
-        style = child if child.nodeName.toLowerCase() is "style"
-        @root.appendChild child
-      child = sibling
-
-    if style
-      style.onload = =>
-        @show()
+    for script in clone.querySelectorAll 'script'
+      @swapScript script
+    @root.appendChild clone
 
     @repeat()
     @handlebars()
     @image_source_change()
     @element.style.height = originalHeight
     @element.style.position = originalPosition
+    @show()
+
+    debugger
   repeat: ->
     last = null
 
