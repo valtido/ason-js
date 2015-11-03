@@ -71,7 +71,11 @@ template(name="profile")
           span.likes ${likes}
     hr
 
-  script.
+  script(type='text/javascript').
+    console.log('test')
+    alert('love')
+    debugger;
+    console.log('love is all we needd')
     var doc = component.document
     $(body)
     .on("click", ".edit", function(){

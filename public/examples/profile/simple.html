@@ -1,0 +1,28 @@
+<script src="/bower_components/webcomponentsjs/webcomponents.js"></script>
+<div id="nameTag">Bob</div>
+<template id="nameTagTemplate">
+<style>
+.outer {
+  border: 2px solid brown;
+
+}
+</style>
+<div class="outer">
+  <div class="boilerplate">
+    Hi! My name is
+  </div>
+  <div class="name">
+    Bob
+  </div>
+</div>
+<script>
+  alert("doo")
+</script>
+</template>
+
+<script>
+var shadow = document.querySelector('#nameTag').createShadowRoot();
+var template = document.querySelector('#nameTagTemplate');
+var clone = document.importNode(template.content, true);
+shadow.appendChild(clone);
+</script>

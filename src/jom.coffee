@@ -113,7 +113,7 @@ class JOM
     .filter (i,link)->
       link.import isnt null
     .each (i, link) =>
-      templates = link.import.querySelectorAll "template"
+      templates = link.import && link.import.querySelectorAll "template"
       $(templates).each (j, template) =>
         if template and "jinit" of template is false and link.import isnt undefined
           template.jinit = true

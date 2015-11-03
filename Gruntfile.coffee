@@ -56,6 +56,7 @@ module.exports = (grunt) ->
           'public/bower_components/webcomponentsjs/webcomponents.js'
           'public/assets/-/is-my-json-valid/is-my-json-valid.min.js'
           'src/handle.js'
+          'src/observe_fallback.js'
           'src/observe.js'
           'src/asset.js'
           'src/shadow.js'

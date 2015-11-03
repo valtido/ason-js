@@ -1,3 +1,4 @@
+
 class Component
   disabled   = false
   regx  = /\${([^\s{}]+)}/
@@ -52,14 +53,12 @@ class Component
     [collection, path] = @attr.collection.split ':'
     @path = path or ""
     @element = $component.get 0
-
-    @element = wrap @element if not @element.createShadowRoot
+    @element = wrap @element
 
     @prop = template: template, collection: collection, path : path
 
     @create_shadow()
     @root = @element.shadowRoot
-
     @hide()
 
     @scripts = []
@@ -71,6 +70,11 @@ class Component
   show : ->
     loader = @root.querySelector '.temporary_loader'
     loader?.remove()
+    for script in @scripts
+      debugger
+      @root
+      .appendChild script
+    @
   hide : ->
     loader = $('<div class="temporary_loader">Loading...</div>')
     loader = document.createElement 'div'
@@ -105,10 +109,15 @@ class Component
   destroy : ->
 
   create_shadow : ->
-    if @element.shadowRoot is null
-      @element.createShadowRoot()
+    element = wrap(@element)
 
-    @element.shadowRoot
+    if element.shadowRoot is null
+      element.createShadowRoot()
+
+    @element.shadowRoot = element.shadowRoot
+    @element = element
+
+    element.shadowRoot
 
   define_template : (template)->
     if not template or template instanceof Template is false
@@ -236,7 +245,6 @@ class Component
       if child.id isnt "temporary_loader"
         sibling = child.nextSibling
         child.remove()
-
       child = sibling or child.nextSibling
 
     template = new Template @template.original
@@ -250,8 +258,11 @@ class Component
     child = clone.firstChild
     while child
       sibling = child.nextSibling
-      style = child if child.nodeName.toLowerCase() is "style"
-      @root.appendChild child
+      if child.nodeName.toLowerCase() is 'script'
+        @scripts.push child
+      else
+        style = child if child.nodeName.toLowerCase() is "style"
+        @root.appendChild child
       child = sibling
 
     if style

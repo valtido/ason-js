@@ -1,6 +1,12 @@
 class Shadow
   constructor : ->
-    @root = document.currentScript?.parentNode or
+    parent = document.currentScript?.parentNode
+    if parent instanceof ShadowRoot is true
+      sh = parent
+    else
+      sh = wrap(parent).shadowRoot
+
+    @root = sh or
             arguments.callee?.caller?.caller?.arguments[0]?.target or
             null
     @traverseAncestry()
