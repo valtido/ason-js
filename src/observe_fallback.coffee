@@ -321,4 +321,4 @@ unless Object.observe
         _notifiers.splice idx, 1
   ) Object, this
 
-Array.observe = Object.observe if Array.observe is undefined
+# Array.observe = Object.observe if Array.observe is undefined

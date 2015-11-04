@@ -35,7 +35,6 @@ template(name="person")
   script.
     $(body)
     .on('change keyup',".location", function(event){
-        debugger
       doc.location = $(this).val()
     })
     .on('change keyup',".first", function(event){

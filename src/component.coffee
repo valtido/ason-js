@@ -268,7 +268,6 @@ class Component
     @element.style.position = originalPosition
     @show()
 
-    debugger
   repeat: ->
     last = null
 

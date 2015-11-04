@@ -74,7 +74,7 @@ template(name="profile")
   script(type='text/javascript').
     console.log('test')
     alert('love')
-    debugger;
+    
     console.log('love is all we needd')
     var doc = component.document
     $(body)
@@ -84,7 +84,6 @@ template(name="profile")
     .on("click", ".location_list .item", function(){
       var value = $.trim($(this).text());
       var index = $(this).parents('.flip').attr('repeat-index')
-      debugger
       component.document[index].location = value;
     })
     .on("click", "i.icon-location", function(){

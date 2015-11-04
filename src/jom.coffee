@@ -139,8 +139,6 @@ class JOM
   assemble_components: ->
     $.each @components, (i, component)=>
       if component.ready is true or component.idle is true
-        # component.show()
-        # debugger
         return true
 
       if "timer" of component is false
@@ -215,7 +213,6 @@ class JOM
               mutations.forEach (mutation) ->
                 target = mutation.target.handle
                 if target.stringify(target.value) isnt target.dom
-                  debugger
                   target.value = target.dom
 
                 console.log mutation.type
@@ -228,9 +225,7 @@ class JOM
               handle.node.addEventListener 'change', ->
                 target = @handle
                 if target.stringify(target.value) isnt target.dom
-                  debugger
                   target.value = target.dom
-                debugger
 
       if collection.observing is false
         collection.observing = true
@@ -244,7 +239,6 @@ class JOM
                 if nat.type is "update"
                   for key, handle of component.handles
                     if change.path is handle.path
-                      # debugger
                       # figgure out how to change handles only
                       handle.value = change.value
                       component.image_source_change()

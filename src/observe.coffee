@@ -8,8 +8,7 @@ class Observe
     throw new Error "Observe: Object missing." if not root
     if typeof callback isnt "function"
       throw new Error "Observe: Callback should be a function."
-    type_of_curr = curr.constructor.name
-    if type_of_curr is "Array"
+    if not not curr and curr.constructor is Array
       base = path
       for item, key in curr
         if typeof item is "object"
@@ -17,7 +16,7 @@ class Observe
           new Observe @collection, root, callback, item, new_path
           new_path = ""
 
-    if type_of_curr is "Object"
+    if not not curr and curr.constructor is Object
       base = path
       for key, item of curr
         # if item.constructor.name is "Object"
@@ -28,9 +27,9 @@ class Observe
           new_path = ""
 
 
-    if curr.constructor.name is "Array"
+    if not not curr and curr.constructor is Array
       base = path
-      Array.observe curr, (changes) =>
+      Object.observe curr, (changes) =>
         result = {}
         original = {}
 
@@ -54,7 +53,7 @@ class Observe
           result[i] = part
           original[i] = change
         callback result, original
-    else if curr.constructor.name is "Object"
+    else if not not curr and curr.constructor is Object
       base = path
       Object.observe curr, (changes)=>
         result = {}

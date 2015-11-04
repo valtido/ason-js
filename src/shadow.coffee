@@ -4,7 +4,10 @@ class Shadow
     if parent instanceof ShadowRoot is true
       sh = parent
     else
-      sh = wrap(parent).shadowRoot
+      if parent
+        sh = wrap(parent)?.shadowRoot
+      else
+        sh = jom.components[jom.components.length-1].element.shadowRoot
 
     @root = sh or
             arguments.callee?.caller?.caller?.arguments[0]?.target or

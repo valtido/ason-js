@@ -8,6 +8,5 @@ template(name="number")
   script.
     $(body)
     .on("change keyup", "input", function (){
-      //- debugger
       data.num = new Number($(this).val()).valueOf()
     })

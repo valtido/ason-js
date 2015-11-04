@@ -573,15 +573,11 @@ if (!Object.observe) {
   })(Object, this);
 }
 
-if (Array.observe === void 0) {
-  Array.observe = Object.observe;
-}
-
 var Observe;
 
 Observe = (function() {
   function Observe(collection, root, callback, curr, path) {
-    var base, item, j, key, len, new_path, type_of_curr;
+    var base, item, j, key, len, new_path;
     this.collection = collection;
     if (curr == null) {
       curr = null;
@@ -596,8 +592,7 @@ Observe = (function() {
     if (typeof callback !== "function") {
       throw new Error("Observe: Callback should be a function.");
     }
-    type_of_curr = curr.constructor.name;
-    if (type_of_curr === "Array") {
+    if (!!curr && curr.constructor === Array) {
       base = path;
       for (key = j = 0, len = curr.length; j < len; key = ++j) {
         item = curr[key];
@@ -608,7 +603,7 @@ Observe = (function() {
         }
       }
     }
-    if (type_of_curr === "Object") {
+    if (!!curr && curr.constructor === Object) {
       base = path;
       for (key in curr) {
         item = curr[key];
@@ -624,9 +619,9 @@ Observe = (function() {
         }
       }
     }
-    if (curr.constructor.name === "Array") {
+    if (!!curr && curr.constructor === Array) {
       base = path;
-      Array.observe(curr, (function(_this) {
+      Object.observe(curr, (function(_this) {
         return function(changes) {
           var original, result;
           result = {};
@@ -652,7 +647,7 @@ Observe = (function() {
           return callback(result, original);
         };
       })(this));
-    } else if (curr.constructor.name === "Object") {
+    } else if (!!curr && curr.constructor === Object) {
       base = path;
       Object.observe(curr, (function(_this) {
         return function(changes) {
@@ -797,14 +792,18 @@ var Shadow;
 
 Shadow = (function() {
   function Shadow() {
-    var parent, ref, ref1, ref2, ref3, ref4, sh;
+    var parent, ref, ref1, ref2, ref3, ref4, ref5, sh;
     parent = (ref = document.currentScript) != null ? ref.parentNode : void 0;
     if (parent instanceof ShadowRoot === true) {
       sh = parent;
     } else {
-      sh = wrap(parent).shadowRoot;
+      if (parent) {
+        sh = (ref1 = wrap(parent)) != null ? ref1.shadowRoot : void 0;
+      } else {
+        sh = jom.components[jom.components.length - 1].element.shadowRoot;
+      }
     }
-    this.root = sh || ((ref1 = arguments.callee) != null ? (ref2 = ref1.caller) != null ? (ref3 = ref2.caller) != null ? (ref4 = ref3["arguments"][0]) != null ? ref4.target : void 0 : void 0 : void 0 : void 0) || null;
+    this.root = sh || ((ref2 = arguments.callee) != null ? (ref3 = ref2.caller) != null ? (ref4 = ref3.caller) != null ? (ref5 = ref4["arguments"][0]) != null ? ref5.target : void 0 : void 0 : void 0 : void 0) || null;
     this.traverseAncestry();
     this.root;
   }
@@ -1424,8 +1423,7 @@ Component = (function() {
     this.image_source_change();
     this.element.style.height = originalHeight;
     this.element.style.position = originalPosition;
-    this.show();
-    debugger;
+    return this.show();
   };
 
   Component.prototype.repeat = function() {
@@ -2133,7 +2131,6 @@ JOM = (function() {
                 var target;
                 target = mutation.target.handle;
                 if (target.stringify(target.value) !== target.dom) {
-                  debugger;
                   target.value = target.dom;
                 }
                 return console.log(mutation.type);
@@ -2150,10 +2147,8 @@ JOM = (function() {
                 var target;
                 target = this.handle;
                 if (target.stringify(target.value) !== target.dom) {
-                  debugger;
-                  target.value = target.dom;
+                  return target.value = target.dom;
                 }
-                debugger;
               });
             }
           }
