@@ -1,5 +1,8 @@
 {
   "page": {
     "layout":false
+  },
+  "test":{
+    "layout":false
   }
 }

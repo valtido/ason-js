@@ -17,7 +17,7 @@ template(name="profile")
     div.back label {width: 100px; display: inline-block;}
     
     .likes{-webkit-user-select: none;user-select: none;-moz-user-select: none;-ms-user-select: none;}
-    .front,.back{backface-visibility: hidden; width:100%;}
+    .front,.back{width:100%;}
     .hidden{display: none;}
     .edit{right: 5px; position: absolute; top: 5px;}
     [body]{position: relative;perspective: 1000;}
@@ -26,7 +26,7 @@ template(name="profile")
     .show_edit{transform: rotateY(180deg);}
     .show_edit .back{ display:block; }
     .show_edit .front{ display:none; }
-    .flip{background: whitesmoke; padding: 20px; transition: 0.6s;  transform-style: preserve-3d; display: block; margin-bottom: 10px;}
+    .flip{background: whitesmoke; padding: 20px; transition: 0.6s;  transform-style: preserve-3d; display: block; margin-bottom: 10px; position: relative;}
     .front { z-index: 2;  transform: rotateY(0deg); display: block;    }
     .back {  transform: rotateY(180deg); display: none; }
     .flip[current="true"]{ background: green; }

@@ -1,15 +1,20 @@
- language: node_js
- node_js:
-    - 0.11
-
-before_install:
-  - wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-  - sudo sh -c 'echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
-  - sudo apt-get update
-  - sudo apt-get install google-chrome-stable
-  - export CHROME_BIN=/usr/bin/chromium-browser
-
+sudo: false
+language: node_js
+cache:
+  directories:
+    - node_modules
 notifications:
-    email:
-        on_success: never
-        on_failure: change
+  email: false
+node_js:
+  - '4'
+before_install:
+  - npm i -g npm@^2.0.0
+before_script:
+  - npm prune
+after_success:
+  - npm run semantic-release
+script:
+  - npm run test
+branches:
+  except:
+    - "/^v\\d+\\.\\d+\\.\\d+$/"

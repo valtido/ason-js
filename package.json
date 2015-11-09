@@ -1,6 +1,5 @@
 {
   "name": "jom",
-  "version": "0.0.2",
   "description": "JOM (JSON Object Model), A frontend engine to help devlop web apps in a modular fashion",
   "main": "./dist/jom.js",
   "directories": {
@@ -15,7 +14,8 @@
     "test2": "node --harmony node_modules/karma/bin/karma start test/karma.config.js --browsers PhantomJS --verbose",
     "test3": "node --harmony node_modules/karma/bin/karma start test/karma.config.js",
     "build": "grunt build",
-    "docs": "codo ./src --output ./public/doc"
+    "docs": "codo ./src --output ./public/doc",
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
   "repository": {
     "type": "git",
@@ -50,7 +50,8 @@
     "karma-jasmine": "^0.2.3",
     "karma-phantomjs-launcher": "^0.1.4",
     "karma-safari-launcher": "^0.1.1",
-    "load-grunt-tasks": "^3.1.0"
+    "load-grunt-tasks": "^3.1.0",
+    "semantic-release": "^4.3.5"
   },
   "engines": {
     "node": ">=0.10"

@@ -53,7 +53,7 @@ module.exports = (grunt) ->
         src: [
           # 'bower_components/jquery/dist/jquery.js'
           'src/utils.js'
-          # 'public/bower_components/webcomponentsjs/webcomponents.js'
+          'public/bower_components/webcomponentsjs/webcomponents.js'
           'public/assets/-/is-my-json-valid/is-my-json-valid.min.js'
           'src/handle.js'
           'src/observe_fallback.js'
