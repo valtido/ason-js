@@ -44,6 +44,7 @@
     "grunt-contrib-watch": "^0.6.1",
     "grunt-karma": "^0.10.1",
     "gzip-js": "^0.3.2",
+    "harp": "0.19.0",
     "karma": "^0.12.37",
     "karma-chrome-launcher": "^0.1.4",
     "karma-cli": "0.0.4",
@@ -54,7 +55,8 @@
     "karma-phantomjs-launcher": "^0.1.4",
     "karma-safari-launcher": "^0.1.1",
     "load-grunt-tasks": "^3.1.0",
-    "semantic-release": "^4.3.5"
+    "semantic-release": "^4.3.5",
+    "terraform": "0.13.1"
   },
   "engines": {
     "node": ">=0.10"

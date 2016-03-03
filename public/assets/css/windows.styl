@@ -1,12 +1,14 @@
 :host
   position relative
-  margin 1em
+  margin 0
+  padding 0
 div.loading[body]
   display none
 div[body]
   background white
   padding 1em
   vertical-align top
+  display block
 img
   float none
 .item
@@ -16,12 +18,21 @@ img
   padding .5em
   margin .5em
   max-width 100px
+  position relative
   cursor hand
   cursor pointer
   :hover
     background #ccc
     img
       border-radius 50px
+  & i.icon
+    display none
+    position absolute
+    right 0
+    top 0
+    &:hover
+      background #fff
+      color #900
   & img
     width 100%
     width 100px
@@ -33,6 +44,11 @@ img
     text-align center
     color #333
     padding-top .5em
+
+div[body].editMode
+  i.icon
+    display block
+
 .window
 .windows
 .item

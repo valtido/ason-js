@@ -6,21 +6,51 @@ template(name="template")
     @import url("/assets/css/main.css");
     @import url("/assets/css/windows.css");
   div.clearfix(body)
-    div.item(repeat="${items}", data-url="${url}")  
+    div.item(repeat="${items}", data-url="${url}")
+      i.icon.icon-trash-empty
       img(source="${image}")
       div ${title}
     .windows
   script.
+    var doc        = component.document;
+    var timeoutId  = 0;
+    var changeMode = function(event, items){
+      var parent = this.parentNode;
+      parent.classList.add('editMode');
+      //- debugger
+    }
+
     $(window)
     .on('keydown', function(event){
       if(event.which == 27){
         $('.window',body).removeClass('active')
       }
-    })
+    });
 
     $(body)
-    .on('click',".item", function(event){
-      var index = $(this).attr('repeat-index')
+    .on('mouseup', function(event){
+      this.classList.remove('editMode');
+    })
+    .on('click',".item .icon.icon-trash-empty", function(event){
+      event.stopImmediatePropagation();
+      this.parentNode.remove();
+    })
+    .on('mouseup mouseleave',".item", function(event){
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      clearTimeout(timeoutId);
+    })
+    .on('mousedown',".item", function(event){
+      //- changeMode.call(this, []);
+      timeoutId = setTimeout(function(){
+        event.stopPropagation();
+        changeMode.apply(event.currentTarget, [event, body.querySelectorAll('.item')]);
+      }, 250);
+    })
+    .on('dblclick',".item", function(event){
+      if( this.parentNode.classList.contains('editMode') ) return false;
+
+      var index = $(this).attr('repeat-index');
       var url   = doc.items[index].url;
       var id    = doc.items[index].id;
       var win   = $('.windows .window[id="'+id+'"]', body);
